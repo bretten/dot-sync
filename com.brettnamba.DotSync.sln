@@ -1,8 +1,36 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2277D53C-4826-4E33-BF6E-1E267B6692D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{680D988E-F186-47E3-8DA9-B69A137F7BDC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", "{2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", "{B4C2A55D-1389-4A28-9DF1-6D337723782E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Domain", "src\FileSystem\DotSync.FileSystem.Domain\DotSync.FileSystem.Domain.csproj", "{77D93EEC-A08C-416F-9236-8A20D19FC448}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Domain.Tests", "tests\FileSystem\DotSync.FileSystem.Domain.Tests\DotSync.FileSystem.Domain.Tests.csproj", "{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9} = {2277D53C-4826-4E33-BF6E-1E267B6692D9}
+		{B4C2A55D-1389-4A28-9DF1-6D337723782E} = {680D988E-F186-47E3-8DA9-B69A137F7BDC}
+		{77D93EEC-A08C-416F-9236-8A20D19FC448} = {2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9}
+		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5} = {B4C2A55D-1389-4A28-9DF1-6D337723782E}
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{77D93EEC-A08C-416F-9236-8A20D19FC448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77D93EEC-A08C-416F-9236-8A20D19FC448}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77D93EEC-A08C-416F-9236-8A20D19FC448}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77D93EEC-A08C-416F-9236-8A20D19FC448}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
