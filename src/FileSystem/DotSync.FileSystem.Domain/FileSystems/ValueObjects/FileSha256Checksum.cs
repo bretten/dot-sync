@@ -1,4 +1,4 @@
-﻿namespace com.brettnamba.DotSync.FileSystem.Domain.Files.ValueObjects;
+﻿namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 public record struct FileSha256Checksum
 {

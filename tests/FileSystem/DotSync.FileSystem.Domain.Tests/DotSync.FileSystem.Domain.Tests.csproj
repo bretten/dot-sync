@@ -12,6 +12,8 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0"/>
+        <PackageReference Include="Moq" Version="4.20.70" />
+        <PackageReference Include="Testcontainers" Version="3.8.0" />
         <PackageReference Include="xunit" Version="2.4.2"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -25,6 +27,21 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\src\FileSystem\DotSync.FileSystem.Domain\DotSync.FileSystem.Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="FileIntegrity\Services\TestFiles\dir\dir_nested\path_changed.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="FileIntegrity\Services\TestFiles\dir\checksum_fail_path_match.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="FileIntegrity\Services\TestFiles\dir2\new_file.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="FileIntegrity\Services\TestFiles\verified.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
