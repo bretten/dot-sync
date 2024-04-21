@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+﻿using System.Collections.Immutable;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
@@ -33,7 +34,10 @@ public abstract class BaseFileIntegrityVerifier(
     {
         var tasks = VerifyDirectory(directoryPath);
         var results = await Task.WhenAll(tasks);
-        return new StorageLocationIntegrityVerificationResult(results.AsReadOnly());
+        var filesNotFoundInTheDirectory = await FileRepository.GetUnverifiedFiles(directoryPath);
+
+        return new StorageLocationIntegrityVerificationResult(results.AsReadOnly(),
+            filesNotFoundInTheDirectory.ToImmutableList());
     }
 
     /// <summary>

@@ -1,4 +1,7 @@
-﻿namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+﻿using System.Collections.Immutable;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+
+namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 
 /// <summary>
 /// Represents the file integrity verification result of a whole storage location
@@ -11,14 +14,27 @@ public readonly record struct StorageLocationIntegrityVerificationResult
     public IReadOnlyList<FileIntegrityVerificationResult> Results { get; }
 
     /// <summary>
+    /// Files that have a previous record of verification but were not found during this verification of the storage
+    /// location
+    /// </summary>
+    public IReadOnlyList<DotFile> FilesNoLongerInStorageLocation { get; }
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="results">The file integrity verification results for all files within the storage location</param>
-    public StorageLocationIntegrityVerificationResult(IReadOnlyList<FileIntegrityVerificationResult> results)
+    /// <param name="filesNoLongerInStorageLocation">Files that have a previous record of verification but were not found during this verification of the storage location</param>
+    public StorageLocationIntegrityVerificationResult(IReadOnlyList<FileIntegrityVerificationResult> results,
+        IReadOnlyList<DotFile> filesNoLongerInStorageLocation)
     {
         Results = results;
         SuccessfulVerifications = Results.Count(x => x.IsVerified);
-        UnverifiedFiles = Results.Where(x => !x.IsVerified);
+
+        var unverifiedFiles = Results.Where(x => !x.IsVerified).ToImmutableList();
+        UnverifiedFiles = unverifiedFiles;
+
+        FilesNoLongerInStorageLocation = filesNoLongerInStorageLocation
+            .Where(x => !unverifiedFiles.Select(u => u.Path).Contains(x.Path)).ToImmutableList();
     }
 
     /// <summary>
@@ -29,5 +45,5 @@ public readonly record struct StorageLocationIntegrityVerificationResult
     /// <summary>
     /// All files that were not verified
     /// </summary>
-    public IEnumerable<FileIntegrityVerificationResult> UnverifiedFiles { get; private init; }
+    public IReadOnlyList<FileIntegrityVerificationResult> UnverifiedFiles { get; private init; }
 }

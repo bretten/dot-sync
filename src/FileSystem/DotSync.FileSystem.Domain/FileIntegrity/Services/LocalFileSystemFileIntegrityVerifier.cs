@@ -7,7 +7,6 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 
 /// <summary>
 /// Verifies the integrity of files on a local filesystem
-/// <inheritdoc cref="BaseFileIntegrityVerifier" path="/param[@name='fileRepository']"/>
 /// </summary>
 public sealed class LocalFileSystemFileIntegrityVerifier(
     IFileRepository fileRepository,
