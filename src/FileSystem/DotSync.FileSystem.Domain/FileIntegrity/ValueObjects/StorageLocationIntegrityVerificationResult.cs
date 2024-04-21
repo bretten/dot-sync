@@ -36,6 +36,9 @@ public readonly record struct StorageLocationIntegrityVerificationResult
         var unverifiedFiles = Results.Where(x => !x.IsVerified).ToImmutableList();
         UnverifiedFiles = unverifiedFiles;
 
+        // There may have been files in the repo from a previous run, but are no longer in the current filesystem
+        // The results contain the verified and unverified files currently in the filesystem. By finding and removing the
+        // intersection of unverified files from this current run vs the previous run, we can determine files no longer in the filesystem
         FilesNoLongerInStorageLocation = filesNoLongerInStorageLocation
             .Where(x => !unverifiedFiles.Select(u => u.Path).Contains(x.Path)).ToImmutableList();
     }

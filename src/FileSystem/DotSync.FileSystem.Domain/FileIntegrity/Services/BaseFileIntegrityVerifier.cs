@@ -32,8 +32,16 @@ public abstract class BaseFileIntegrityVerifier(
     /// <returns>Verification result for the directory</returns>
     public async Task<StorageLocationIntegrityVerificationResult> Verify(FileSystemPath directoryPath)
     {
+        // Reset the verified flag
+        await FileRepository.SetAllAsUnverified(directoryPath);
+
+        // Verify all files at the specified directory
         var tasks = VerifyDirectory(directoryPath);
         var results = await Task.WhenAll(tasks);
+
+        // There may have been files in the repo from a previous run, but are no longer in the current filesystem
+        // Files should have been verified at this point by VerifyDirectory, so we can get the remaining unverified
+        // and remove the intersection between the unverified from the recent run to determine files no longer in the filesystem
         var filesNotFoundInTheDirectory = await FileRepository.GetUnverifiedFiles(directoryPath);
 
         return new StorageLocationIntegrityVerificationResult(results.AsReadOnly(),
