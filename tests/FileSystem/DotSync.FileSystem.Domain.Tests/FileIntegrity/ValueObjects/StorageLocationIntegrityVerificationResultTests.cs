@@ -9,6 +9,60 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.FileIntegrity.ValueObje
 public class StorageLocationIntegrityVerificationResultTests
 {
     [Fact]
+    public void FileCount_ResultsAndFilesFromPreviousRun_ReturnsCountBasedOnOnlyResults()
+    {
+        // Arrange
+        var verified = Faker.FakeFileIntegrityVerificationResult(path: "dir/file1.txt", isVerified: false);
+        var unverified = Faker.FakeFileIntegrityVerificationResult(path: "dir/file2.txt", isVerified: false);
+
+        var unverifiedFilesFromPreviousRun = new List<DotFile>()
+        {
+            Files.TestClasses.Faker.FakeFile(path: "dir/file1.txt"),
+            Files.TestClasses.Faker.FakeFile(path: "dir/file2.txt"),
+            Files.TestClasses.Faker.FakeFile(path: "dir/file3.txt"),
+            Files.TestClasses.Faker.FakeFile(path: "dir/file4.txt")
+        }.AsReadOnly();
+
+        var result = new StorageLocationIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
+        {
+            verified, unverified
+        }, unverifiedFilesFromPreviousRun);
+
+        // Act
+        var actual = result.FileCount;
+
+        // Assert
+        Assert.Equal(2, actual);
+    }
+
+    [Fact]
+    public void TotalSize_ResultsAndFilesFromPreviousRun_ReturnsSizeBasedOnOnlyResults()
+    {
+        // Arrange
+        var verified = Faker.FakeFileIntegrityVerificationResult(path: "dir/file1.txt", isVerified: false, size: 1);
+        var unverified = Faker.FakeFileIntegrityVerificationResult(path: "dir/file2.txt", isVerified: false, size: 2);
+
+        var unverifiedFilesFromPreviousRun = new List<DotFile>()
+        {
+            Files.TestClasses.Faker.FakeFile(path: "dir/file1.txt"),
+            Files.TestClasses.Faker.FakeFile(path: "dir/file2.txt"),
+            Files.TestClasses.Faker.FakeFile(path: "dir/file3.txt"),
+            Files.TestClasses.Faker.FakeFile(path: "dir/file4.txt")
+        }.AsReadOnly();
+
+        var result = new StorageLocationIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
+        {
+            verified, unverified
+        }, unverifiedFilesFromPreviousRun);
+
+        // Act
+        var actual = result.TotalSize;
+
+        // Assert
+        Assert.Equal(3, actual);
+    }
+
+    [Fact]
     public void SuccessfulVerifications_ResultsWithVerifications_ReturnsVerifiedCount()
     {
         // Arrange

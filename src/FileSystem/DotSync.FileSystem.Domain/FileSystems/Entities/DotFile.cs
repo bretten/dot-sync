@@ -2,26 +2,21 @@
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
-public sealed class DotFile
+public sealed class DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha256Checksum, long size)
 {
-    public Guid Id { get; }
+    public Guid Id { get; } = id;
 
-    public FileSystemPath Path { get; private set; }
+    public FileSystemPath Path { get; private set; } = path;
 
-    public FileSha256Checksum Sha256Checksum { get; }
+    public FileSha256Checksum Sha256Checksum { get; } = sha256Checksum;
+
+    public long Size { get; } = size;
 
     public bool IsVerified { get; private set; }
 
     public DateTime UpdatedAt { get; }
 
     public DateTime CreatedAt { get; }
-
-    public DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha256Checksum)
-    {
-        Id = id;
-        Path = path;
-        Sha256Checksum = sha256Checksum;
-    }
 
     public bool Match(DotFile otherFile)
     {

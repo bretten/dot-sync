@@ -6,11 +6,12 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 
 public static class Faker
 {
-    public static DotFile FakeFile(Guid? id = null, string? path = null, string? checksum = null)
+    public static DotFile FakeFile(Guid? id = null, string? path = null, string? checksum = null, long size = 0)
     {
         return new DotFile(id: id ?? new Guid(),
             FileSystemPath.Create(path?.AsPath() ?? string.Empty),
-            FileSha256Checksum.Create(checksum ?? string.Empty)
+            FileSha256Checksum.Create(checksum ?? string.Empty),
+            size
         );
     }
 }

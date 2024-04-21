@@ -1,6 +1,6 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -77,7 +77,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             existingFileByChecksum.SetAsVerified();
             await FileRepository.Update(existingFileByChecksum);
             return FileIntegrityVerificationResult.Verified(existingFileByChecksum.Path,
-                existingFileByChecksum.Sha256Checksum);
+                existingFileByChecksum.Sha256Checksum, fileInfo.Length);
         }
 
         // The file could not be found via checksum, so check to see if the path is being used
@@ -86,14 +86,14 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         {
             // The path was being used, so it could be a couple of cases
             return FileIntegrityVerificationResult.Unverified(existingFileByPath.Path,
-                existingFileByPath.Sha256Checksum);
+                existingFileByPath.Sha256Checksum, fileInfo.Length);
         }
 
         // The file could not be found via checksum or file path. It is a new file, so add it
         var newFile = new DotFile(Guid.NewGuid(), FileSystemPath.Create(relativePath),
-            FileSha256Checksum.Create(checksum));
+            FileSha256Checksum.Create(checksum), fileInfo.Length);
         newFile.SetAsVerified();
         await FileRepository.Add(newFile);
-        return FileIntegrityVerificationResult.Verified(newFile.Path, newFile.Sha256Checksum);
+        return FileIntegrityVerificationResult.Verified(newFile.Path, newFile.Sha256Checksum, fileInfo.Length);
     }
 }

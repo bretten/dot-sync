@@ -1,7 +1,7 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
-namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
+namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 
 public interface IFileRepository
 {

@@ -25,6 +25,8 @@ public class FileSystemPathTests
     [InlineData("file.jpg", "file.jpg")]
     [InlineData("dir/file.png", "dir/file.png")]
     [InlineData("dir/dir2/test.txt", "dir/dir2/test.txt")]
+    [InlineData(@"dir\dir2\test.txt",
+        @"dir\dir2\test.txt")] // Backslashes are valid characters in filenames in Unix: https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/8.0/file-path-backslash
     public void Create_Path_ReturnsFileSystemPath(string path, string expected)
     {
         // Arrange

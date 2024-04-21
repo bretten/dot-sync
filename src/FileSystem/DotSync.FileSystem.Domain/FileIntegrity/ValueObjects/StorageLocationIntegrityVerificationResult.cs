@@ -28,14 +28,27 @@ public readonly record struct StorageLocationIntegrityVerificationResult
         IReadOnlyList<DotFile> filesNoLongerInStorageLocation)
     {
         Results = results;
-        SuccessfulVerifications = Results.Count(x => x.IsVerified);
 
+        FileCount = results.Count;
+        TotalSize = results.Sum(x => x.Size);
+
+        SuccessfulVerifications = Results.Count(x => x.IsVerified);
         var unverifiedFiles = Results.Where(x => !x.IsVerified).ToImmutableList();
         UnverifiedFiles = unverifiedFiles;
 
         FilesNoLongerInStorageLocation = filesNoLongerInStorageLocation
             .Where(x => !unverifiedFiles.Select(u => u.Path).Contains(x.Path)).ToImmutableList();
     }
+
+    /// <summary>
+    /// The number of files
+    /// </summary>
+    public long FileCount { get; private init; }
+
+    /// <summary>
+    /// The total size of all the files
+    /// </summary>
+    public long TotalSize { get; private init; }
 
     /// <summary>
     /// The number of successful file integrity verifications

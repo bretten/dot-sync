@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
