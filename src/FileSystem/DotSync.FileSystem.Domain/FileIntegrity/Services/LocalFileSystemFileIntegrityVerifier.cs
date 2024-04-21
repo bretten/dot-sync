@@ -1,6 +1,7 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Services;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 
@@ -13,15 +14,27 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     IFileChecksumGenerator checksumGenerator)
     : BaseFileIntegrityVerifier(fileRepository, checksumGenerator)
 {
-    protected override IEnumerable<Task> VerifyDirectory(FileSystemPath directoryPath)
+    /// <summary>
+    /// Verifies the integrity of all files within the specified directory
+    /// </summary>
+    /// <param name="directoryPath">The path to the directory that will be verified</param>
+    /// <returns>Verification results for each file within the directory</returns>
+    protected override IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath)
     {
         return VerifyDirectory(new DirectoryInfo(directoryPath.Value), directoryPath);
     }
 
-    private IEnumerable<Task> VerifyDirectory(DirectoryInfo directoryInfo, FileSystemPath rootDirectoryPath)
+    /// <summary>
+    /// Verifies the integrity of all files within the specified directory
+    /// </summary>
+    /// <param name="directoryInfo">The directory to verify</param>
+    /// <param name="rootDirectoryPath">The original root directory that is being verified</param>
+    /// <returns>Verification results for each file within the directory</returns>
+    private IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(DirectoryInfo directoryInfo,
+        FileSystemPath rootDirectoryPath)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
-        var tasks = new List<Task>();
+        var tasks = new List<Task<FileIntegrityVerificationResult>>();
         foreach (var entry in entries)
         {
             switch (entry)
@@ -38,7 +51,13 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         return tasks;
     }
 
-    private async Task VerifyFile(FileInfo fileInfo, FileSystemPath rootDirectoryPath)
+    /// <summary>
+    /// Verifies the integrity of a single file
+    /// </summary>
+    /// <param name="fileInfo">The file</param>
+    /// <param name="rootDirectoryPath">The original root directory that is being verified</param>
+    /// <returns>Verification result of the file</returns>
+    private async Task<FileIntegrityVerificationResult> VerifyFile(FileInfo fileInfo, FileSystemPath rootDirectoryPath)
     {
         // Generate the checksum of the file on the filesystem
         var checksum = ChecksumGenerator.GenerateChecksum(fileInfo);
@@ -49,18 +68,17 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         var existingFileByChecksum = await FileRepository.GetFileByChecksum(checksum);
         if (existingFileByChecksum != null)
         {
-            // The checksum already has a match. If the path matches, the file can be verified
-            if (relativePath == existingFileByChecksum.Path.Value)
+            // The checksum matched, but its path is out of date. Update the path and then verify the file
+            if (relativePath != existingFileByChecksum.Path.Value)
             {
-                existingFileByChecksum.SetAsVerified();
-                return;
+                existingFileByChecksum.UpdatePath(relativePath);
             }
 
-            // The checksum matched, but its path is out of date. Update the path and then verify the file
-            existingFileByChecksum.UpdatePath(relativePath);
+            // The checksum and path match, so the file can be verified
             existingFileByChecksum.SetAsVerified();
             await FileRepository.Update(existingFileByChecksum);
-            return;
+            return FileIntegrityVerificationResult.Verified(existingFileByChecksum.Path,
+                existingFileByChecksum.Sha256Checksum);
         }
 
         // The file could not be found via checksum, so check to see if the path is being used
@@ -68,9 +86,8 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         if (existingFileByPath != null)
         {
             // The path was being used, so it could be a couple of cases
-            throw new HashNotFoundException(
-                "File was modified so has new hash OR The file at the DB path was deleted/moved and new file was added with the same path",
-                fileInfo);
+            return FileIntegrityVerificationResult.Unverified(existingFileByPath.Path,
+                existingFileByPath.Sha256Checksum);
         }
 
         // The file could not be found via checksum or file path. It is a new file, so add it
@@ -78,10 +95,6 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             FileSha256Checksum.Create(checksum));
         newFile.SetAsVerified();
         await FileRepository.Add(newFile);
-    }
-
-    public class HashNotFoundException(string? message, FileInfo fileInfo) : Exception(message)
-    {
-        public FileInfo FileInfo { get; } = fileInfo;
+        return FileIntegrityVerificationResult.Verified(newFile.Path, newFile.Sha256Checksum);
     }
 }

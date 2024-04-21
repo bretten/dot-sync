@@ -1,7 +1,8 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using Moq;
@@ -64,7 +65,7 @@ public class LocalFileSystemFileIntegrityVerifierTests
         /*
          * Act
          */
-        await verifier.Verify(FileSystemPath.Create(LocalFileSystemFilesPath));
+        var actual = await verifier.Verify(FileSystemPath.Create(LocalFileSystemFilesPath));
 
         /*
          * Assert
@@ -80,6 +81,13 @@ public class LocalFileSystemFileIntegrityVerifierTests
         stubFileRepository.Verify(x => x.Add(IsDotFileWith("dir2/new_file.txt", "new_file", true)), Times.Once);
         // The other files should not have been added
         stubFileRepository.Verify(x => x.Add(It.IsAny<DotFile>()), Times.AtMostOnce);
+
+        // There should be 4 results
+        Assert.Equal(4, actual.Results.Count);
+        Assert.True(actual.Results.First(ResultFor(verifiedFile)).IsVerified);
+        Assert.True(actual.Results.First(ResultFor(pathChangedFile)).IsVerified);
+        Assert.False(actual.Results.First(ResultFor(checksumFailPathMatchFile)).IsVerified);
+        Assert.True(actual.Results.First(ResultFor(newFile)).IsVerified);
     }
 
     private static FileInfo IsFileInfoWith(string path)
@@ -91,5 +99,10 @@ public class LocalFileSystemFileIntegrityVerifierTests
     {
         return It.Is<DotFile>(x =>
             x.Path.Value == path.AsPath() && x.Sha256Checksum.Value == checksum && x.IsVerified == isVerified);
+    }
+
+    private static Func<FileIntegrityVerificationResult, bool> ResultFor(DotFile file)
+    {
+        return x => x.Path == file.Path && x.Checksum == file.Sha256Checksum;
     }
 }

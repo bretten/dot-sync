@@ -1,5 +1,6 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Services;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 
@@ -13,14 +14,32 @@ public abstract class BaseFileIntegrityVerifier(
     IFileChecksumGenerator checksumGenerator)
     : IFileIntegrityVerifier
 {
+    /// <summary>
+    /// Stores the expected state of the files
+    /// </summary>
     protected readonly IFileRepository FileRepository = fileRepository;
+
+    /// <summary>
+    /// Generates checksums for files
+    /// </summary>
     protected readonly IFileChecksumGenerator ChecksumGenerator = checksumGenerator;
 
-    public async Task Verify(FileSystemPath directoryPath)
+    /// <summary>
+    /// Verifies the integrity of all files within the specified directory
+    /// </summary>
+    /// <param name="directoryPath">The path to the directory that will be verified</param>
+    /// <returns>Verification result for the directory</returns>
+    public async Task<StorageLocationIntegrityVerificationResult> Verify(FileSystemPath directoryPath)
     {
         var tasks = VerifyDirectory(directoryPath);
-        await Task.WhenAll(tasks);
+        var results = await Task.WhenAll(tasks);
+        return new StorageLocationIntegrityVerificationResult(results.AsReadOnly());
     }
 
-    protected abstract IEnumerable<Task> VerifyDirectory(FileSystemPath directoryPath);
+    /// <summary>
+    /// Verifies the integrity of all files within the specified directory
+    /// </summary>
+    /// <param name="directoryPath">The path to the directory that will be verified</param>
+    /// <returns>Verification results for each file within the directory</returns>
+    protected abstract IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath);
 }
