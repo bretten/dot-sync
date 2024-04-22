@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\Common\DotSync.Common.Infrastructure\DotSync.Common.Infrastructure.csproj" />
       <ProjectReference Include="..\DotSync.FileSystem.Application\DotSync.FileSystem.Application.csproj" />
     </ItemGroup>
 
