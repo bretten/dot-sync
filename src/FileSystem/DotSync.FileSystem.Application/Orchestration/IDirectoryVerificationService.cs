@@ -1,4 +1,4 @@
-﻿namespace DotSync.FileSystem.Application.Orchestration;
+﻿namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
 /// <summary>
 /// Defines a service that runs a verification on the specified directory

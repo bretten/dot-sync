@@ -1,6 +1,6 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 
-namespace DotSync.FileSystem.Application.Orchestration;
+namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
 /// <summary>
 /// Verification result of <see cref="IDirectoryVerificationService"/>

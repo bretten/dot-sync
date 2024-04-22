@@ -1,4 +1,4 @@
-﻿namespace DotSync.FileSystem.Application.Console;
+﻿namespace com.brettnamba.DotSync.FileSystem.Application.Console;
 
 /// <summary>
 /// Defines a console handler

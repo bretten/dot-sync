@@ -1,6 +1,6 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 
-namespace DotSync.FileSystem.Application.Reporting;
+namespace com.brettnamba.DotSync.FileSystem.Application.Reporting;
 
 /// <summary>
 /// Defines a service that should generate a report out of a <see cref="StorageLocationIntegrityVerificationResult"/>

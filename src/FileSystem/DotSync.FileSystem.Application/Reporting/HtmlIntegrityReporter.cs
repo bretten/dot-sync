@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 
-namespace DotSync.FileSystem.Application.Reporting;
+namespace com.brettnamba.DotSync.FileSystem.Application.Reporting;
 
 /// <summary>
 /// Generates a HTML report out of a <see cref="StorageLocationIntegrityVerificationResult"/>
