@@ -4,4 +4,10 @@
 /// Represents a tenant
 /// </summary>
 /// <param name="Name">The name of the tenant</param>
-public sealed record Tenant(string Name);
+public readonly record struct Tenant(string Name)
+{
+    public override string ToString()
+    {
+        return Name;
+    }
+};
