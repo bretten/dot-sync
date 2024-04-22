@@ -1,10 +1,10 @@
 ﻿using System.Text.RegularExpressions;
+using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.FileIntegrity.ValueObjects.TestClasses;
-using DotSync.FileSystem.Application.Reporting;
 
-namespace DotSync.FileSystem.Application.Tests.Reporting;
+namespace com.brettnamba.DotSync.FileSystem.Application.Tests.Reporting;
 
 public class HtmlIntegrityReporterTests
 {

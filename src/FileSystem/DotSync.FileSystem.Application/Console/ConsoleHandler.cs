@@ -1,6 +1,6 @@
-﻿using DotSync.FileSystem.Application.Orchestration;
+﻿using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
-namespace DotSync.FileSystem.Application.Console;
+namespace com.brettnamba.DotSync.FileSystem.Application.Console;
 
 /// <summary>
 /// Console handler

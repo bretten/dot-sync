@@ -1,9 +1,9 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+﻿using com.brettnamba.DotSync.FileSystem.Application.Reporting;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
-using DotSync.FileSystem.Application.Reporting;
 
-namespace DotSync.FileSystem.Application.Orchestration;
+namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
 /// <summary>
 /// Service that runs a verification on the specified directory

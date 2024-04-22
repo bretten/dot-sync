@@ -16,6 +16,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Applicat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Application.Tests", "tests\FileSystem\DotSync.FileSystem.Application.Tests\DotSync.FileSystem.Application.Tests.csproj", "{2D2549DA-23B1-414E-9939-8F0598900DFC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Infrastructure", "src\FileSystem\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj", "{11A8C7F5-772F-4EDA-8ED9-DBC90DE29B49}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Infrastructure.Tests", "tests\FileSystem\DotSync.FileSystem.Infrastructure.Tests\DotSync.FileSystem.Infrastructure.Tests.csproj", "{84222E7B-67E1-419E-80FF-F38B59A48606}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{4D7829EA-784E-41AD-952E-9D1E2B6524E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.ConsoleApp", "src\FileSystem\Apps\DotSync.FileSystem.ConsoleApp\DotSync.FileSystem.ConsoleApp.csproj", "{BBBC11E2-C36C-4737-9769-F153E785C0AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +36,10 @@ Global
 		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5} = {B4C2A55D-1389-4A28-9DF1-6D337723782E}
 		{F5C84F7F-4224-48E9-A9D1-436617B6B57C} = {2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9}
 		{2D2549DA-23B1-414E-9939-8F0598900DFC} = {B4C2A55D-1389-4A28-9DF1-6D337723782E}
+		{11A8C7F5-772F-4EDA-8ED9-DBC90DE29B49} = {2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9}
+		{84222E7B-67E1-419E-80FF-F38B59A48606} = {B4C2A55D-1389-4A28-9DF1-6D337723782E}
+		{4D7829EA-784E-41AD-952E-9D1E2B6524E2} = {2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9}
+		{BBBC11E2-C36C-4737-9769-F153E785C0AE} = {4D7829EA-784E-41AD-952E-9D1E2B6524E2}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{77D93EEC-A08C-416F-9236-8A20D19FC448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -46,5 +58,17 @@ Global
 		{2D2549DA-23B1-414E-9939-8F0598900DFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D2549DA-23B1-414E-9939-8F0598900DFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D2549DA-23B1-414E-9939-8F0598900DFC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11A8C7F5-772F-4EDA-8ED9-DBC90DE29B49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11A8C7F5-772F-4EDA-8ED9-DBC90DE29B49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11A8C7F5-772F-4EDA-8ED9-DBC90DE29B49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11A8C7F5-772F-4EDA-8ED9-DBC90DE29B49}.Release|Any CPU.Build.0 = Release|Any CPU
+		{84222E7B-67E1-419E-80FF-F38B59A48606}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{84222E7B-67E1-419E-80FF-F38B59A48606}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{84222E7B-67E1-419E-80FF-F38B59A48606}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{84222E7B-67E1-419E-80FF-F38B59A48606}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBBC11E2-C36C-4737-9769-F153E785C0AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBBC11E2-C36C-4737-9769-F153E785C0AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBBC11E2-C36C-4737-9769-F153E785C0AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBBC11E2-C36C-4737-9769-F153E785C0AE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
