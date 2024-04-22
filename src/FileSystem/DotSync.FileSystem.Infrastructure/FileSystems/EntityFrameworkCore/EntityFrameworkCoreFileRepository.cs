@@ -19,9 +19,9 @@ public sealed class EntityFrameworkCoreFileRepository(FileSystemsDbContext dbCon
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<DotFile?> GetFileByChecksum(string checksum)
+    public async Task<DotFile?> GetFileByChecksum(FileSha256Checksum checksum)
     {
-        return await dbContext.Files.FirstOrDefaultAsync(x => x.Sha256Checksum.Value == checksum);
+        return await dbContext.Files.FirstOrDefaultAsync(x => x.Sha256Checksum == checksum);
     }
 
     public async Task<DotFile?> GetFileByPath(FileSystemPath path)

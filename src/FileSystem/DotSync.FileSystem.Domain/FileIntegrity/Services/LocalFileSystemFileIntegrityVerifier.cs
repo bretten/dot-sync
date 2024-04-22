@@ -64,7 +64,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         var relativePath = Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName);
 
         // See if the file's checksum already exists
-        var existingFileByChecksum = await FileRepository.GetFileByChecksum(checksum);
+        var existingFileByChecksum = await FileRepository.GetFileByChecksum(FileSha256Checksum.Create(checksum));
         if (existingFileByChecksum != null)
         {
             // The checksum matched, but its path is out of date. Update the path and then verify the file
