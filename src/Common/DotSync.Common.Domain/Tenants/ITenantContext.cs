@@ -6,12 +6,7 @@
 public interface ITenantContext
 {
     /// <summary>
-    /// Switches the current tenant
+    /// The current tenant
     /// </summary>
-    void SwitchTenant(Tenant tenant);
-
-    /// <summary>
-    /// Gets the current tenant
-    /// </summary>
-    Tenant GetCurrentTenant();
+    Tenant CurrentTenant { get; }
 }
