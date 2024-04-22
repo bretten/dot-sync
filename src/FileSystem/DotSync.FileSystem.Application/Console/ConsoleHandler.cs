@@ -52,7 +52,7 @@ public class ConsoleHandler(IDirectoryVerificationService directoryVerificationS
         await File.WriteAllTextAsync(args[2], result.Report);
     }
 
-    private sealed class UnknownCommandException(string? message) : Exception;
+    private sealed class UnknownCommandException(string? message) : Exception(message);
 
-    private sealed class RequiredArgumentNotProvided(string? message) : Exception;
+    private sealed class RequiredArgumentNotProvided(string? message) : Exception(message);
 }

@@ -46,5 +46,5 @@ public readonly record struct FileSystemPath
     /// <summary>
     /// Thrown if the path could not be parsed as a valid, relative URI
     /// </summary>
-    public sealed class InvalidUriForFileSystemPathException(string? message) : Exception;
+    public sealed class InvalidUriForFileSystemPathException(string? message) : Exception(message);
 }

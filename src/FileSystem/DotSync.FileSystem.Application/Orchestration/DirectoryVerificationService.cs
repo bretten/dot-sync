@@ -51,5 +51,5 @@ public sealed class DirectoryVerificationService(
         return new DirectoryVerificationResult(result, report);
     }
 
-    private sealed class DirectoryNotStorageLocationException(string? message) : Exception;
+    private sealed class DirectoryNotStorageLocationException(string? message) : Exception(message);
 }
