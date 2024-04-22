@@ -1,43 +1,41 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 
 /// <summary>
 /// Defines a storage location for files
 /// </summary>
-/// <param name="directoryPath">The path to the storage location</param>
-/// <param name="fileCount">The total number of files in the storage location</param>
-/// <param name="storageSize">The total size of the storage location</param>
-public sealed class StorageLocation(FileSystemPath directoryPath, long fileCount, long storageSize)
+public sealed class StorageLocation(FileSystemPath path, StorageLocationType type, StorageStatistics storageStatistics)
 {
     /// <summary>
     /// The path to the storage location
     /// </summary>
-    public FileSystemPath DirectoryPath { get; } = directoryPath;
+    public FileSystemPath Path { get; } = path;
 
     /// <summary>
-    /// The total number of files in the storage location
+    /// The type of storage location
     /// </summary>
-    public long FileCount { get; private set; } = fileCount;
+    public StorageLocationType Type { get; } = type;
 
     /// <summary>
-    /// The total size of the storage location
+    /// The total number of files and size of the storage location
     /// </summary>
-    public long StorageSize { get; private set; } = storageSize;
+    public StorageStatistics StorageStatistics { get; private set; } = storageStatistics;
 
     /// <summary>
-    /// Updates the file count
+    /// Previous storage statistics
     /// </summary>
-    public void UpdateFileCount(long fileCount)
+    public List<HistoricalStorageStatistics> HistoricalStorageStatistics { get; } = [];
+
+    /// <summary>
+    /// Updates the storage statistics and logs the last statistics
+    /// </summary>
+    public void UpdateStatistics(long fileCount, long storageSize, DateTime dateTime)
     {
-        FileCount = fileCount;
-    }
+        HistoricalStorageStatistics.Add(new HistoricalStorageStatistics(dateTime, StorageStatistics));
 
-    /// <summary>
-    /// Updates the storage size
-    /// </summary>
-    public void UpdateStorageSize(long storageSize)
-    {
-        StorageSize = storageSize;
+        StorageStatistics = new StorageStatistics(fileCount: fileCount, size: storageSize);
     }
 }

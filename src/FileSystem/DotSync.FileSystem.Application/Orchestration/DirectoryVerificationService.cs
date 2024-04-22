@@ -44,7 +44,7 @@ public sealed class DirectoryVerificationService(
             throw new DirectoryNotStorageLocationException($"No storage location for {path}");
         }
 
-        var result = await _fileIntegrityVerifier.Verify(storageLocation.DirectoryPath);
+        var result = await _fileIntegrityVerifier.Verify(storageLocation.Path);
 
         var report = await _integrityReporter.OutputDirectoryResult(result);
 
