@@ -12,6 +12,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Domain",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Domain.Tests", "tests\FileSystem\DotSync.FileSystem.Domain.Tests\DotSync.FileSystem.Domain.Tests.csproj", "{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Application", "src\FileSystem\DotSync.FileSystem.Application\DotSync.FileSystem.Application.csproj", "{F5C84F7F-4224-48E9-A9D1-436617B6B57C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.FileSystem.Application.Tests", "tests\FileSystem\DotSync.FileSystem.Application.Tests\DotSync.FileSystem.Application.Tests.csproj", "{2D2549DA-23B1-414E-9939-8F0598900DFC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -22,6 +26,8 @@ Global
 		{B4C2A55D-1389-4A28-9DF1-6D337723782E} = {680D988E-F186-47E3-8DA9-B69A137F7BDC}
 		{77D93EEC-A08C-416F-9236-8A20D19FC448} = {2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9}
 		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5} = {B4C2A55D-1389-4A28-9DF1-6D337723782E}
+		{F5C84F7F-4224-48E9-A9D1-436617B6B57C} = {2A37DAF6-1A1E-439A-8DFF-56C6CFCC2BA9}
+		{2D2549DA-23B1-414E-9939-8F0598900DFC} = {B4C2A55D-1389-4A28-9DF1-6D337723782E}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{77D93EEC-A08C-416F-9236-8A20D19FC448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -32,5 +38,13 @@ Global
 		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1AA56FC9-3287-405E-8C46-5E32DCE6BBF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5C84F7F-4224-48E9-A9D1-436617B6B57C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5C84F7F-4224-48E9-A9D1-436617B6B57C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5C84F7F-4224-48E9-A9D1-436617B6B57C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5C84F7F-4224-48E9-A9D1-436617B6B57C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2D2549DA-23B1-414E-9939-8F0598900DFC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D2549DA-23B1-414E-9939-8F0598900DFC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D2549DA-23B1-414E-9939-8F0598900DFC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D2549DA-23B1-414E-9939-8F0598900DFC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
