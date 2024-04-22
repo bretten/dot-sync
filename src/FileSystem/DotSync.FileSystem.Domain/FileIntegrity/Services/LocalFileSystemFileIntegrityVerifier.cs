@@ -81,7 +81,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         }
 
         // The file could not be found via checksum, so check to see if the path is being used
-        var existingFileByPath = await FileRepository.GetFileByPath(relativePath);
+        var existingFileByPath = await FileRepository.GetFileByPath(FileSystemPath.Create(relativePath));
         if (existingFileByPath != null)
         {
             // The path was being used, so it could be a couple of cases

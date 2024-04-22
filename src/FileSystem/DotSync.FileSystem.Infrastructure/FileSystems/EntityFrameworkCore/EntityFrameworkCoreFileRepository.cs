@@ -1,0 +1,41 @@
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
+
+public sealed class EntityFrameworkCoreFileRepository(FileSystemsDbContext dbContext) : IFileRepository
+{
+    public async Task Add(DotFile file)
+    {
+        await dbContext.AddAsync(file);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task Update(DotFile file)
+    {
+        dbContext.Update(file);
+        await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<DotFile?> GetFileByChecksum(string checksum)
+    {
+        return await dbContext.Files.FirstOrDefaultAsync(x => x.Sha256Checksum.Value == checksum);
+    }
+
+    public async Task<DotFile?> GetFileByPath(FileSystemPath path)
+    {
+        return await dbContext.Files.FirstOrDefaultAsync(x => x.Path == path);
+    }
+
+    public async Task SetAllAsUnverified(FileSystemPath path)
+    {
+        await dbContext.Files.ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
+    }
+
+    public async Task<IEnumerable<DotFile>> GetUnverifiedFiles(FileSystemPath path)
+    {
+        return await dbContext.Files.Where(x => !x.IsVerified && x.Path == path).ToListAsync();
+    }
+}

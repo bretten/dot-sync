@@ -28,13 +28,13 @@ public class HtmlIntegrityReporterTests
             Faker.FakeFileIntegrityVerificationResult(path: "dir5/file5.txt", checksum: "file5", isVerified: false,
                 size: 5);
 
-        var fileFromPreviousRun1 = com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses.Faker.FakeFile(
+        var fileFromPreviousRun1 = Domain.Tests.Files.TestClasses.Faker.FakeFile(
             path: "dir4/file4.txt", checksum: "file4", size: 4);
-        var fileFromPreviousRun2 = com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses.Faker.FakeFile(
+        var fileFromPreviousRun2 = Domain.Tests.Files.TestClasses.Faker.FakeFile(
             path: "dir5/file5.txt", checksum: "file5", size: 5);
-        var fileFromPreviousRun3 = com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses.Faker.FakeFile(
+        var fileFromPreviousRun3 = Domain.Tests.Files.TestClasses.Faker.FakeFile(
             path: "dir6/file6.txt", checksum: "file6", size: 6);
-        var fileFromPreviousRun4 = com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses.Faker.FakeFile(
+        var fileFromPreviousRun4 = Domain.Tests.Files.TestClasses.Faker.FakeFile(
             path: "dir6/file7.txt", checksum: "file7", size: 7);
 
         var storageLocationResult = Faker.FakeStorageLocationIntegrityVerificationResult(
