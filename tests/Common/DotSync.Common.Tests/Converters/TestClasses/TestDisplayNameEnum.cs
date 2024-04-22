@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using DotSync.Common.Domain.Converters;
+using com.brettnamba.DotSync.Common.Converters;
 
-namespace DotSync.Common.Domain.Tests.Converters.TestClasses;
+namespace com.brettnamba.DotSync.Common.Tests.Converters.TestClasses;
 
 /// <summary>
 /// Test enum

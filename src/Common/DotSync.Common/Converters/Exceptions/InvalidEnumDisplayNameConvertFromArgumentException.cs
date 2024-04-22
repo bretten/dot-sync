@@ -1,4 +1,4 @@
-﻿namespace DotSync.Common.Domain.Converters.Exceptions;
+﻿namespace com.brettnamba.DotSync.Common.Converters.Exceptions;
 
 /// <summary>
 /// Thrown when <see cref="EnumDisplayNameConverter"/> is provided an unsupported parameter in ConvertFrom

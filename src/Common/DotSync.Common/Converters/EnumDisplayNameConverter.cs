@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
-using DotSync.Common.Domain.Converters.Exceptions;
+using com.brettnamba.DotSync.Common.Converters.Exceptions;
 
-namespace DotSync.Common.Domain.Converters;
+namespace com.brettnamba.DotSync.Common.Converters;
 
 /// <summary>
 /// Converts an enum to and from the value of its <see cref="DisplayAttribute"/> name

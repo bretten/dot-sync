@@ -1,4 +1,4 @@
-﻿namespace DotSync.Common.Domain.Tenants;
+﻿namespace com.brettnamba.DotSync.Common.Domain.Tenants;
 
 /// <summary>
 /// <inheritdoc cref="ITenantContext"/>

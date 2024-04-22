@@ -7,7 +7,7 @@
 
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
-        <RootNamespace>com.brettnamba.DotSync.Common.Application.Tests</RootNamespace>
+        <RootNamespace>com.brettnamba.DotSync.Common.Tests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -24,7 +24,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\src\Common\DotSync.Common.Application\DotSync.Common.Application.csproj" />
+      <ProjectReference Include="..\..\..\src\Common\DotSync.Common\DotSync.Common.csproj" />
     </ItemGroup>
 
 </Project>

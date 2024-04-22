@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel;
-using DotSync.Common.Domain.Converters.Exceptions;
-using DotSync.Common.Domain.Tests.Converters.TestClasses;
+using com.brettnamba.DotSync.Common.Converters.Exceptions;
+using com.brettnamba.DotSync.Common.Tests.Converters.TestClasses;
 
-namespace DotSync.Common.Domain.Tests.Converters;
+namespace com.brettnamba.DotSync.Common.Tests.Converters;
 
 public class EnumDisplayNameConverterTests
 {

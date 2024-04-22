@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace DotSync.Common.Domain.Converters.Exceptions;
+namespace com.brettnamba.DotSync.Common.Converters.Exceptions;
 
 /// <summary>
 /// Thrown when <see cref="EnumDisplayNameConverter"/> cannot find a string value that corresponds to an enum member's
