@@ -1,4 +1,6 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+﻿using System.Collections.ObjectModel;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 
@@ -15,5 +17,13 @@ public static class Faker
             size,
             isVerified
         );
+    }
+
+    public static StorageLocationIntegrityVerificationResult FakeStorageLocationIntegrityVerificationResult(
+        List<FileIntegrityVerificationResult>? results = null, List<DotFile>? filesNoLongerInStorage = null)
+    {
+        return new StorageLocationIntegrityVerificationResult(
+            results?.AsReadOnly() ?? ReadOnlyCollection<FileIntegrityVerificationResult>.Empty,
+            filesNoLongerInStorage?.AsReadOnly() ?? ReadOnlyCollection<DotFile>.Empty);
     }
 }
