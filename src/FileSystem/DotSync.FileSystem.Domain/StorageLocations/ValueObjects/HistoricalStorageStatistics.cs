@@ -3,6 +3,32 @@
 /// <summary>
 /// Represents a previous storage statistic
 /// </summary>
-/// <param name="DateTime">The time of the previous statistics</param>
-/// <param name="Statistics">The storage statistics</param>
-public readonly record struct HistoricalStorageStatistics(DateTime DateTime, StorageStatistics Statistics);
+public sealed record HistoricalStorageStatistics
+{
+    /// <summary>
+    /// The time of the previous statistics
+    /// </summary>
+    public DateTimeOffset DateTime { get; }
+
+    /// <summary>
+    /// The storage statistics
+    /// </summary>
+    public StorageStatistics Statistics { get; }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    public HistoricalStorageStatistics(DateTimeOffset dateTime, StorageStatistics statistics)
+    {
+        DateTime = dateTime;
+        Statistics = statistics;
+    }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    public HistoricalStorageStatistics(DateTimeOffset dateTime)
+    {
+        DateTime = dateTime;
+    }
+};

@@ -7,22 +7,27 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 /// <summary>
 /// Defines a storage location for files
 /// </summary>
-public sealed class StorageLocation(FileSystemPath path, StorageLocationType type, StorageStatistics storageStatistics)
+public sealed class StorageLocation
 {
+    /// <summary>
+    /// ID
+    /// </summary>
+    public Guid Id { get; }
+
     /// <summary>
     /// The path to the storage location
     /// </summary>
-    public FileSystemPath Path { get; } = path;
+    public FileSystemPath Path { get; }
 
     /// <summary>
     /// The type of storage location
     /// </summary>
-    public StorageLocationType Type { get; } = type;
+    public StorageLocationType Type { get; }
 
     /// <summary>
     /// The total number of files and size of the storage location
     /// </summary>
-    public StorageStatistics StorageStatistics { get; private set; } = storageStatistics;
+    public StorageStatistics StorageStatistics { get; private set; }
 
     /// <summary>
     /// Previous storage statistics
@@ -30,9 +35,29 @@ public sealed class StorageLocation(FileSystemPath path, StorageLocationType typ
     public List<HistoricalStorageStatistics> HistoricalStorageStatistics { get; } = [];
 
     /// <summary>
+    /// Constructor
+    /// </summary>
+    public StorageLocation(FileSystemPath path, StorageLocationType type, StorageStatistics storageStatistics)
+    {
+        Id = Guid.NewGuid();
+        Path = path;
+        Type = type;
+        StorageStatistics = storageStatistics;
+    }
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    public StorageLocation(FileSystemPath path, StorageLocationType type)
+    {
+        Path = path;
+        Type = type;
+    }
+
+    /// <summary>
     /// Updates the storage statistics and logs the last statistics
     /// </summary>
-    public void UpdateStatistics(long fileCount, long storageSize, DateTime dateTime)
+    public void UpdateStatistics(long fileCount, long storageSize, DateTimeOffset dateTime)
     {
         HistoricalStorageStatistics.Add(new HistoricalStorageStatistics(dateTime, StorageStatistics));
 

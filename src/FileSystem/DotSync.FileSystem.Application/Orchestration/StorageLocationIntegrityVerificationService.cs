@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.Common.Domain.Tenants;
+﻿using com.brettnamba.DotSync.Common.DateAndTme;
+using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -14,6 +15,7 @@ public sealed class StorageLocationIntegrityVerificationService(
     IFileIntegrityVerifier fileIntegrityVerifier,
     IStorageLocationRepository storageLocationRepository,
     IIntegrityReporter integrityReporter,
+    IClock clock,
     ITenantContext tenantContext)
     : TenantAware(tenantContext), IStorageLocationIntegrityVerificationService
 {
@@ -33,6 +35,11 @@ public sealed class StorageLocationIntegrityVerificationService(
     private readonly IIntegrityReporter _integrityReporter = integrityReporter;
 
     /// <summary>
+    /// Gets the current time
+    /// </summary>
+    private readonly IClock _clock = clock;
+
+    /// <summary>
     /// <inheritdoc cref="IStorageLocationIntegrityVerificationService.Execute"/>
     /// </summary>
     public async Task<StorageLocationIntegrityVerificationResult> Execute(StorageLocationType storageLocationType)
@@ -45,6 +52,10 @@ public sealed class StorageLocationIntegrityVerificationService(
         }
 
         var result = await _fileIntegrityVerifier.Verify(storageLocation.Path);
+
+        storageLocation.UpdateStatistics(fileCount: result.FileCount, storageSize: result.TotalSize,
+            _clock.GetUtcNow());
+        await _storageLocationRepository.Update(storageLocation);
 
         var report = await _integrityReporter.OutputDirectoryResult(result);
 
