@@ -1,19 +1,23 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
+using com.brettnamba.DotSync.Common.Converters;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 
 /// <summary>
 /// The different types of <see cref="StorageLocation"/>
 /// </summary>
+[TypeConverter(typeof(EnumDisplayNameConverter))]
 public enum StorageLocationType
 {
     /// <summary>
     /// A local filesystem
     /// </summary>
-    Local,
+    [Display(Name = "local")] Local,
 
     /// <summary>
     /// Amazon S3
     /// </summary>
-    AmazonS3
+    [Display(Name = "s3")] AmazonS3
 }

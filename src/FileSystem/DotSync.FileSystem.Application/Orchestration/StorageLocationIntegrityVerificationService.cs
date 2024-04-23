@@ -1,18 +1,21 @@
-﻿using com.brettnamba.DotSync.FileSystem.Application.Reporting;
+﻿using com.brettnamba.DotSync.Common.Domain.Tenants;
+using com.brettnamba.DotSync.Common.Extensions;
+using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
 /// <summary>
-/// Service that runs a verification on the specified directory
+/// <inheritdoc cref="IStorageLocationIntegrityVerificationService"/>
 /// </summary>
-public sealed class DirectoryVerificationService(
+public sealed class StorageLocationIntegrityVerificationService(
     IFileIntegrityVerifier fileIntegrityVerifier,
     IStorageLocationRepository storageLocationRepository,
-    IIntegrityReporter integrityReporter)
-    : IDirectoryVerificationService
+    IIntegrityReporter integrityReporter,
+    ITenantContext tenantContext)
+    : TenantAware(tenantContext), IStorageLocationIntegrityVerificationService
 {
     /// <summary>
     /// Verifies the integrity of the files in the directory
@@ -30,25 +33,22 @@ public sealed class DirectoryVerificationService(
     private readonly IIntegrityReporter _integrityReporter = integrityReporter;
 
     /// <summary>
-    /// Executes a verification on the specified directory path
+    /// <inheritdoc cref="IStorageLocationIntegrityVerificationService.Execute"/>
     /// </summary>
-    /// <param name="directoryPath">The directory path to verify</param>
-    /// <returns>The result of the verification</returns>
-    public async Task<DirectoryVerificationResult> Execute(string directoryPath)
+    public async Task<StorageLocationIntegrityVerificationResult> Execute(StorageLocationType storageLocationType)
     {
-        var path = FileSystemPath.Create(directoryPath);
-
-        var storageLocation = await _storageLocationRepository.GetByPath(path);
+        var storageLocation = await _storageLocationRepository.GetByType(storageLocationType);
         if (storageLocation == null)
         {
-            throw new DirectoryNotStorageLocationException($"No storage location for {path}");
+            throw new DirectoryNotStorageLocationException(
+                $"No storage location of type {storageLocationType.GetDisplayName()} for file set {TenantContext.CurrentTenant}");
         }
 
         var result = await _fileIntegrityVerifier.Verify(storageLocation.Path);
 
         var report = await _integrityReporter.OutputDirectoryResult(result);
 
-        return new DirectoryVerificationResult(result, report);
+        return new StorageLocationIntegrityVerificationResult(result, report);
     }
 
     private sealed class DirectoryNotStorageLocationException(string? message) : Exception(message);
