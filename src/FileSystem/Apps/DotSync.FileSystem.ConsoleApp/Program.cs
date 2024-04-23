@@ -4,6 +4,7 @@ using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -52,7 +53,7 @@ static async Task Verify(string[] args)
 
     //builder.Services.AddTransient<IFileRepository>();
     //builder.Services.AddTransient<IStorageLocationRepository>();
-    //builder.Services.AddTransient<IFileChecksumGenerator, >();
+    builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
 
     builder.Services
