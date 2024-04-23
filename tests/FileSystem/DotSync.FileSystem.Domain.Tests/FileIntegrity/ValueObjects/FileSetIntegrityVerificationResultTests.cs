@@ -122,7 +122,7 @@ public class FileSetIntegrityVerificationResultTests
         }, unverifiedFilesFromPreviousRun);
 
         // Act
-        var actual = result.FilesNoLongerInStorageLocation;
+        var actual = result.FilesNoLongerInSet;
 
         // Assert
         Assert.Equal(2, actual.Count);

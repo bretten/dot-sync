@@ -29,7 +29,7 @@ public sealed class HtmlIntegrityReporter : IIntegrityReporter
                                       <li>Total files: {result.FileCount}</li>
                                       <li>Verified files: {result.SuccessfulVerifications}</li>
                                       <li>Unverified files: {result.UnverifiedFiles.Count}</li>
-                                      <li>Files no longer in storage location: {result.FilesNoLongerInStorageLocation.Count}</li>
+                                      <li>Files no longer in set: {result.FilesNoLongerInSet.Count}</li>
                                       <li>Total size (bytes): {result.TotalSize}</li>
                                       <li>Total size: {FormatBytes(result.TotalSize)}</li>
                                   </ul>
@@ -45,10 +45,10 @@ public sealed class HtmlIntegrityReporter : IIntegrityReporter
 
         b.AppendLine("</table>");
 
-        b.AppendLine("<h2>Files No Longer In Storage Location</h2>");
+        b.AppendLine("<h2>Files no longer in set</h2>");
         b.AppendLine("<table>");
         b.AppendLine("<tr><th>Path</th><th>Checksum</th></tr>");
-        foreach (var file in result.FilesNoLongerInStorageLocation)
+        foreach (var file in result.FilesNoLongerInSet)
         {
             b.AppendLine($"<tr><td>{file.Path.Value}</td><td>{file.Sha256Checksum.Value}</td></tr>");
         }

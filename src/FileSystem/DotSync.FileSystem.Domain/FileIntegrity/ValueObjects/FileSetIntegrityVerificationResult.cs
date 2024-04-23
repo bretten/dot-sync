@@ -14,18 +14,17 @@ public readonly record struct FileSetIntegrityVerificationResult
     public IReadOnlyList<FileIntegrityVerificationResult> Results { get; }
 
     /// <summary>
-    /// Files that have a previous record of verification but were not found during this verification of the storage
-    /// location
+    /// Files that have a previous record of verification but were not found during this verification of the file set
     /// </summary>
-    public IReadOnlyList<DotFile> FilesNoLongerInStorageLocation { get; }
+    public IReadOnlyList<DotFile> FilesNoLongerInSet { get; }
 
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="results">The file integrity verification results for all files within the file set</param>
-    /// <param name="filesNoLongerInStorageLocation">Files that have a previous record of verification but were not found during this verification of the file set</param>
+    /// <param name="filesNoLongerInSet">Files that have a previous record of verification but were not found during this verification of the file set</param>
     public FileSetIntegrityVerificationResult(IReadOnlyList<FileIntegrityVerificationResult> results,
-        IReadOnlyList<DotFile> filesNoLongerInStorageLocation)
+        IReadOnlyList<DotFile> filesNoLongerInSet)
     {
         Results = results;
 
@@ -39,7 +38,7 @@ public readonly record struct FileSetIntegrityVerificationResult
         // There may have been files in the repo from a previous run, but are no longer in the current filesystem
         // The results contain the verified and unverified files currently in the filesystem. By finding and removing the
         // intersection of unverified files from this current run vs the previous run, we can determine files no longer in the filesystem
-        FilesNoLongerInStorageLocation = filesNoLongerInStorageLocation
+        FilesNoLongerInSet = filesNoLongerInSet
             .Where(x => !unverifiedFiles.Select(u => u.Path).Contains(x.Path)).ToImmutableList();
     }
 
