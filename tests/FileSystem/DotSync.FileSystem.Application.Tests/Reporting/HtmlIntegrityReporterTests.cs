@@ -37,7 +37,7 @@ public class HtmlIntegrityReporterTests
         var fileFromPreviousRun4 = Domain.Tests.Files.TestClasses.Faker.FakeFile(
             path: "dir6/file7.txt", checksum: "file7", size: 7);
 
-        var storageLocationResult = Faker.FakeStorageLocationIntegrityVerificationResult(
+        var storageLocationResult = Faker.FakeFileSetIntegrityVerificationResult(
             new List<FileIntegrityVerificationResult>()
                 { fileResult1, fileResult2, fileResult3, fileResult4, fileResult5 },
             new List<DotFile>
@@ -62,7 +62,7 @@ public class HtmlIntegrityReporterTests
                                                    <li>Total files: 5</li>
                                                    <li>Verified files: 3</li>
                                                    <li>Unverified files: 2</li>
-                                                   <li>Files no longer in storage location: 2</li>
+                                                   <li>Files no longer in set: 2</li>
                                                    <li>Total size (bytes): 15</li>
                                                    <li>Total size: 15 B</li>
                                                </ul>
@@ -72,7 +72,7 @@ public class HtmlIntegrityReporterTests
                                    <tr><td>dir4\file4.txt</td><td>file4</td></tr>
                                    <tr><td>dir5\file5.txt</td><td>file5</td></tr>
                                    </table>
-                                   <h2>Files No Longer In Storage Location</h2>
+                                   <h2>Files no longer in set</h2>
                                    <table>
                                    <tr><th>Path</th><th>Checksum</th></tr>
                                    <tr><td>dir6\file6.txt</td><td>file6</td></tr>
