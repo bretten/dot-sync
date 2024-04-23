@@ -4,16 +4,16 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 namespace com.brettnamba.DotSync.FileSystem.Application.Reporting;
 
 /// <summary>
-/// Generates a HTML report out of a <see cref="StorageLocationIntegrityVerificationResult"/>
+/// Generates a HTML report out of a <see cref="FileSetIntegrityVerificationResult"/>
 /// </summary>
 public sealed class HtmlIntegrityReporter : IIntegrityReporter
 {
     /// <summary>
-    /// Outputs a report for <see cref="StorageLocationIntegrityVerificationResult"/>
+    /// Outputs a report for <see cref="FileSetIntegrityVerificationResult"/>
     /// </summary>
     /// <param name="result">The result to generate a report for</param>
     /// <returns>The report</returns>
-    public Task<string> OutputDirectoryResult(StorageLocationIntegrityVerificationResult result)
+    public Task<string> OutputDirectoryResult(FileSetIntegrityVerificationResult result)
     {
         var b = new StringBuilder();
         b.AppendLine("<html>");

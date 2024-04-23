@@ -37,7 +37,7 @@ public class HtmlIntegrityReporterTests
         var fileFromPreviousRun4 = Domain.Tests.Files.TestClasses.Faker.FakeFile(
             path: "dir6/file7.txt", checksum: "file7", size: 7);
 
-        var storageLocationResult = Faker.FakeStorageLocationIntegrityVerificationResult(
+        var storageLocationResult = Faker.FakeFileSetIntegrityVerificationResult(
             new List<FileIntegrityVerificationResult>()
                 { fileResult1, fileResult2, fileResult3, fileResult4, fileResult5 },
             new List<DotFile>

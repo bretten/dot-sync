@@ -9,6 +9,6 @@ public interface IFileRepository
     Task Update(DotFile file);
     Task<DotFile?> GetFileByChecksum(string hash);
     Task<DotFile?> GetFileByPath(string path);
-    Task SetAllAsUnverified(FileSystemPath path);
-    Task<IEnumerable<DotFile>> GetUnverifiedFiles(FileSystemPath path);
+    Task SetAllAsUnverified();
+    Task<IEnumerable<DotFile>> GetUnverifiedFiles();
 }

@@ -6,7 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.FileIntegrity.ValueObjects;
 
-public class StorageLocationIntegrityVerificationResultTests
+public class FileSetIntegrityVerificationResultTests
 {
     [Fact]
     public void FileCount_ResultsAndFilesFromPreviousRun_ReturnsCountBasedOnOnlyResults()
@@ -23,7 +23,7 @@ public class StorageLocationIntegrityVerificationResultTests
             Files.TestClasses.Faker.FakeFile(path: "dir/file4.txt")
         }.AsReadOnly();
 
-        var result = new StorageLocationIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
+        var result = new FileSetIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
         {
             verified, unverified
         }, unverifiedFilesFromPreviousRun);
@@ -50,7 +50,7 @@ public class StorageLocationIntegrityVerificationResultTests
             Files.TestClasses.Faker.FakeFile(path: "dir/file4.txt")
         }.AsReadOnly();
 
-        var result = new StorageLocationIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
+        var result = new FileSetIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
         {
             verified, unverified
         }, unverifiedFilesFromPreviousRun);
@@ -69,7 +69,7 @@ public class StorageLocationIntegrityVerificationResultTests
         var verified1 = Faker.FakeFileIntegrityVerificationResult(isVerified: true);
         var verified2 = Faker.FakeFileIntegrityVerificationResult(isVerified: true);
         var unverified1 = Faker.FakeFileIntegrityVerificationResult(isVerified: false);
-        var result = new StorageLocationIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
+        var result = new FileSetIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
         {
             verified1, verified2, unverified1
         }, ImmutableList<DotFile>.Empty);
@@ -88,7 +88,7 @@ public class StorageLocationIntegrityVerificationResultTests
         var verified1 = Faker.FakeFileIntegrityVerificationResult(isVerified: true);
         var unverified1 = Faker.FakeFileIntegrityVerificationResult(isVerified: false);
         var unverified2 = Faker.FakeFileIntegrityVerificationResult(isVerified: false);
-        var result = new StorageLocationIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
+        var result = new FileSetIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
         {
             verified1, unverified1, unverified2
         }, ImmutableList<DotFile>.Empty);
@@ -116,7 +116,7 @@ public class StorageLocationIntegrityVerificationResultTests
             Files.TestClasses.Faker.FakeFile(path: "dir/file4.txt")
         }.AsReadOnly();
 
-        var result = new StorageLocationIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
+        var result = new FileSetIntegrityVerificationResult(new List<FileIntegrityVerificationResult>()
         {
             unverified1, unverified2
         }, unverifiedFilesFromPreviousRun);

@@ -19,10 +19,10 @@ public static class Faker
         );
     }
 
-    public static StorageLocationIntegrityVerificationResult FakeStorageLocationIntegrityVerificationResult(
+    public static FileSetIntegrityVerificationResult FakeFileSetIntegrityVerificationResult(
         List<FileIntegrityVerificationResult>? results = null, List<DotFile>? filesNoLongerInStorage = null)
     {
-        return new StorageLocationIntegrityVerificationResult(
+        return new FileSetIntegrityVerificationResult(
             results?.AsReadOnly() ?? ReadOnlyCollection<FileIntegrityVerificationResult>.Empty,
             filesNoLongerInStorage?.AsReadOnly() ?? ReadOnlyCollection<DotFile>.Empty);
     }

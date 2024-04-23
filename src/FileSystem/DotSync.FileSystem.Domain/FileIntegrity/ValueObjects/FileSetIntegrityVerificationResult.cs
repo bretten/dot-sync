@@ -4,12 +4,12 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 
 /// <summary>
-/// Represents the file integrity verification result of a whole storage location
+/// Represents the file integrity verification result of a whole file set
 /// </summary>
-public readonly record struct StorageLocationIntegrityVerificationResult
+public readonly record struct FileSetIntegrityVerificationResult
 {
     /// <summary>
-    /// The file integrity verification results for all files within the storage location
+    /// The file integrity verification results for all files within the file set
     /// </summary>
     public IReadOnlyList<FileIntegrityVerificationResult> Results { get; }
 
@@ -22,9 +22,9 @@ public readonly record struct StorageLocationIntegrityVerificationResult
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="results">The file integrity verification results for all files within the storage location</param>
-    /// <param name="filesNoLongerInStorageLocation">Files that have a previous record of verification but were not found during this verification of the storage location</param>
-    public StorageLocationIntegrityVerificationResult(IReadOnlyList<FileIntegrityVerificationResult> results,
+    /// <param name="results">The file integrity verification results for all files within the file set</param>
+    /// <param name="filesNoLongerInStorageLocation">Files that have a previous record of verification but were not found during this verification of the file set</param>
+    public FileSetIntegrityVerificationResult(IReadOnlyList<FileIntegrityVerificationResult> results,
         IReadOnlyList<DotFile> filesNoLongerInStorageLocation)
     {
         Results = results;
