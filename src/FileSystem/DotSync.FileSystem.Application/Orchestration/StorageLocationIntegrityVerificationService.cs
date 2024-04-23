@@ -3,6 +3,7 @@ using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 
@@ -42,9 +43,10 @@ public sealed class StorageLocationIntegrityVerificationService(
     /// <summary>
     /// <inheritdoc cref="IStorageLocationIntegrityVerificationService.Execute"/>
     /// </summary>
-    public async Task<StorageLocationIntegrityVerificationResult> Execute(StorageLocationType storageLocationType)
+    public async Task<StorageLocationIntegrityVerificationResult> Execute(StorageLocationType storageLocationType,
+        FileSystemPath path)
     {
-        var storageLocation = await _storageLocationRepository.GetByType(storageLocationType);
+        var storageLocation = await _storageLocationRepository.GetByTypeAndPath(storageLocationType, path);
         if (storageLocation == null)
         {
             throw new DirectoryNotStorageLocationException(

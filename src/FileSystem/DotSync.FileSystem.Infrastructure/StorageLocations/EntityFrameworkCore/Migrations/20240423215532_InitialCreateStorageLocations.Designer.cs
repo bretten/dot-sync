@@ -13,7 +13,7 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFr
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(StorageLocationsDbContext))]
-    [Migration("20240423215532_InitialCreateStorageLocations")]
+    [Migration("20240423223213_InitialCreateStorageLocations")]
     partial class InitialCreateStorageLocations
     {
         /// <inheritdoc />

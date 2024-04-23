@@ -15,14 +15,14 @@ public sealed class StorageLocation
     public Guid Id { get; }
 
     /// <summary>
-    /// The path to the storage location
-    /// </summary>
-    public FileSystemPath Path { get; }
-
-    /// <summary>
     /// The type of storage location
     /// </summary>
     public StorageLocationType Type { get; }
+
+    /// <summary>
+    /// The path to the storage location
+    /// </summary>
+    public FileSystemPath Path { get; }
 
     /// <summary>
     /// The total number of files and size of the storage location
@@ -37,21 +37,21 @@ public sealed class StorageLocation
     /// <summary>
     /// Constructor
     /// </summary>
-    public StorageLocation(FileSystemPath path, StorageLocationType type, StorageStatistics storageStatistics)
+    public StorageLocation(StorageLocationType type, FileSystemPath path, StorageStatistics storageStatistics)
     {
         Id = Guid.NewGuid();
-        Path = path;
         Type = type;
+        Path = path;
         StorageStatistics = storageStatistics;
     }
 
     /// <summary>
     /// Constructor
     /// </summary>
-    public StorageLocation(FileSystemPath path, StorageLocationType type)
+    public StorageLocation(StorageLocationType type, FileSystemPath path)
     {
-        Path = path;
         Type = type;
+        Path = path;
     }
 
     /// <summary>

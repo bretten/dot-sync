@@ -3,6 +3,7 @@ using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -37,13 +38,14 @@ static async Task Verify(string[] args)
     if (args.Length != 3)
     {
         throw new RequiredArgumentNotProvided(
-            "Could not run verify. Parameter order is file set, storage location type, report output path");
+            "Could not run verify. Parameter order is file set, storage location type, path in storage location, report output path");
     }
 
     var fileSet = args[0];
     var storageLocationType =
         (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[1])!;
-    var reportOutputPath = args[2];
+    var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[3];
 
     var builder = Host.CreateApplicationBuilder(args);
 
@@ -69,7 +71,7 @@ static async Task Verify(string[] args)
             $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
     }
 
-    var result = await service.Execute(storageLocationType);
+    var result = await service.Execute(storageLocationType, storageLocationPath);
     Console.WriteLine($"Total files: {result.Result.FileCount}");
     Console.WriteLine($"Verified files: {result.Result.SuccessfulVerifications}");
     Console.WriteLine($"Unverified files: {result.Result.UnverifiedFiles.Count}");

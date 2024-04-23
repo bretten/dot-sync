@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.StorageLocations.TestClasses;
@@ -44,7 +45,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
     public async Task Add_StorageLocation_AddsStorageLocationToDbContextSet()
     {
         // Arrange
-        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/file", fileCount: 1, size: 2);
+        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/storage", fileCount: 1, size: 2);
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
@@ -67,7 +68,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
     public async Task Update_StorageLocation_UpdatesStorageLocationInDbContextSet()
     {
         // Arrange
-        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/file", fileCount: 1, size: 2);
+        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/storage", fileCount: 1, size: 2);
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
@@ -102,10 +103,10 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task GetByType_Type_ReturnsStorageLocation()
+    public async Task GetByTypeAndPath_TypeAndPath_ReturnsStorageLocation()
     {
         // Arrange
-        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/file", fileCount: 1, size: 2);
+        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/storage", fileCount: 1, size: 2);
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
@@ -121,7 +122,8 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         var repo = new EntityFrameworkCoreStorageLocationRepository(assertDbContext);
 
         // Act
-        var actual = await repo.GetByType(StorageLocationType.Local);
+        var actual = await repo.GetByTypeAndPath(StorageLocationType.Local,
+            FileSystemPath.Create(@"path\to\storage", replaceBackslashes: OperatingSystem.IsWindows()));
 
         // Assert
         Assert.NotNull(actual);

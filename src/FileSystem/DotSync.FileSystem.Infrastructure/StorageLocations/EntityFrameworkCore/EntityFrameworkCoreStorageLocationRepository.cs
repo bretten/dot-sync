@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -20,8 +21,9 @@ public sealed class EntityFrameworkCoreStorageLocationRepository(StorageLocation
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<StorageLocation?> GetByType(StorageLocationType type)
+    public async Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, FileSystemPath path)
     {
-        return await dbContext.StorageLocationsWithHistoricalStatistics().FirstOrDefaultAsync(x => x.Type == type);
+        return await dbContext.StorageLocationsWithHistoricalStatistics()
+            .FirstOrDefaultAsync(x => x.Type == type && x.Path == path);
     }
 }

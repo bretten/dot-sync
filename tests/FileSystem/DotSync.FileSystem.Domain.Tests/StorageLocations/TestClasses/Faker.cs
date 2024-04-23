@@ -8,11 +8,11 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.StorageLocations.TestCl
 
 public static class Faker
 {
-    public static StorageLocation FakeStorageLocation(string? path = null,
-        StorageLocationType type = StorageLocationType.Local, long fileCount = 0, long size = 0)
+    public static StorageLocation FakeStorageLocation(StorageLocationType type = StorageLocationType.Local,
+        string? path = null, long fileCount = 0, long size = 0)
     {
-        return new StorageLocation(FileSystemPath.Create(path?.AsPath() ?? string.Empty),
-            type,
+        return new StorageLocation(type,
+            FileSystemPath.Create(path?.AsPath() ?? string.Empty),
             new StorageStatistics(fileCount, size)
         );
     }
