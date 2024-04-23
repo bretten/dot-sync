@@ -64,9 +64,9 @@ public sealed class DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha
     /// <summary>
     /// Updates the path of the file
     /// </summary>
-    public void UpdatePath(string newPath)
+    public void UpdatePath(FileSystemPath newPath)
     {
-        Path = FileSystemPath.Create(newPath);
+        Path = newPath;
     }
 
     /// <summary>
