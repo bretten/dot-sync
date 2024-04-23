@@ -7,6 +7,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -58,7 +59,7 @@ static async Task Verify(string[] args)
 
     builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
-    //builder.Services.AddTransient<IFileChecksumGenerator, >();
+    builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
 
     builder.Services
