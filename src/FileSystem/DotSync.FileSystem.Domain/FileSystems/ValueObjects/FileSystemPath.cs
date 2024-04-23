@@ -44,6 +44,17 @@ public readonly record struct FileSystemPath
     }
 
     /// <summary>
+    /// Creates a <see cref="FileSystemPath"/>
+    /// </summary>
+    /// <param name="path">The path</param>
+    /// <param name="replaceBackslashes">True if backslashes should be replaced with forward slashes</param>
+    /// <returns><see cref="FileSystemPath"/></returns>
+    public static FileSystemPath Create(string path, bool replaceBackslashes)
+    {
+        return Create(!replaceBackslashes ? path : path.Replace('\u005c', Path.AltDirectorySeparatorChar));
+    }
+
+    /// <summary>
     /// Thrown if the path could not be parsed as a valid, relative URI
     /// </summary>
     public sealed class InvalidUriForFileSystemPathException(string? message) : Exception(message);

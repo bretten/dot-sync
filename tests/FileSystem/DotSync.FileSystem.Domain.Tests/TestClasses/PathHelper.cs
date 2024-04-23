@@ -4,6 +4,6 @@ public static class PathHelper
 {
     public static string AsPath(this string path)
     {
-        return path.Replace('/', Path.DirectorySeparatorChar);
+        return path.Replace('\u005c', Path.AltDirectorySeparatorChar);
     }
 }

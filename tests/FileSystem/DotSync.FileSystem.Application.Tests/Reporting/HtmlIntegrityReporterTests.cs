@@ -69,14 +69,14 @@ public class HtmlIntegrityReporterTests
                                    <h2>Unverified Files</h2>
                                    <table>
                                    <tr><th>Path</th><th>Checksum</th></tr>
-                                   <tr><td>dir4\file4.txt</td><td>file4</td></tr>
-                                   <tr><td>dir5\file5.txt</td><td>file5</td></tr>
+                                   <tr><td>dir4/file4.txt</td><td>file4</td></tr>
+                                   <tr><td>dir5/file5.txt</td><td>file5</td></tr>
                                    </table>
                                    <h2>Files no longer in set</h2>
                                    <table>
                                    <tr><th>Path</th><th>Checksum</th></tr>
-                                   <tr><td>dir6\file6.txt</td><td>file6</td></tr>
-                                   <tr><td>dir6\file7.txt</td><td>file7</td></tr>
+                                   <tr><td>dir6/file6.txt</td><td>file6</td></tr>
+                                   <tr><td>dir6/file7.txt</td><td>file7</td></tr>
                                    </table>
                                    </body>
                                    </html>

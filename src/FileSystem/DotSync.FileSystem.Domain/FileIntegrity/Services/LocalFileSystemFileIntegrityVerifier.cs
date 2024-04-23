@@ -61,14 +61,15 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         // Generate the checksum of the file on the filesystem
         var checksum = ChecksumGenerator.GenerateChecksum(fileInfo);
         // Determine its relative path compared to the root directory
-        var relativePath = Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName);
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName),
+            replaceBackslashes: OperatingSystem.IsWindows());
 
         // See if the file's checksum already exists
         var existingFileByChecksum = await FileRepository.GetFileByChecksum(FileSha256Checksum.Create(checksum));
         if (existingFileByChecksum != null)
         {
             // The checksum matched, but its path is out of date. Update the path and then verify the file
-            if (relativePath != existingFileByChecksum.Path.Value)
+            if (relativePath != existingFileByChecksum.Path)
             {
                 existingFileByChecksum.UpdatePath(relativePath);
             }
@@ -81,7 +82,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         }
 
         // The file could not be found via checksum, so check to see if the path is being used
-        var existingFileByPath = await FileRepository.GetFileByPath(FileSystemPath.Create(relativePath));
+        var existingFileByPath = await FileRepository.GetFileByPath(relativePath);
         if (existingFileByPath != null)
         {
             // The path was being used, so it could be a couple of cases
@@ -90,8 +91,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         }
 
         // The file could not be found via checksum or file path. It is a new file, so add it
-        var newFile = new DotFile(Guid.NewGuid(), FileSystemPath.Create(relativePath),
-            FileSha256Checksum.Create(checksum), fileInfo.Length);
+        var newFile = new DotFile(Guid.NewGuid(), relativePath, FileSha256Checksum.Create(checksum), fileInfo.Length);
         newFile.SetAsVerified();
         await FileRepository.Add(newFile);
         return FileIntegrityVerificationResult.Verified(newFile.Path, newFile.Sha256Checksum, fileInfo.Length);
