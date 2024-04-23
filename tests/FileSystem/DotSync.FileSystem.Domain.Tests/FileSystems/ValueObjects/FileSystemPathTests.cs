@@ -40,4 +40,24 @@ public class FileSystemPathTests
         // Assert
         Assert.Equal(expected, actual.Value);
     }
+
+    [Theory]
+    [InlineData("file.jpg", "file.jpg")]
+    [InlineData("dir/file.png", "dir/file.png")]
+    [InlineData(@"dir\file.png", "dir/file.png")]
+    [InlineData("dir/dir2/test.txt", "dir/dir2/test.txt")]
+    [InlineData(@"dir\dir2\test.txt", "dir/dir2/test.txt")]
+    [InlineData(@"C:\path\to\file.txt", @"C:/path/to/file.txt")] // Path to file
+    [InlineData(@"C:\path\to\dir", @"C:/path/to/dir")]
+    [InlineData(@"C:\path\to\dir\", @"C:/path/to/dir/")]
+    public void Create_PathAndReplaceBackslashes_ReturnsFileSystemPath(string path, string expected)
+    {
+        // Arrange
+
+        // Act
+        var actual = FileSystemPath.Create(path, replaceBackslashes: true);
+
+        // Assert
+        Assert.Equal(expected, actual.Value);
+    }
 }

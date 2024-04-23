@@ -35,13 +35,13 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("verified.txt")))
             .Returns(verifiedFile.Sha256Checksum.Value);
         stubChecksumGenerator
-            .Setup(x => x.GenerateChecksum(IsFileInfoWith("dir/dir_nested/path_changed.txt")))
+            .Setup(x => x.GenerateChecksum(IsFileInfoWith("path_changed.txt")))
             .Returns(pathChangedFile.Sha256Checksum.Value);
         stubChecksumGenerator
-            .Setup(x => x.GenerateChecksum(IsFileInfoWith("dir/checksum_fail_path_match.txt")))
+            .Setup(x => x.GenerateChecksum(IsFileInfoWith("checksum_fail_path_match.txt")))
             .Returns(checksumFailPathMatchFile.Sha256Checksum.Value);
         stubChecksumGenerator
-            .Setup(x => x.GenerateChecksum(IsFileInfoWith("dir2/new_file.txt")))
+            .Setup(x => x.GenerateChecksum(IsFileInfoWith("new_file.txt")))
             .Returns(newFile.Sha256Checksum.Value);
         // It will try to verify files by their checksum
         var stubFileRepository = new Mock<IFileRepository>();
@@ -54,9 +54,9 @@ public class LocalFileSystemFileIntegrityVerifierTests
         stubFileRepository.Setup(x => x.GetFileByChecksum(newFile.Sha256Checksum.Value))
             .ReturnsAsync((DotFile?)null);
         // It will try to verify files by their path if they could not be found by their checksum
-        stubFileRepository.Setup(x => x.GetFileByPath(checksumFailPathMatchFile.Path.Value))
+        stubFileRepository.Setup(x => x.GetFileByPath(checksumFailPathMatchFile.Path))
             .ReturnsAsync(checksumFailPathMatchFile);
-        stubFileRepository.Setup(x => x.GetFileByPath(newFile.Path.Value))
+        stubFileRepository.Setup(x => x.GetFileByPath(newFile.Path))
             .ReturnsAsync((DotFile?)null);
 
         var verifier =
