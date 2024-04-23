@@ -27,4 +27,10 @@
       <ProjectReference Include="..\..\..\src\FileSystem\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="FileIntegrity\Services\TestFiles\checksum_file.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
