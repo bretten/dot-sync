@@ -24,7 +24,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
                 .WithName(GetType().Name + Guid.NewGuid())
                 .WithUsername("postgres")
                 .WithPassword("password99")
-                .WithPortBinding(54329, 5432)
+                .WithPortBinding(54326, 5432)
                 .Build();
         }
         catch (ArgumentException e)
@@ -176,13 +176,13 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         var repo = new EntityFrameworkCoreFileRepository(assertDbContext);
 
         // Act
-        await repo.SetAllAsUnverified(FileSystemPath.Create("path/to"));
+        await repo.SetAllAsUnverified();
 
         // Assert
         var actual = assertDbContext.Files.ToList();
         Assert.Equal(2, actual.Count);
-        Assert.True(actual.First(x => x.Id == fakeFile.Id).IsVerified);
-        Assert.True(actual.First(x => x.Id == fakeFile2.Id).IsVerified);
+        Assert.False(actual.First(x => x.Id == fakeFile.Id).IsVerified);
+        Assert.False(actual.First(x => x.Id == fakeFile2.Id).IsVerified);
     }
 
     [Fact]
@@ -212,7 +212,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         var repo = new EntityFrameworkCoreFileRepository(assertDbContext);
 
         // Act
-        var actual = await repo.GetUnverifiedFiles(FileSystemPath.Create("path/to"));
+        var actual = await repo.GetUnverifiedFiles();
 
         // Assert
         Assert.NotNull(actual);

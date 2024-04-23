@@ -29,13 +29,13 @@ public sealed class EntityFrameworkCoreFileRepository(FileSystemsDbContext dbCon
         return await dbContext.Files.FirstOrDefaultAsync(x => x.Path == path);
     }
 
-    public async Task SetAllAsUnverified(FileSystemPath path)
+    public async Task SetAllAsUnverified()
     {
         await dbContext.Files.ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
     }
 
-    public async Task<IEnumerable<DotFile>> GetUnverifiedFiles(FileSystemPath path)
+    public async Task<IEnumerable<DotFile>> GetUnverifiedFiles()
     {
-        return await dbContext.Files.Where(x => !x.IsVerified && x.Path == path).ToListAsync();
+        return await dbContext.Files.Where(x => !x.IsVerified).ToListAsync();
     }
 }

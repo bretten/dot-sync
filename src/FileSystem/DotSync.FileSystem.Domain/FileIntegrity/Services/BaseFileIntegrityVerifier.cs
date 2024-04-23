@@ -26,25 +26,25 @@ public abstract class BaseFileIntegrityVerifier(
     protected readonly IFileChecksumGenerator ChecksumGenerator = checksumGenerator;
 
     /// <summary>
-    /// Verifies the integrity of all files within the specified directory
+    /// Verifies the integrity of all files within the specified path
     /// </summary>
-    /// <param name="directoryPath">The path to the directory that will be verified</param>
-    /// <returns>Verification result for the directory</returns>
-    public async Task<StorageLocationIntegrityVerificationResult> Verify(FileSystemPath directoryPath)
+    /// <param name="path">The path that will be verified</param>
+    /// <returns>Verification result for the path</returns>
+    public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path)
     {
         // Reset the verified flag
-        await FileRepository.SetAllAsUnverified(directoryPath);
+        await FileRepository.SetAllAsUnverified();
 
         // Verify all files at the specified directory
-        var tasks = VerifyDirectory(directoryPath);
+        var tasks = VerifyDirectory(path);
         var results = await Task.WhenAll(tasks);
 
         // There may have been files in the repo from a previous run, but are no longer in the current filesystem
         // Files should have been verified at this point by VerifyDirectory, so we can get the remaining unverified
         // and remove the intersection between the unverified from the recent run to determine files no longer in the filesystem
-        var filesNotFoundInTheDirectory = await FileRepository.GetUnverifiedFiles(directoryPath);
+        var filesNotFoundInTheDirectory = await FileRepository.GetUnverifiedFiles();
 
-        return new StorageLocationIntegrityVerificationResult(results.AsReadOnly(),
+        return new FileSetIntegrityVerificationResult(results.AsReadOnly(),
             filesNotFoundInTheDirectory.ToImmutableList());
     }
 

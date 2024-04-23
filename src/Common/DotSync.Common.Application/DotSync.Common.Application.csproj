@@ -4,11 +4,11 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <RootNamespace>com.brettnamba.DotSync.FileSystem.Domain</RootNamespace>
+        <RootNamespace>com.brettnamba.DotSync.Common.Application</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Common\DotSync.Common.Domain\DotSync.Common.Domain.csproj" />
+      <ProjectReference Include="..\DotSync.Common.Domain\DotSync.Common.Domain.csproj" />
     </ItemGroup>
 
 </Project>
