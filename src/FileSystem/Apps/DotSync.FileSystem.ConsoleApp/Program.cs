@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
@@ -40,7 +41,7 @@ static Task DetermineCommand(string[] args)
 
 static async Task Verify(string[] args)
 {
-    if (args.Length != 3)
+    if (args.Length != 4)
     {
         throw new RequiredArgumentNotProvided(
             "Could not run verify. Parameter order is file set, storage location type, path in storage location, report output path");
@@ -56,8 +57,11 @@ static async Task Verify(string[] args)
 
     builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant(fileSet)));
     builder.Services.AddTransient<ITenantAware, TenantAware>();
+    builder.Services.AddTransient<IClock, Clock>();
 
+    builder.Services.AddDbContext<FileSystemsDbContext>();
     builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
+    builder.Services.AddDbContext<StorageLocationsDbContext>();
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
