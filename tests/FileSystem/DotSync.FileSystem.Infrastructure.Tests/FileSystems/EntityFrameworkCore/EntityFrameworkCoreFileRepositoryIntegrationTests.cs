@@ -153,7 +153,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task SetAllAsUnverified_DirectoryPath_SetsAllAsUnverifiedInPath()
+    public async Task SetAllAsUnverified_VerifiedFiles_SetsAllAsUnverified()
     {
         // Arrange
         var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file");
@@ -187,7 +187,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task GetUnverifiedFiles_DirectoryPath_ReturnsUnverifiedFilesInPath()
+    public async Task GetUnverifiedFiles_MixOfVerifiedAndUnverifiedFiles_ReturnsUnverifiedFiles()
     {
         // Arrange
         var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file");
@@ -203,6 +203,8 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         fakeFile2.SetAsVerified();
         await dbContext.AddAsync(fakeFile);
         await dbContext.AddAsync(fakeFile2);
+        await dbContext.AddAsync(fakeFile3);
+        await dbContext.AddAsync(fakeFile4);
         await dbContext.SaveChangesAsync();
 
         await using var assertConnection =
