@@ -111,7 +111,7 @@ static async Task StorageLocationAction(string[] args)
             var storageLocation = await service.GetByTypeAndPath(storageLocationType, storageLocationPath);
             if (storageLocation == null) throw new StorageLocationNotFoundException();
             if (args.Length != 5) throw new ArgumentException("No new path specified for storage location");
-            storageLocation.UpdatePath(FileSystemPath.Create(args[4]));
+            storageLocation.UpdatePath(FileSystemPath.Create(args[4], replaceBackslashes: OperatingSystem.IsWindows()));
             await service.Update(storageLocation);
             break;
         default:
