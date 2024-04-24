@@ -90,7 +90,7 @@ static async Task StorageLocationAction(string[] args)
     var fileSet = args[1];
     var storageLocationType =
         (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[2])!;
-    var storageLocationPath = FileSystemPath.Create(args[3]);
+    var storageLocationPath = FileSystemPath.Create(args[3], replaceBackslashes: OperatingSystem.IsWindows());
 
     var builder = ConfigureAndRegisterServices(fileSet);
     using var host = builder.Build();
@@ -111,7 +111,7 @@ static async Task StorageLocationAction(string[] args)
             var storageLocation = await service.GetByTypeAndPath(storageLocationType, storageLocationPath);
             if (storageLocation == null) throw new StorageLocationNotFoundException();
             if (args.Length != 5) throw new ArgumentException("No new path specified for storage location");
-            storageLocation.UpdatePath(FileSystemPath.Create(args[4]));
+            storageLocation.UpdatePath(FileSystemPath.Create(args[4], replaceBackslashes: OperatingSystem.IsWindows()));
             await service.Update(storageLocation);
             break;
         default:
@@ -136,7 +136,7 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet)
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"));
     });
     builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
-    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
+    builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));
     });
