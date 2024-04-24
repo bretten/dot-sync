@@ -13,6 +13,7 @@ public sealed class StorageLocationsDesignTimeDbContextFactory : IDesignTimeDbCo
         {
             throw new ArgumentException("Please specify the connection string as the first argument");
         }
+
         var optionsBuilder = new DbContextOptionsBuilder<StorageLocationsDbContext>();
         optionsBuilder.UseNpgsql(args[0]);
         return new StorageLocationsDbContext(optionsBuilder.Options);

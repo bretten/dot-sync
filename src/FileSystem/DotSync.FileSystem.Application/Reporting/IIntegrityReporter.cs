@@ -1,4 +1,5 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Reporting;
 
@@ -10,7 +11,8 @@ public interface IIntegrityReporter
     /// <summary>
     /// Should output a report for <see cref="FileSetIntegrityVerificationResult"/>
     /// </summary>
+    /// <param name="storageLocation">Where the result was stored</param>
     /// <param name="result">The result to generate a report for</param>
     /// <returns>The report</returns>
-    Task<string> OutputDirectoryResult(FileSetIntegrityVerificationResult result);
+    Task<string> OutputFileSetResult(StorageLocation storageLocation, FileSetIntegrityVerificationResult result);
 }

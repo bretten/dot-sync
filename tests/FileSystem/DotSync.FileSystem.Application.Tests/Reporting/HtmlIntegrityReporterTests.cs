@@ -2,6 +2,7 @@
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.FileIntegrity.ValueObjects.TestClasses;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Tests.Reporting;
@@ -9,7 +10,7 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Tests.Reporting;
 public class HtmlIntegrityReporterTests
 {
     [Fact]
-    public async Task OutputDirectoryResult_MixedResults_ReturnsReport()
+    public async Task OutputFileSetResult_MixedResults_ReturnsReport()
     {
         // Arrange
         var fileResult1 =
@@ -43,10 +44,12 @@ public class HtmlIntegrityReporterTests
             new List<DotFile>
                 { fileFromPreviousRun1, fileFromPreviousRun2, fileFromPreviousRun3, fileFromPreviousRun4 });
 
+        var fakeStorageLocation = Domain.Tests.StorageLocations.TestClasses.Faker.FakeStorageLocation(path: "root/path",
+            type: StorageLocationType.Local);
         var reporter = new HtmlIntegrityReporter();
 
         // Act
-        var actual = await reporter.OutputDirectoryResult(storageLocationResult);
+        var actual = await reporter.OutputFileSetResult(fakeStorageLocation, storageLocationResult);
 
         // Assert
         Assert.Equal(Regex.Replace("""
@@ -57,6 +60,9 @@ public class HtmlIntegrityReporterTests
                                    th, td {padding-top: 5px; padding-bottom: 5px; padding-left: 5px; padding-right: 5px; }
                                    </style>
                                    <h1>Results</h1>
+                                   <strong>Storage Location Type:</strong> local
+                                   <br/>
+                                   <strong>Storage Location Path:</strong> root/path
                                    <h2>Overview</h2>
                                                <ul>
                                                    <li>Total files: 5</li>
