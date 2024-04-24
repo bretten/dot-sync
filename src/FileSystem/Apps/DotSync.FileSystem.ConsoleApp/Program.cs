@@ -1,10 +1,18 @@
 ﻿using System.ComponentModel;
+using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -35,24 +43,38 @@ static Task DetermineCommand(string[] args)
 
 static async Task Verify(string[] args)
 {
-    if (args.Length != 3)
+    if (args.Length != 4)
     {
         throw new RequiredArgumentNotProvided(
-            "Could not run verify. Parameter order is file set, storage location type, report output path");
+            "Could not run verify. Parameter order is file set, storage location type, path in storage location, report output path");
     }
 
     var fileSet = args[0];
     var storageLocationType =
         (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[1])!;
-    var reportOutputPath = args[2];
+    var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[3];
 
     var builder = Host.CreateApplicationBuilder(args);
 
+    var env = builder.Environment.EnvironmentName;
+    builder.Configuration.AddJsonFile("appsettings.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+
     builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant(fileSet)));
     builder.Services.AddTransient<ITenantAware, TenantAware>();
+    builder.Services.AddTransient<IClock, Clock>();
 
-    //builder.Services.AddTransient<IFileRepository>();
-    //builder.Services.AddTransient<IStorageLocationRepository>();
+    builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder =>
+    {
+        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("FileSystems"));
+    });
+    builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
+    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
+    {
+        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("StorageLocations"));
+    });
+    builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
 
@@ -70,7 +92,7 @@ static async Task Verify(string[] args)
             $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
     }
 
-    var result = await service.Execute(storageLocationType);
+    var result = await service.Execute(storageLocationType, storageLocationPath);
     Console.WriteLine($"Total files: {result.Result.FileCount}");
     Console.WriteLine($"Verified files: {result.Result.SuccessfulVerifications}");
     Console.WriteLine($"Unverified files: {result.Result.UnverifiedFiles.Count}");

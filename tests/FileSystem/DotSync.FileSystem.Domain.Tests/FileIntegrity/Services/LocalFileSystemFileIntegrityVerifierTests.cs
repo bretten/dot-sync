@@ -45,13 +45,13 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .Returns(newFile.Sha256Checksum.Value);
         // It will try to verify files by their checksum
         var stubFileRepository = new Mock<IFileRepository>();
-        stubFileRepository.Setup(x => x.GetFileByChecksum(verifiedFile.Sha256Checksum.Value))
+        stubFileRepository.Setup(x => x.GetFileByChecksum(verifiedFile.Sha256Checksum))
             .ReturnsAsync(verifiedFile);
-        stubFileRepository.Setup(x => x.GetFileByChecksum(pathChangedFile.Sha256Checksum.Value))
+        stubFileRepository.Setup(x => x.GetFileByChecksum(pathChangedFile.Sha256Checksum))
             .ReturnsAsync(pathChangedFile);
-        stubFileRepository.Setup(x => x.GetFileByChecksum(checksumFailPathMatchFile.Sha256Checksum.Value))
+        stubFileRepository.Setup(x => x.GetFileByChecksum(checksumFailPathMatchFile.Sha256Checksum))
             .ReturnsAsync((DotFile?)null);
-        stubFileRepository.Setup(x => x.GetFileByChecksum(newFile.Sha256Checksum.Value))
+        stubFileRepository.Setup(x => x.GetFileByChecksum(newFile.Sha256Checksum))
             .ReturnsAsync((DotFile?)null);
         // It will try to verify files by their path if they could not be found by their checksum
         stubFileRepository.Setup(x => x.GetFileByPath(checksumFailPathMatchFile.Path))
