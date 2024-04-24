@@ -51,17 +51,13 @@ public sealed class StorageLocationEntityTypeConfiguration : IEntityTypeConfigur
                     .IsRequired()
                     .HasColumnType("bigint")
                     .HasColumnName(Constants.StorageLocations.FileCount)
-                    .HasColumnOrder(columnOrder++)
-                    .HasConversion(v => v,
-                        v => v);
+                    .HasColumnOrder(columnOrder++);
 
                 b.Property(e => e.Size)
                     .IsRequired()
                     .HasColumnType("bigint")
                     .HasColumnName(Constants.StorageLocations.Size)
-                    .HasColumnOrder(columnOrder++)
-                    .HasConversion(v => v,
-                        v => v);
+                    .HasColumnOrder(columnOrder++);
             });
     }
 }

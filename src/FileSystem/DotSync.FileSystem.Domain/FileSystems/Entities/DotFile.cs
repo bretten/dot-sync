@@ -39,12 +39,12 @@ public sealed class DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha
     /// <summary>
     /// Last update
     /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
 
     /// <summary>
     /// When it was created
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; init; }
 
     /// <summary>
     /// Checks if a file matches another file

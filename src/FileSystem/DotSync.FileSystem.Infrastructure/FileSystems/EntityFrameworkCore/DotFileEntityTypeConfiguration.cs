@@ -1,5 +1,6 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -47,32 +48,29 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
             .IsRequired()
             .HasColumnType("bigint")
             .HasColumnName(Constants.Files.Size)
-            .HasColumnOrder(columnOrder++)
-            .HasConversion(v => v,
-                v => v);
+            .HasColumnOrder(columnOrder++);
 
         builder.Property(e => e.IsVerified)
             .IsRequired()
             .HasColumnType("boolean")
             .HasColumnName(Constants.Files.IsVerified)
-            .HasColumnOrder(columnOrder++)
-            .HasConversion(v => v,
-                v => v);
+            .HasColumnOrder(columnOrder++);
 
         builder.Property(e => e.UpdatedAt)
             .IsRequired()
             .HasColumnType("timestamp with time zone")
             .HasColumnName(Constants.Files.UpdatedAt)
-            .HasColumnOrder(columnOrder++)
-            .HasConversion(v => v,
-                v => v);
+            .HasColumnOrder(columnOrder++);
+        //.HasComputedColumnSql("now() AT TIME ZONE 'UTC'")
+        //.ValueGeneratedOnAddOrUpdate()
+        //.HasValueGenerator<DateTimeOffsetValueGenerator>(); // Value generators don't work for updates: https://github.com/dotnet/efcore/issues/19765#issuecomment-770412377
 
         builder.Property(e => e.CreatedAt)
             .IsRequired()
             .HasColumnType("timestamp with time zone")
             .HasColumnName(Constants.Files.CreatedAt)
             .HasColumnOrder(columnOrder++)
-            .HasConversion(v => v,
-                v => v);
+            .ValueGeneratedOnAdd()
+            .HasValueGenerator<DateTimeOffsetValueGenerator>();
     }
 }

@@ -30,9 +30,7 @@ public sealed class
             .IsRequired()
             .HasColumnType("timestamp with time zone")
             .HasColumnName(Constants.HistoricalStorageStatistics.Timestamp)
-            .HasColumnOrder(columnOrder++)
-            .HasConversion(v => v,
-                v => v);
+            .HasColumnOrder(columnOrder++);
 
         builder.ComplexProperty(e => e.Statistics,
             b =>
@@ -41,17 +39,13 @@ public sealed class
                     .IsRequired()
                     .HasColumnType("bigint")
                     .HasColumnName(Constants.HistoricalStorageStatistics.FileCount)
-                    .HasColumnOrder(columnOrder++)
-                    .HasConversion(v => v,
-                        v => v);
+                    .HasColumnOrder(columnOrder++);
 
                 b.Property(e => e.Size)
                     .IsRequired()
                     .HasColumnType("bigint")
                     .HasColumnName(Constants.HistoricalStorageStatistics.Size)
-                    .HasColumnOrder(columnOrder++)
-                    .HasConversion(v => v,
-                        v => v);
+                    .HasColumnOrder(columnOrder++);
             });
     }
 }

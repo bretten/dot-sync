@@ -1,11 +1,14 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+﻿using com.brettnamba.DotSync.Common.DateAndTme;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 
-public sealed class EntityFrameworkCoreFileRepository(IDbContextFactory<FileSystemsDbContext> dbContextFactory) : IFileRepository
+public sealed class EntityFrameworkCoreFileRepository(
+    IDbContextFactory<FileSystemsDbContext> dbContextFactory,
+    IClock clock) : IFileRepository
 {
     public async Task Add(DotFile file)
     {
@@ -17,6 +20,7 @@ public sealed class EntityFrameworkCoreFileRepository(IDbContextFactory<FileSyst
     public async Task Update(DotFile file)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        file.UpdatedAt = clock.GetUtcNow();
         dbContext.Update(file);
         await dbContext.SaveChangesAsync();
     }

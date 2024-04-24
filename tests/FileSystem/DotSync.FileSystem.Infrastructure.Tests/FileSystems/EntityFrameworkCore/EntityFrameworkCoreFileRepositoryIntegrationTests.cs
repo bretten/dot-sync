@@ -1,4 +1,5 @@
 ﻿using System.Data.Common;
+using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
@@ -50,7 +51,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         await using var dbContext = GetDbContext(connection);
         await dbContext.Database.MigrateAsync();
 
-        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
         await repo.Add(fakeFile);
@@ -76,7 +77,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         await dbContext.AddAsync(fakeFile);
         await dbContext.SaveChangesAsync();
 
-        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
         fakeFile.SetAsVerified();
@@ -110,7 +111,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
             await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
         await using var assertDbContext = GetDbContext(assertConnection);
         await assertDbContext.Database.MigrateAsync();
-        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
         var actual = await repo.GetFileByChecksum(FileSha256Checksum.Create("file"));
@@ -140,7 +141,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
             await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
         await using var assertDbContext = GetDbContext(assertConnection);
         await assertDbContext.Database.MigrateAsync();
-        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
         var actual = await repo.GetFileByPath(FileSystemPath.Create("path/to/file.txt"));
@@ -174,7 +175,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
             await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
         await using var assertDbContext = GetDbContext(assertConnection);
         await assertDbContext.Database.MigrateAsync();
-        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
         await repo.SetAllAsUnverified();
@@ -212,7 +213,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
             await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
         await using var assertDbContext = GetDbContext(assertConnection);
         await assertDbContext.Database.MigrateAsync();
-        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
         var actual = await repo.GetUnverifiedFiles();
