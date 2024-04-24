@@ -136,7 +136,7 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet)
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"));
     });
     builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
-    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
+    builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));
     });

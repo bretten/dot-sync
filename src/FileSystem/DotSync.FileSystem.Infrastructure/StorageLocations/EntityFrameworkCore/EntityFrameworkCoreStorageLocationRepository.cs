@@ -6,26 +6,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 
-public sealed class EntityFrameworkCoreStorageLocationRepository(IDbContextFactory<StorageLocationsDbContext> dbContextFactory)
+public sealed class EntityFrameworkCoreStorageLocationRepository(StorageLocationsDbContext dbContext)
     : IStorageLocationRepository
 {
     public async Task Add(StorageLocation storageLocation)
     {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         await dbContext.AddAsync(storageLocation);
         await dbContext.SaveChangesAsync();
     }
 
     public async Task Update(StorageLocation storageLocation)
     {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         dbContext.Update(storageLocation);
         await dbContext.SaveChangesAsync();
     }
 
     public async Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, FileSystemPath path)
     {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         return await dbContext.StorageLocationsWithHistoricalStatistics()
             .FirstOrDefaultAsync(x => x.Type == type && x.Path == path);
     }

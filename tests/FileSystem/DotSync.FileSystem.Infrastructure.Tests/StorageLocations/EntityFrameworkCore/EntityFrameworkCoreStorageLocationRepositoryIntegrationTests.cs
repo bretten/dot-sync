@@ -52,7 +52,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         await using var dbContext = GetDbContext(connection);
         await dbContext.Database.MigrateAsync();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(dbContext);
 
         // Act
         await repo.Add(fakeStorageLocation);
@@ -78,7 +78,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         await dbContext.AddAsync(fakeStorageLocation);
         await dbContext.SaveChangesAsync();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(dbContext);
 
         // Act
         fakeStorageLocation.UpdateStatistics(fileCount: 10, storageSize: 20,
@@ -120,7 +120,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
             await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
         await using var assertDbContext = GetDbContext(assertConnection);
         await assertDbContext.Database.MigrateAsync();
-        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(assertDbContext);
 
         // Act
         var actual = await repo.GetByTypeAndPath(StorageLocationType.Local,
