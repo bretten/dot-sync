@@ -1,4 +1,5 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
@@ -6,5 +7,6 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 /// Verification result of <see cref="IStorageLocationIntegrityVerificationService"/>
 /// </summary>
 public readonly record struct StorageLocationIntegrityVerificationResult(
+    StorageLocation StorageLocation,
     FileSetIntegrityVerificationResult Result,
     string Report);

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
+using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -68,12 +69,15 @@ static async Task Verify(string[] args)
     }
 
     var result = await service.Execute(storageLocationType, storageLocationPath);
+    Console.WriteLine($"Storage location type: {result.StorageLocation.Type.GetDisplayName()}");
+    Console.WriteLine($"Storage location path: {result.StorageLocation.Path.Value}");
     Console.WriteLine($"Total files: {result.Result.FileCount}");
     Console.WriteLine($"Verified files: {result.Result.SuccessfulVerifications}");
     Console.WriteLine($"Unverified files: {result.Result.UnverifiedFiles.Count}");
     Console.WriteLine($"Files no longer in set: {result.Result.FilesNoLongerInSet.Count}");
     Console.WriteLine($"Total size (bytes): {result.Result.TotalSize}");
-    await File.WriteAllTextAsync(reportOutputPath, result.Report);
+    var reportFileName = $"verify_{fileSet}_{storageLocationType.GetDisplayName()}.html";
+    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
 
     await host.StopAsync();
 }

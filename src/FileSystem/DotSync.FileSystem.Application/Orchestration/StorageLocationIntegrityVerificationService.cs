@@ -59,9 +59,9 @@ public sealed class StorageLocationIntegrityVerificationService(
             _clock.GetUtcNow());
         await _storageLocationRepository.Update(storageLocation);
 
-        var report = await _integrityReporter.OutputDirectoryResult(result);
+        var report = await _integrityReporter.OutputFileSetResult(storageLocation, result);
 
-        return new StorageLocationIntegrityVerificationResult(result, report);
+        return new StorageLocationIntegrityVerificationResult(storageLocation, result, report);
     }
 
     private sealed class DirectoryNotStorageLocationException(string? message) : Exception(message);

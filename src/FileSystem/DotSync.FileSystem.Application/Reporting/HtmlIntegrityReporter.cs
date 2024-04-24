@@ -1,5 +1,7 @@
 ﻿using System.Text;
+using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Reporting;
 
@@ -11,9 +13,10 @@ public sealed class HtmlIntegrityReporter : IIntegrityReporter
     /// <summary>
     /// Outputs a report for <see cref="FileSetIntegrityVerificationResult"/>
     /// </summary>
+    /// <param name="storageLocation">Where the result was stored</param>
     /// <param name="result">The result to generate a report for</param>
     /// <returns>The report</returns>
-    public Task<string> OutputDirectoryResult(FileSetIntegrityVerificationResult result)
+    public Task<string> OutputFileSetResult(StorageLocation storageLocation, FileSetIntegrityVerificationResult result)
     {
         var b = new StringBuilder();
         b.AppendLine("<html>");
@@ -23,6 +26,9 @@ public sealed class HtmlIntegrityReporter : IIntegrityReporter
         b.AppendLine("th, td {padding-top: 5px; padding-bottom: 5   px; padding-left: 5px; padding-right: 5px; }");
         b.AppendLine("</style>");
         b.AppendLine("<h1>Results</h1>");
+        b.AppendLine($"<strong>Storage Location Type:</strong> {storageLocation.Type.GetDisplayName()}");
+        b.AppendLine("<br/>");
+        b.AppendLine($"<strong>Storage Location Path:</strong> {storageLocation.Path.Value}");
         b.AppendLine("<h2>Overview</h2>");
         b.AppendLine($"""
                                   <ul>
