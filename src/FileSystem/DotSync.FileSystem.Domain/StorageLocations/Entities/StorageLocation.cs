@@ -22,7 +22,7 @@ public sealed class StorageLocation
     /// <summary>
     /// The path to the storage location
     /// </summary>
-    public FileSystemPath Path { get; }
+    public FileSystemPath Path { get; private set; }
 
     /// <summary>
     /// The total number of files and size of the storage location
@@ -62,5 +62,10 @@ public sealed class StorageLocation
         HistoricalStorageStatistics.Add(new HistoricalStorageStatistics(dateTime, StorageStatistics));
 
         StorageStatistics = new StorageStatistics(fileCount: fileCount, size: storageSize);
+    }
+
+    public void UpdatePath(FileSystemPath path)
+    {
+        Path = path;
     }
 }

@@ -6,6 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
@@ -37,6 +38,7 @@ static Task DetermineCommand(string[] args)
     return command.ToLower() switch
     {
         "verify" => Verify(remainingArgs.ToArray()),
+        "storage_location" => StorageLocationAction(remainingArgs.ToArray()),
         _ => throw new UnknownCommandException($"Unknown command {command}")
     };
 }
@@ -55,34 +57,7 @@ static async Task Verify(string[] args)
     var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
     var reportOutputPath = args[3];
 
-    var builder = Host.CreateApplicationBuilder(args);
-
-    var env = builder.Environment.EnvironmentName;
-    builder.Configuration.AddJsonFile("appsettings.json");
-    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
-
-    builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant(fileSet)));
-    builder.Services.AddTransient<ITenantAware, TenantAware>();
-    builder.Services.AddTransient<IClock, Clock>();
-
-    builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder =>
-    {
-        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("FileSystems"));
-    });
-    builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
-    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
-    {
-        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("StorageLocations"));
-    });
-    builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
-    builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
-    builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
-
-    builder.Services
-        .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
-    builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
-
-
+    var builder = ConfigureAndRegisterServices(fileSet);
     using var host = builder.Build();
 
     var service = host.Services.GetService<IStorageLocationIntegrityVerificationService>();
@@ -103,8 +78,86 @@ static async Task Verify(string[] args)
     await host.StopAsync();
 }
 
+static async Task StorageLocationAction(string[] args)
+{
+    if (args.Length < 4 || args.Length > 5)
+    {
+        throw new RequiredArgumentNotProvided(
+            "Could not run storage_location. Parameter order is storage location action, file set, storage location type, path to storage location, new path");
+    }
+
+    var action = args[0];
+    var fileSet = args[1];
+    var storageLocationType =
+        (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[2])!;
+    var storageLocationPath = FileSystemPath.Create(args[3]);
+
+    var builder = ConfigureAndRegisterServices(fileSet);
+    using var host = builder.Build();
+
+    var service = host.Services.GetService<IStorageLocationRepository>();
+    if (service == null)
+    {
+        throw new ServiceNotFoundException(
+            $"Verify could not resolve service of type {nameof(IStorageLocationRepository)}");
+    }
+
+    switch (action)
+    {
+        case "create":
+            await service.Add(new StorageLocation(storageLocationType, storageLocationPath));
+            break;
+        case "update":
+            var storageLocation = await service.GetByTypeAndPath(storageLocationType, storageLocationPath);
+            if (storageLocation == null) throw new StorageLocationNotFoundException();
+            if (args.Length != 5) throw new ArgumentException("No new path specified for storage location");
+            storageLocation.UpdatePath(FileSystemPath.Create(args[4]));
+            await service.Update(storageLocation);
+            break;
+        default:
+            throw new InvalidStorageLocationActionException($"Invalid storage location action: {action}");
+    }
+}
+
+static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet)
+{
+    var builder = Host.CreateApplicationBuilder();
+
+    var env = builder.Environment.EnvironmentName;
+    builder.Configuration.AddJsonFile("appsettings.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+
+    builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant(fileSet)));
+    builder.Services.AddTransient<ITenantAware, TenantAware>();
+    builder.Services.AddTransient<IClock, Clock>();
+
+    builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder =>
+    {
+        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"));
+    });
+    builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
+    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
+    {
+        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));
+    });
+    builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
+    builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
+    builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
+
+    builder.Services
+        .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
+    builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
+
+    return builder;
+}
+
 internal sealed class UnknownCommandException(string? message) : Exception(message);
 
 internal sealed class RequiredArgumentNotProvided(string? message) : Exception(message);
 
 internal sealed class ServiceNotFoundException(string? message) : Exception(message);
+
+internal sealed class StorageLocationNotFoundException(string? message = "No storage location found")
+    : Exception(message);
+
+internal sealed class InvalidStorageLocationActionException(string? message) : Exception(message);
