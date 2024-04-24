@@ -10,7 +10,7 @@ public sealed class StorageLocationsDesignTimeDbContextFactory : IDesignTimeDbCo
     public StorageLocationsDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<StorageLocationsDbContext>();
-        optionsBuilder.UseNpgsql();
+        optionsBuilder.UseNpgsql(args[0]);
         return new StorageLocationsDbContext(optionsBuilder.Options);
     }
 }

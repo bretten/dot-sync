@@ -10,7 +10,7 @@ public sealed class FileSystemsDesignTimeDbContextFactory : IDesignTimeDbContext
     public FileSystemsDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<FileSystemsDbContext>();
-        optionsBuilder.UseNpgsql();
+        optionsBuilder.UseNpgsql(args[0]);
         return new FileSystemsDbContext(optionsBuilder.Options);
     }
 }

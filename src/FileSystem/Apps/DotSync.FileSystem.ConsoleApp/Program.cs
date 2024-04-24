@@ -11,6 +11,8 @@ using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -55,13 +57,23 @@ static async Task Verify(string[] args)
 
     var builder = Host.CreateApplicationBuilder(args);
 
+    var env = builder.Environment.EnvironmentName;
+    builder.Configuration.AddJsonFile("appsettings.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+
     builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant(fileSet)));
     builder.Services.AddTransient<ITenantAware, TenantAware>();
     builder.Services.AddTransient<IClock, Clock>();
 
-    builder.Services.AddDbContext<FileSystemsDbContext>();
+    builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder =>
+    {
+        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("FileSystems"));
+    });
     builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
-    builder.Services.AddDbContext<StorageLocationsDbContext>();
+    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
+    {
+        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("StorageLocations"));
+    });
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
