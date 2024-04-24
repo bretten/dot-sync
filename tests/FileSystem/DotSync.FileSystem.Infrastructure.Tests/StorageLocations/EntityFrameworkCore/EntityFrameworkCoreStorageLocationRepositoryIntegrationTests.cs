@@ -5,7 +5,6 @@ using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.StorageLocations.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Moq;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -152,16 +151,6 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
             .LogTo(Console.WriteLine)
             .Options;
         return new StorageLocationsDbContext(contextOptions);
-    }
-
-    private async Task<IDbContextFactory<StorageLocationsDbContext>> GetDbContextFactory()
-    {
-        var connection = await GetDbConnection();
-        var context = GetDbContext(connection);
-        var stubDbContextFactory = new Mock<IDbContextFactory<StorageLocationsDbContext>>();
-        stubDbContextFactory.Setup(x => x.CreateDbContextAsync(CancellationToken.None))
-            .ReturnsAsync(context);
-        return stubDbContextFactory.Object;
     }
 
     private sealed class DockerNotRunningException(string? message) : Exception(message);
