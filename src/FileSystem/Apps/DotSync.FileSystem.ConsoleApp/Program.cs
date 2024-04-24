@@ -90,7 +90,7 @@ static async Task StorageLocationAction(string[] args)
     var fileSet = args[1];
     var storageLocationType =
         (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[2])!;
-    var storageLocationPath = FileSystemPath.Create(args[3]);
+    var storageLocationPath = FileSystemPath.Create(args[3], replaceBackslashes: OperatingSystem.IsWindows());
 
     var builder = ConfigureAndRegisterServices(fileSet);
     using var host = builder.Build();

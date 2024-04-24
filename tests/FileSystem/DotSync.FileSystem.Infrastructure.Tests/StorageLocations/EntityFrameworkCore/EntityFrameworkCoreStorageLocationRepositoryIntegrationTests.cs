@@ -5,6 +5,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.StorageLocations.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -51,7 +52,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         await using var dbContext = GetDbContext(connection);
         await dbContext.Database.MigrateAsync();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(dbContext);
+        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory());
 
         // Act
         await repo.Add(fakeStorageLocation);
@@ -77,7 +78,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         await dbContext.AddAsync(fakeStorageLocation);
         await dbContext.SaveChangesAsync();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(dbContext);
+        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory());
 
         // Act
         fakeStorageLocation.UpdateStatistics(fileCount: 10, storageSize: 20,
@@ -119,7 +120,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
             await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
         await using var assertDbContext = GetDbContext(assertConnection);
         await assertDbContext.Database.MigrateAsync();
-        var repo = new EntityFrameworkCoreStorageLocationRepository(assertDbContext);
+        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory());
 
         // Act
         var actual = await repo.GetByTypeAndPath(StorageLocationType.Local,
@@ -151,6 +152,16 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
             .LogTo(Console.WriteLine)
             .Options;
         return new StorageLocationsDbContext(contextOptions);
+    }
+
+    private async Task<IDbContextFactory<StorageLocationsDbContext>> GetDbContextFactory()
+    {
+        var connection = await GetDbConnection();
+        var context = GetDbContext(connection);
+        var stubDbContextFactory = new Mock<IDbContextFactory<StorageLocationsDbContext>>();
+        stubDbContextFactory.Setup(x => x.CreateDbContextAsync(CancellationToken.None))
+            .ReturnsAsync(context);
+        return stubDbContextFactory.Object;
     }
 
     private sealed class DockerNotRunningException(string? message) : Exception(message);
