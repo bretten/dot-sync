@@ -28,14 +28,6 @@ public sealed class StorageLocationEntityTypeConfiguration : IEntityTypeConfigur
             .HasColumnName(Constants.StorageLocations.Id)
             .HasColumnOrder(columnOrder++);
 
-        builder.Property(e => e.Path)
-            .IsRequired()
-            .HasColumnType("text")
-            .HasColumnName(Constants.StorageLocations.Path)
-            .HasColumnOrder(columnOrder++)
-            .HasConversion(v => v.Value,
-                v => FileSystemPath.Create(v));
-
         builder.Property(e => e.Type)
             .IsRequired()
             .HasColumnType("varchar(12)")
@@ -43,6 +35,14 @@ public sealed class StorageLocationEntityTypeConfiguration : IEntityTypeConfigur
             .HasColumnOrder(columnOrder++)
             .HasConversion(v => v.GetDisplayName(),
                 v => (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(v)!);
+
+        builder.Property(e => e.Path)
+            .IsRequired()
+            .HasColumnType("text")
+            .HasColumnName(Constants.StorageLocations.Path)
+            .HasColumnOrder(columnOrder++)
+            .HasConversion(v => v.Value,
+                v => FileSystemPath.Create(v));
 
         builder.ComplexProperty(e => e.StorageStatistics,
             b =>

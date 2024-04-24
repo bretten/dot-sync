@@ -39,13 +39,13 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.Enti
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("path")
-                        .HasColumnOrder(1);
+                        .HasColumnOrder(2);
 
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("varchar(12)")
                         .HasColumnName("type")
-                        .HasColumnOrder(2);
+                        .HasColumnOrder(1);
 
                     b.ComplexProperty<Dictionary<string, object>>("StorageStatistics", "com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities.StorageLocation.StorageStatistics#StorageStatistics", b1 =>
                         {

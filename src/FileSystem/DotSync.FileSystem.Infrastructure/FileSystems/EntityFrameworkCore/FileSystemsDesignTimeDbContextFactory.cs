@@ -9,6 +9,10 @@ public sealed class FileSystemsDesignTimeDbContextFactory : IDesignTimeDbContext
 {
     public FileSystemsDbContext CreateDbContext(string[] args)
     {
+        if (args.Length < 1)
+        {
+            throw new ArgumentException("Please specify the connection string as the first argument");
+        }
         var optionsBuilder = new DbContextOptionsBuilder<FileSystemsDbContext>();
         optionsBuilder.UseNpgsql(args[0]);
         return new FileSystemsDbContext(optionsBuilder.Options);
