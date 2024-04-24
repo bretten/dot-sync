@@ -22,8 +22,8 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.Enti
                 columns: table => new
                 {
                     id = table.Column<Guid>(type: "uuid", nullable: false),
-                    path = table.Column<string>(type: "text", nullable: false),
                     type = table.Column<string>(type: "varchar(12)", nullable: false),
+                    path = table.Column<string>(type: "text", nullable: false),
                     file_count = table.Column<long>(type: "bigint", nullable: false),
                     size = table.Column<long>(type: "bigint", nullable: false)
                 },
