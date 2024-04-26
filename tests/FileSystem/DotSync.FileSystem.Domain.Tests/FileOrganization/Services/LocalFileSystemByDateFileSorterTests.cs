@@ -38,7 +38,7 @@ public class LocalFileSystemByDateFileSorterTests
         stubMetadataReader.Setup(x => x.ReadPhotoOrVideoTakenDate(PathEndingIn("date_taken_2023-02-04.jpg")))
             .Returns(new DateTime(2023, 2, 4));
 
-        var mockLogger = Mock.Of<ILogger>();
+        var mockLogger = Mock.Of<ILogger<IFileSorter>>();
         var sorter = new LocalFileSystemByDateFileSorter(stubMetadataReader.Object, mockLogger);
 
         /*

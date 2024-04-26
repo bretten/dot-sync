@@ -17,14 +17,14 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <summary>
     /// Logger
     /// </summary>
-    private readonly ILogger _logger;
+    private readonly ILogger<IFileSorter> _logger;
 
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileMetadataReader">Metadata reader used to get the date of the file</param>
     /// <param name="logger">Logger</param>
-    public LocalFileSystemByDateFileSorter(IFileMetadataReader fileMetadataReader, ILogger logger)
+    public LocalFileSystemByDateFileSorter(IFileMetadataReader fileMetadataReader, ILogger<IFileSorter> logger)
     {
         _fileMetadataReader = fileMetadataReader;
         _logger = logger;
