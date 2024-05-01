@@ -5,13 +5,16 @@ using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -40,6 +43,7 @@ static Task DetermineCommand(string[] args)
     {
         "verify" => Verify(remainingArgs.ToArray()),
         "storage_location" => StorageLocationAction(remainingArgs.ToArray()),
+        "sort" => Sort(remainingArgs.ToArray()),
         _ => throw new UnknownCommandException($"Unknown command {command}")
     };
 }
@@ -121,6 +125,36 @@ static async Task StorageLocationAction(string[] args)
         default:
             throw new InvalidStorageLocationActionException($"Invalid storage location action: {action}");
     }
+}
+
+static async Task Sort(string[] args)
+{
+    if (args.Length != 2)
+    {
+        throw new RequiredArgumentNotProvided("Could not run sort. Parameter order is source path, destination path");
+    }
+
+    var sourcePath = FileSystemPath.Create(args[0]);
+    var destinationPath = FileSystemPath.Create(args[1]);
+
+    var builder = Host.CreateApplicationBuilder();
+    var env = builder.Environment.EnvironmentName;
+    builder.Configuration.AddJsonFile("appsettings.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+
+    builder.Services.AddLogging();
+    builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
+    builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
+
+    using var host = builder.Build();
+
+    var service = host.Services.GetRequiredService<IFileSorter>();
+    if (service == null)
+    {
+        throw new ServiceNotFoundException($"Verify could not resolve service of type {nameof(IFileSorter)}");
+    }
+
+    await service.Sort(sourcePath, destinationPath);
 }
 
 static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet)
