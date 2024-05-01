@@ -117,7 +117,8 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     {
         // If the file was located at path/to/file.txt, the sourceDirectory would be "path"
         var destinationFolderName = $"{sourceDirectory.Name} - {fileDate:yyyy-MM}";
-        var newPath = Path.Combine(destinationPath.Value, fileDate.Year.ToString(), destinationFolderName, file.Name);
+        var newPath = Path.Combine(destinationPath.Value, fileDate.Year.ToString(), fileDate.ToString("yyyy-MM"),
+            destinationFolderName, file.Name);
         if (File.Exists(newPath))
         {
             throw new FileAlreadyExistsAtMoveDestinationException($"File already exists at {newPath}");

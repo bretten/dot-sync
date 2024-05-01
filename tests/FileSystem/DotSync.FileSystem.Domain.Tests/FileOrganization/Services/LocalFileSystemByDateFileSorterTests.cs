@@ -59,9 +59,9 @@ public class LocalFileSystemByDateFileSorterTests
         }
 
         // The files should now be in the destination directory
-        Assert.True(File.Exists(Path.Combine(_destinationDirectory.FullName, "2024", "dir1 - 2024-04",
+        Assert.True(File.Exists(Path.Combine(_destinationDirectory.FullName, "2024", "2024-04", "dir1 - 2024-04",
             "date_modified_2024-04-25.jpg")));
-        Assert.True(File.Exists(Path.Combine(_destinationDirectory.FullName, "2023", "dir2 - 2023-02",
+        Assert.True(File.Exists(Path.Combine(_destinationDirectory.FullName, "2023", "2023-02", "dir2 - 2023-02",
             "date_taken_2023-02-04.jpg")));
 
         // Cleanup
