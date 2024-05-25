@@ -50,25 +50,31 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
             .HasColumnName(Constants.Files.Size)
             .HasColumnOrder(columnOrder++);
 
+        builder.Property(e => e.FileCreation)
+            .IsRequired()
+            .HasColumnType("timestamp without time zone")
+            .HasColumnName(Constants.Files.FileCreation)
+            .HasColumnOrder(columnOrder++);
+
         builder.Property(e => e.IsVerified)
             .IsRequired()
             .HasColumnType("boolean")
             .HasColumnName(Constants.Files.IsVerified)
             .HasColumnOrder(columnOrder++);
 
-        builder.Property(e => e.UpdatedAt)
+        builder.Property(e => e.LastSync)
             .IsRequired()
             .HasColumnType("timestamp with time zone")
-            .HasColumnName(Constants.Files.UpdatedAt)
+            .HasColumnName(Constants.Files.LastSync)
             .HasColumnOrder(columnOrder++);
         //.HasComputedColumnSql("now() AT TIME ZONE 'UTC'")
         //.ValueGeneratedOnAddOrUpdate()
         //.HasValueGenerator<DateTimeOffsetValueGenerator>(); // Value generators don't work for updates: https://github.com/dotnet/efcore/issues/19765#issuecomment-770412377
 
-        builder.Property(e => e.CreatedAt)
+        builder.Property(e => e.FirstSync)
             .IsRequired()
             .HasColumnType("timestamp with time zone")
-            .HasColumnName(Constants.Files.CreatedAt)
+            .HasColumnName(Constants.Files.FirstSync)
             .HasColumnOrder(columnOrder++)
             .ValueGeneratedOnAdd()
             .HasValueGenerator<DateTimeOffsetValueGenerator>();

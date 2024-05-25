@@ -25,9 +25,10 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFra
                     path = table.Column<string>(type: "text", nullable: false),
                     sha256_checksum = table.Column<string>(type: "text", nullable: false),
                     size = table.Column<long>(type: "bigint", nullable: false),
+                    file_creation = table.Column<DateTime>(type: "timestamp without time zone", nullable: false),
                     is_verified = table.Column<bool>(type: "boolean", nullable: false),
-                    updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    last_sync = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    first_sync = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

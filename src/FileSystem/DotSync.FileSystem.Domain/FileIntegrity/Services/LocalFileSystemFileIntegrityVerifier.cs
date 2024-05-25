@@ -1,6 +1,7 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -10,7 +11,8 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 /// </summary>
 public sealed class LocalFileSystemFileIntegrityVerifier(
     IFileRepository fileRepository,
-    IFileChecksumGenerator checksumGenerator)
+    IFileChecksumGenerator checksumGenerator,
+    IFileMetadataReader metadataReader)
     : BaseFileIntegrityVerifier(fileRepository, checksumGenerator)
 {
     /// <summary>
@@ -90,8 +92,12 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
                 existingFileByPath.Sha256Checksum, fileInfo.Length);
         }
 
+        // File creation time (or best estimation)
+        var fileCreation = metadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
+
         // The file could not be found via checksum or file path. It is a new file, so add it
-        var newFile = new DotFile(Guid.NewGuid(), relativePath, FileSha256Checksum.Create(checksum), fileInfo.Length);
+        var newFile = new DotFile(Guid.NewGuid(), relativePath, FileSha256Checksum.Create(checksum), fileInfo.Length,
+            fileCreation);
         newFile.SetAsVerified();
         await FileRepository.Add(newFile);
         return FileIntegrityVerificationResult.Verified(newFile.Path, newFile.Sha256Checksum, fileInfo.Length);

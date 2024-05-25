@@ -9,7 +9,13 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 /// <param name="path">Relative path to the file</param>
 /// <param name="sha256Checksum">Checksum of the file</param>
 /// <param name="size">Size of the file</param>
-public sealed class DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha256Checksum, long size)
+/// <param name="fileCreation">When the file was created (or a best estimation)</param>
+public sealed class DotFile(
+    Guid id,
+    FileSystemPath path,
+    FileSha256Checksum sha256Checksum,
+    long size,
+    DateTime fileCreation)
 {
     /// <summary>
     /// ID
@@ -32,19 +38,24 @@ public sealed class DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha
     public long Size { get; } = size;
 
     /// <summary>
+    /// When the file itself was created
+    /// </summary>
+    public DateTime FileCreation { get; } = fileCreation;
+
+    /// <summary>
     /// True if the file has been verified to have the correct path and checksum
     /// </summary>
     public bool IsVerified { get; private set; }
 
     /// <summary>
-    /// Last update
+    /// The last time this file was synced with the system
     /// </summary>
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTimeOffset LastSync { get; set; }
 
     /// <summary>
-    /// When it was created
+    /// When the file was first synced with the system
     /// </summary>
-    public DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset FirstSync { get; init; }
 
     /// <summary>
     /// Checks if a file matches another file

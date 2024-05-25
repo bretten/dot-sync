@@ -30,10 +30,10 @@ public sealed class WindowsFileMetadataReader : IFileMetadataReader
     }
 
     /// <summary>
-    /// <inheritdoc cref="IFileMetadataReader.ReadPhotoOrVideoTakenDate"/>
+    /// <inheritdoc cref="IFileMetadataReader.ReadFileCreationDate"/>
     /// <para>Attempts to read the taken date from different meta data properties. If it cannot find a date, it will throw an exception of type <see cref="DateTakenCouldNotBeFoundException"/></para>
     /// </summary>
-    public DateTime ReadPhotoOrVideoTakenDate(FileSystemPath path)
+    public DateTime ReadFileCreationDate(FileSystemPath path)
     {
         var shellObject = GetShellObject(new FileInfo(path.Value));
         try
@@ -54,6 +54,7 @@ public sealed class WindowsFileMetadataReader : IFileMetadataReader
 
         try
         {
+            // The true file creation time may be lost. Example: A file was created, then copied. The modified date will then be more accurate
             return DateTime.Parse(GetMetadataValue(shellObject, DateModifiedId));
         }
         catch (FormatException)

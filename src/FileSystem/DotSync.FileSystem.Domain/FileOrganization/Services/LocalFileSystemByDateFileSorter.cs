@@ -87,7 +87,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
         foreach (var file in files)
         {
             // Get the date of the file
-            var date = _fileMetadataReader.ReadPhotoOrVideoTakenDate(FileSystemPath.Create(file.FullName));
+            var date = _fileMetadataReader.ReadFileCreationDate(FileSystemPath.Create(file.FullName));
 
             // Get the directory of the file's containing folder so we can delete it when it becomes empty
             if (file.Directory != null) containingDirectories.Add(file.Directory);
