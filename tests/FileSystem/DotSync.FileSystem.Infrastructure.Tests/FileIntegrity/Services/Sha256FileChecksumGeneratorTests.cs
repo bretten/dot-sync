@@ -4,7 +4,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileIntegrity.S
 
 public class Sha256FileChecksumGeneratorTests
 {
-    private const string TestFilesPath = "FileIntegrity/Services/TestFiles/";
+    private const string TestFilesPath = "FileIntegrity/Services/TestFiles/Sha256FileChecksumGenerator/";
 
     [Fact]
     public void GenerateChecksum_File_ReturnsChecksum()

@@ -6,13 +6,15 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using Moq;
 
-namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.FileIntegrity.Services;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileIntegrity.Services;
 
 public class LocalFileSystemFileIntegrityVerifierTests
 {
-    private const string LocalFileSystemFilesPath = "FileIntegrity/Services/TestFiles/";
+    private const string LocalFileSystemFilesPath =
+        "FileIntegrity/Services/TestFiles/LocalFileSystemFileIntegrityVerifier/";
 
     [Fact]
     public async Task Verify_FileForEachCase_VerifiesValidFilesAndHandlesInvalidFiles()

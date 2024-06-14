@@ -30,18 +30,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="FileIntegrity\Services\TestFiles\dir\dir_nested\path_changed.txt">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="FileIntegrity\Services\TestFiles\dir\checksum_fail_path_match.txt">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="FileIntegrity\Services\TestFiles\dir2\new_file.txt">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="FileIntegrity\Services\TestFiles\verified.txt">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
       <None Update="FileOrganization\Services\TestFiles\dir1\nestedDir1\date_modified_2024-04-25.jpg">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>

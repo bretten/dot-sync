@@ -30,7 +30,19 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="FileIntegrity\Services\TestFiles\checksum_file.txt">
+      <None Update="FileIntegrity\Services\TestFiles\LocalFileSystemFileIntegrityVerifier\verified.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="FileIntegrity\Services\TestFiles\LocalFileSystemFileIntegrityVerifier\dir\dir_nested\path_changed.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="FileIntegrity\Services\TestFiles\LocalFileSystemFileIntegrityVerifier\dir\checksum_fail_path_match.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="FileIntegrity\Services\TestFiles\LocalFileSystemFileIntegrityVerifier\dir2\new_file.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="FileIntegrity\Services\TestFiles\Sha256FileChecksumGenerator\checksum_file.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

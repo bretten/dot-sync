@@ -1,10 +1,11 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
-namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 
 /// <summary>
 /// Verifies the integrity of files on a local filesystem
