@@ -13,6 +13,7 @@ public sealed class EntityFrameworkCoreFileRepository(
     public async Task Add(DotFile file)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        file.LastSync = clock.GetUtcNow();
         await dbContext.AddAsync(file);
         await dbContext.SaveChangesAsync();
     }
@@ -20,7 +21,7 @@ public sealed class EntityFrameworkCoreFileRepository(
     public async Task Update(DotFile file)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        file.UpdatedAt = clock.GetUtcNow();
+        file.LastSync = clock.GetUtcNow();
         dbContext.Update(file);
         await dbContext.SaveChangesAsync();
     }

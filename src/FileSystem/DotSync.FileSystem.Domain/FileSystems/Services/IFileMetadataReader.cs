@@ -8,9 +8,9 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 public interface IFileMetadataReader
 {
     /// <summary>
-    /// Reads the date when a photo or video was taken
+    /// Reads the date when a file was created
     /// </summary>
-    /// <param name="path">The path of the photo or video file</param>
-    /// <returns>The date the photo or video was taken</returns>
-    DateTime ReadPhotoOrVideoTakenDate(FileSystemPath path);
+    /// <param name="path">The path of the file</param>
+    /// <returns>The creation date of the file</returns>
+    DateTime ReadFileCreationDate(FileSystemPath path);
 }

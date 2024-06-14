@@ -35,18 +35,23 @@ public static class Constants
         public const string Size = "size";
 
         /// <summary>
+        /// The creation date of the file
+        /// </summary>
+        public const string FileCreation = "file_creation";
+
+        /// <summary>
         /// True if the file has been verified to have the correct path and checksum
         /// </summary>
         public const string IsVerified = "is_verified";
 
         /// <summary>
-        /// Last update
+        /// Last sync
         /// </summary>
-        public const string UpdatedAt = "updated_at";
+        public const string LastSync = "last_sync";
 
         /// <summary>
-        /// When it was created
+        /// When the file was first synced
         /// </summary>
-        public const string CreatedAt = "created_at";
+        public const string FirstSync = "first_sync";
     }
 }

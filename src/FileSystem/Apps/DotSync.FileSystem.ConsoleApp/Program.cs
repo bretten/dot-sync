@@ -180,6 +180,7 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet)
     });
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
+    builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
     builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
 
     builder.Services

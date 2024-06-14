@@ -33,9 +33,9 @@ public class LocalFileSystemByDateFileSorterTests
 
         // The metadata reader should return dates for the files
         var stubMetadataReader = new Mock<IFileMetadataReader>();
-        stubMetadataReader.Setup(x => x.ReadPhotoOrVideoTakenDate(PathEndingIn("date_modified_2024-04-25.jpg")))
+        stubMetadataReader.Setup(x => x.ReadFileCreationDate(PathEndingIn("date_modified_2024-04-25.jpg")))
             .Returns(new DateTime(2024, 4, 25));
-        stubMetadataReader.Setup(x => x.ReadPhotoOrVideoTakenDate(PathEndingIn("date_taken_2023-02-04.jpg")))
+        stubMetadataReader.Setup(x => x.ReadFileCreationDate(PathEndingIn("date_taken_2023-02-04.jpg")))
             .Returns(new DateTime(2023, 2, 4));
 
         var mockLogger = Mock.Of<ILogger<IFileSorter>>();

@@ -34,15 +34,26 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFra
                         .HasColumnName("id")
                         .HasColumnOrder(0);
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("FileCreation")
+                        .HasColumnType("timestamp without time zone")
+                        .HasColumnName("file_creation")
+                        .HasColumnOrder(4);
+
+                    b.Property<DateTimeOffset>("FirstSync")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at")
-                        .HasColumnOrder(6);
+                        .HasColumnName("first_sync")
+                        .HasColumnOrder(7);
 
                     b.Property<bool>("IsVerified")
                         .HasColumnType("boolean")
                         .HasColumnName("is_verified")
-                        .HasColumnOrder(4);
+                        .HasColumnOrder(5);
+
+                    b.Property<DateTimeOffset>("LastSync")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_sync")
+                        .HasColumnOrder(6);
 
                     b.Property<string>("Path")
                         .IsRequired()
@@ -60,11 +71,6 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFra
                         .HasColumnType("bigint")
                         .HasColumnName("size")
                         .HasColumnOrder(3);
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at")
-                        .HasColumnOrder(5);
 
                     b.HasKey("Id")
                         .HasName("files_pkey");

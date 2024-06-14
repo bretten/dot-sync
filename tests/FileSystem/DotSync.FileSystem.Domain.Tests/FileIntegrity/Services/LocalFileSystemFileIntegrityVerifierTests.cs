@@ -2,6 +2,7 @@
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
@@ -58,9 +59,13 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .ReturnsAsync(checksumFailPathMatchFile);
         stubFileRepository.Setup(x => x.GetFileByPath(newFile.Path))
             .ReturnsAsync((DotFile?)null);
+        // Metadata reader
+        var stubMetadataReader = new Mock<IFileMetadataReader>();
+        stubMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<FileSystemPath>()))
+            .Returns(new DateTime(2024, 4, 25));
 
-        var verifier =
-            new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object);
+        var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
+            stubMetadataReader.Object);
 
         /*
          * Act
