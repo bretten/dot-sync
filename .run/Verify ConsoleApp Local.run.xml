@@ -1,5 +1,5 @@
 ﻿<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Verify ConsoleApp" type="DotNetProject" factoryName=".NET Project">
+  <configuration default="false" name="Verify ConsoleApp Local" type="DotNetProject" factoryName=".NET Project">
     <option name="EXE_PATH" value="$PROJECT_DIR$/src/FileSystem/Apps/DotSync.FileSystem.ConsoleApp/bin/Debug/net8.0/DotSync.FileSystem.ConsoleApp.exe" />
     <option name="PROGRAM_PARAMETERS" value="verify photos local D:\Temp\csharp D:\Temp\Scratch\" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/FileSystem/Apps/DotSync.FileSystem.ConsoleApp/bin/Debug/net8.0" />

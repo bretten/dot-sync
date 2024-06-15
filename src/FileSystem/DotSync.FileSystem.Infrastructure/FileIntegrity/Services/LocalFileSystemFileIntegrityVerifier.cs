@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+﻿using System.Collections.Concurrent;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
@@ -21,9 +22,18 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// </summary>
     /// <param name="directoryPath">The path to the directory that will be verified</param>
     /// <returns>Verification results for each file within the directory</returns>
-    protected override IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath)
+    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
+        FileSystemPath directoryPath)
     {
-        return VerifyDirectory(new DirectoryInfo(directoryPath.Value), directoryPath);
+        var tasks = VerifyDirectory(new DirectoryInfo(directoryPath.Value), directoryPath);
+        var results = new ConcurrentBag<FileIntegrityVerificationResult>();
+        await Parallel.ForEachAsync(tasks, async (task, token) =>
+        {
+            var result = await task;
+            results.Add(result);
+        });
+
+        return results;
     }
 
     /// <summary>

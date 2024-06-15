@@ -59,9 +59,9 @@ public sealed class StorageLocation
     /// </summary>
     public void UpdateStatistics(long fileCount, long storageSize, DateTimeOffset dateTime)
     {
-        HistoricalStorageStatistics.Add(new HistoricalStorageStatistics(dateTime, StorageStatistics));
-
         StorageStatistics = new StorageStatistics(fileCount: fileCount, size: storageSize);
+
+        HistoricalStorageStatistics.Add(new HistoricalStorageStatistics(dateTime, StorageStatistics));
     }
 
     public void UpdatePath(FileSystemPath path)

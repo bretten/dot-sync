@@ -1,4 +1,7 @@
 ﻿using System.ComponentModel;
+using Amazon;
+using Amazon.Runtime;
+using Amazon.S3;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.Common.Extensions;
@@ -62,7 +65,7 @@ static async Task Verify(string[] args)
     var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
     var reportOutputPath = args[3];
 
-    var builder = ConfigureAndRegisterServices(fileSet);
+    var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
     using var host = builder.Build();
 
     var service = host.Services.GetService<IStorageLocationIntegrityVerificationService>();
@@ -100,7 +103,7 @@ static async Task StorageLocationAction(string[] args)
         (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[2])!;
     var storageLocationPath = FileSystemPath.Create(args[3], replaceBackslashes: OperatingSystem.IsWindows());
 
-    var builder = ConfigureAndRegisterServices(fileSet);
+    var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
     using var host = builder.Build();
 
     var service = host.Services.GetService<IStorageLocationRepository>();
@@ -157,7 +160,7 @@ static async Task Sort(string[] args)
     await service.Sort(sourcePath, destinationPath);
 }
 
-static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet)
+static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, StorageLocationType storageLocationType)
 {
     var builder = Host.CreateApplicationBuilder();
 
@@ -181,7 +184,22 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet)
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
-    builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
+    if (storageLocationType == StorageLocationType.Local)
+    {
+        builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
+    }
+    else if (storageLocationType == StorageLocationType.AmazonS3)
+    {
+        builder.Services.AddTransient<IAmazonS3>(sp =>
+        {
+            var awsAccessKeyId = builder.Configuration[$"AmazonS3:{fileSet}:AwsAccessKey"];
+            var awsSecretAccessKey = builder.Configuration[$"AmazonS3:{fileSet}:AwsSecretAccessKey"];
+            var region = builder.Configuration[$"AmazonS3:{fileSet}:Region"];
+            return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
+                RegionEndpoint.GetBySystemName(region));
+        });
+        builder.Services.AddTransient<IFileIntegrityVerifier, AmazonS3FileIntegrityVerifier>();
+    }
 
     builder.Services
         .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();

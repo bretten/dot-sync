@@ -36,15 +36,14 @@ public abstract class BaseFileIntegrityVerifier(
         await FileRepository.SetAllAsUnverified();
 
         // Verify all files at the specified directory
-        var tasks = VerifyDirectory(path);
-        var results = await Task.WhenAll(tasks);
+        var results = await VerifyDirectory(path);
 
         // There may have been files in the repo from a previous run, but are no longer in the current filesystem
         // Files should have been verified at this point by VerifyDirectory, so we can get the remaining unverified
         // and remove the intersection between the unverified from the recent run to determine files no longer in the filesystem
         var filesNotFoundInTheDirectory = await FileRepository.GetUnverifiedFiles();
 
-        return new FileSetIntegrityVerificationResult(results.AsReadOnly(),
+        return new FileSetIntegrityVerificationResult(results.ToImmutableList(),
             filesNotFoundInTheDirectory.ToImmutableList());
     }
 
@@ -53,5 +52,5 @@ public abstract class BaseFileIntegrityVerifier(
     /// </summary>
     /// <param name="directoryPath">The path to the directory that will be verified</param>
     /// <returns>Verification results for each file within the directory</returns>
-    protected abstract IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath);
+    protected abstract Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath);
 }
