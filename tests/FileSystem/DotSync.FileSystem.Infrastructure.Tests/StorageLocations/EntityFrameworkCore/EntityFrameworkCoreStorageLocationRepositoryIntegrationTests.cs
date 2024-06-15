@@ -96,7 +96,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         Assert.Single(actual.HistoricalStorageStatistics);
         Assert.Equal(new HistoricalStorageStatistics(
                 new DateTimeOffset(2024, 6, 1, 0, 0, 0, TimeSpan.Zero),
-                new StorageStatistics(fileCount: 1, size: 2)
+                new StorageStatistics(fileCount: 10, size: 20)
             ),
             actual.HistoricalStorageStatistics.First());
     }

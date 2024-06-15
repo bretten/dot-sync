@@ -1,0 +1,146 @@
+﻿using System.Collections.Concurrent;
+using System.Net;
+using Amazon.S3;
+using Amazon.S3.Model;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services.Exceptions;
+
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
+
+/// <summary>
+/// Verifies the integrity of files in an Amazon S3 bucket
+/// </summary>
+public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
+{
+    /// <summary>
+    /// Amazon S3 client
+    /// </summary>
+    private readonly IAmazonS3 _s3;
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="fileRepository">Stores the expected state of the files</param>
+    /// <param name="fileChecksumGenerator">Generates checksums for files</param>
+    /// <param name="s3">Amazon S3 client</param>
+    public AmazonS3FileIntegrityVerifier(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
+        IAmazonS3 s3) : base(fileRepository, fileChecksumGenerator)
+    {
+        _s3 = s3;
+    }
+
+    /// <summary>
+    /// Max number of keys in a S3 ListObjectsV2 request
+    /// </summary>
+    private const int MaxKeys = 1000;
+
+    /// <summary>
+    /// The bucket name
+    /// </summary>
+    private string _bucketName = null!;
+
+    /// <summary>
+    /// Verifies the directory, in this case, an Amazon S3 bucket
+    /// </summary>
+    /// <param name="directoryPath">The Amazon S3 bucket name</param>
+    /// <returns>Verification results for each file within the bucket</returns>
+    /// <exception cref="AmazonS3ListObjectsPaginationException">Thrown if paginating over the keys in the bucket returns a non-OK status</exception>
+    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
+        FileSystemPath directoryPath)
+    {
+        // Set the bucket name
+        _bucketName = directoryPath.Value;
+
+        // Will hold the individual S3 Object verification results
+        var results = new ConcurrentBag<FileIntegrityVerificationResult>();
+
+        // Paginate over all the S3 objects in the bucket
+        var request = new ListObjectsV2Request
+        {
+            BucketName = _bucketName,
+            MaxKeys = MaxKeys,
+        };
+        var paginator = _s3.Paginators.ListObjectsV2(request);
+        await foreach (var response in paginator.Responses)
+        {
+            if (response.HttpStatusCode != HttpStatusCode.OK)
+            {
+                throw new AmazonS3ListObjectsPaginationException(
+                    $"ListObjectsV2 pagination returned {response.HttpStatusCode}");
+            }
+
+            // For each page of S3 objects, verify their checksums
+            await Parallel.ForEachAsync(response.S3Objects, async (s3Object, token) =>
+            {
+                var result = await VerifyS3Object(s3Object);
+                results.Add(result);
+            });
+        }
+
+        return results;
+    }
+
+    /// <summary>
+    /// Verifies a S3 Object by its checksum
+    /// </summary>
+    /// <param name="s3Object">The S3 Object to verify</param>
+    /// <returns>The result of the verification</returns>
+    private async Task<FileIntegrityVerificationResult> VerifyS3Object(S3Object s3Object)
+    {
+        // Get the S3 Object's checksum
+        var s3Checksum = FileSha256Checksum.Create(await GetS3ObjectSha256Checksum(s3Object.Key));
+
+        // The path of the S3 Object
+        var s3Path = FileSystemPath.Create(s3Object.Key);
+
+        // See if the S3 Object's checksum matches a synced file
+        var existingFileByChecksum = await FileRepository.GetFileByChecksum(s3Checksum);
+        if (existingFileByChecksum != null && s3Path == existingFileByChecksum.Path)
+        {
+            // The checksum and path matched, so the file has been verified
+            existingFileByChecksum.SetAsVerified();
+            await FileRepository.Update(existingFileByChecksum);
+            return FileIntegrityVerificationResult.Verified(s3Path, s3Checksum, s3Object.Size);
+        }
+
+        // The S3 Object could not be verified against any synced file
+        return FileIntegrityVerificationResult.Unverified(s3Path, s3Checksum, s3Object.Size);
+    }
+
+    /// <summary>
+    /// Gets the SHA256 checksum of the S3 Object specified by the key
+    /// </summary>
+    /// <param name="key">The key of the S3 Object</param>
+    /// <returns>The SHA256 checksum</returns>
+    /// <exception cref="AmazonS3MissingChecksumException">Thrown if the checksum does not exist</exception>
+    private async Task<string> GetS3ObjectSha256Checksum(string key)
+    {
+        var metaData = await GetObjectMetadata(key);
+        if (string.IsNullOrWhiteSpace(metaData?.ChecksumSHA256))
+        {
+            throw new AmazonS3MissingChecksumException($"No checksum for S3 Object: {key}");
+        }
+
+        return metaData.ChecksumSHA256;
+    }
+
+    /// <summary>
+    /// Gets the metadata of the S3 Object specified by the key
+    /// </summary>
+    /// <param name="key">The key of the S3 Object</param>
+    /// <returns>The S3 Object metadata</returns>
+    private async Task<GetObjectMetadataResponse?> GetObjectMetadata(string key)
+    {
+        var request = new GetObjectMetadataRequest()
+        {
+            BucketName = _bucketName,
+            Key = key,
+            ChecksumMode = ChecksumMode.ENABLED
+        };
+
+        return await _s3.GetObjectMetadataAsync(request);
+    }
+}
