@@ -1,4 +1,5 @@
-﻿using Amazon.S3;
+﻿using System.Net;
+using Amazon.S3;
 using Amazon.S3.Model;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
@@ -20,6 +21,9 @@ public sealed class AmazonS3FileCopier : IFileCopier
 
     public async Task CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination)
     {
+        var exists = await Exists(destination.Value, sourceFile.Value);
+        if (exists) return;
+
         var fileInfo =
             new FileInfo(FileSystemPath.Create(Path.Combine(sourcePath.Value, sourceFile.Value), true).Value);
         var request = new PutObjectRequest
@@ -33,5 +37,25 @@ public sealed class AmazonS3FileCopier : IFileCopier
         };
 
         await _s3.PutObjectAsync(request);
+    }
+
+    private async Task<bool> Exists(string bucketName, string key)
+    {
+        var request = new GetObjectMetadataRequest()
+        {
+            BucketName = bucketName,
+            Key = key,
+            ChecksumMode = ChecksumMode.ENABLED
+        };
+
+        try
+        {
+            var response = await _s3.GetObjectMetadataAsync(request);
+            return response != null && response.HttpStatusCode == HttpStatusCode.OK;
+        }
+        catch (AmazonS3Exception)
+        {
+            return false;
+        }
     }
 }
