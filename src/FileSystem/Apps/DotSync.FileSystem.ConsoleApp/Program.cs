@@ -45,6 +45,7 @@ static Task DetermineCommand(string[] args)
     return command.ToLower() switch
     {
         "verify" => Verify(remainingArgs.ToArray()),
+        "scan" => Scan(remainingArgs.ToArray()),
         "storage_location" => StorageLocationAction(remainingArgs.ToArray()),
         "sort" => Sort(remainingArgs.ToArray()),
         _ => throw new UnknownCommandException($"Unknown command {command}")
@@ -85,6 +86,44 @@ static async Task Verify(string[] args)
     Console.WriteLine($"Total size (bytes): {result.Result.TotalSize}");
     var reportFileName = $"verify_{fileSet}_{storageLocationType.GetDisplayName()}.html";
     await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
+
+    await host.StopAsync();
+}
+
+static async Task Scan(string[] args)
+{
+    if (args.Length != 4)
+    {
+        throw new RequiredArgumentNotProvided(
+            "Could not run scan. Parameter order is file set, storage location type, path in storage location, report output path");
+    }
+
+    var fileSet = args[0];
+    var storageLocationType =
+        (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[1])!;
+    var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[3];
+
+    var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
+    using var host = builder.Build();
+
+    var service = host.Services.GetService<IFileSystemScanner>();
+    if (service == null)
+    {
+        throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
+    }
+
+    var result = await service.Scan(storageLocationPath);
+    Console.WriteLine("New Files:");
+    foreach (var newFile in result.NewFiles)
+    {
+        Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
+    }
+
+    var reportFileName = $"scan_{fileSet}_{storageLocationType.GetDisplayName()}.html";
+    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
+        string.Join("<br/>",
+            result.NewFiles.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
 
     await host.StopAsync();
 }
@@ -187,6 +226,7 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     if (storageLocationType == StorageLocationType.Local)
     {
         builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
+        builder.Services.AddTransient<IFileSystemScanner, LocalFileSystemScanner>();
     }
     else if (storageLocationType == StorageLocationType.AmazonS3)
     {
