@@ -11,4 +11,5 @@ public interface IFileRepository
     Task<DotFile?> GetFileByPath(FileSystemPath path);
     Task SetAllAsUnverified();
     Task<IEnumerable<DotFile>> GetUnverifiedFiles();
+    Task<IEnumerable<DotFile>> GetFilesByPath(FileSystemPath path);
 }

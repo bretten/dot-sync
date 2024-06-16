@@ -15,11 +15,11 @@ public sealed class FilePusher(
     ITenantContext tenantContext,
     IFileCopier fileCopier) : TenantAware(tenantContext), IFilePusher
 {
-    public async Task<IEnumerable<DotFile>> PushFiles(StorageLocationType sourceType, FileSystemPath sourcePath,
-        StorageLocationType destinationType, FileSystemPath destinationPath)
+    public async Task<IEnumerable<DotFile>> PushUnverifiedFiles(StorageLocationType sourceType,
+        FileSystemPath sourceRootPath, StorageLocationType destinationType, FileSystemPath destinationRootPath)
     {
-        var source = await storageLocationRepository.GetByTypeAndPath(sourceType, sourcePath);
-        var destination = await storageLocationRepository.GetByTypeAndPath(destinationType, destinationPath);
+        var source = await storageLocationRepository.GetByTypeAndPath(sourceType, sourceRootPath);
+        var destination = await storageLocationRepository.GetByTypeAndPath(destinationType, destinationRootPath);
         if (source == null || destination == null)
         {
             throw new DirectoryNotStorageLocationException(
@@ -35,9 +35,36 @@ public sealed class FilePusher(
 
         foreach (var file in unverifiedFiles)
         {
-            await fileCopier.CopyFile(sourcePath, file.Path, destination.Path);
+            await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
         }
 
         return unverifiedFiles;
+    }
+
+    public async Task<IEnumerable<DotFile>> PushFilesInDir(StorageLocationType sourceType,
+        FileSystemPath sourceRootPath, FileSystemPath sourcePushPath, StorageLocationType destinationType,
+        FileSystemPath destinationRootPath)
+    {
+        var source = await storageLocationRepository.GetByTypeAndPath(sourceType, sourceRootPath);
+        var destination = await storageLocationRepository.GetByTypeAndPath(destinationType, destinationRootPath);
+        if (source == null || destination == null)
+        {
+            throw new DirectoryNotStorageLocationException(
+                $"No storage location for file set {TenantContext.CurrentTenant}");
+        }
+
+        if (source.Type != StorageLocationType.Local)
+        {
+            throw new NotSupportedException("Can only copy from local");
+        }
+
+        var files = (await fileRepository.GetFilesByPath(sourcePushPath)).ToList();
+
+        foreach (var file in files)
+        {
+            await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
+        }
+
+        return files;
     }
 }

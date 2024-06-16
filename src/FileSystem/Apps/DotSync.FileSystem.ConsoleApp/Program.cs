@@ -47,6 +47,7 @@ static Task DetermineCommand(string[] args)
         "verify" => Verify(remainingArgs.ToArray()),
         "scan" => Scan(remainingArgs.ToArray()),
         "push" => Push(remainingArgs.ToArray()),
+        "push_dir" => PushDir(remainingArgs.ToArray()),
         "storage_location" => StorageLocationAction(remainingArgs.ToArray()),
         "sort" => Sort(remainingArgs.ToArray()),
         _ => throw new UnknownCommandException($"Unknown command {command}")
@@ -158,7 +159,51 @@ static async Task Push(string[] args)
         throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
     }
 
-    var result = await service.PushFiles(StorageLocationType.Local, sourcePath, destinationType, destinationPath);
+    var result =
+        await service.PushUnverifiedFiles(StorageLocationType.Local, sourcePath, destinationType, destinationPath);
+    Console.WriteLine("New Files:");
+    foreach (var newFile in result)
+    {
+        Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
+    }
+
+    var reportFileName =
+        $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
+        string.Join("<br/>",
+            result.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
+
+    await host.StopAsync();
+}
+
+static async Task PushDir(string[] args)
+{
+    if (args.Length != 6)
+    {
+        throw new RequiredArgumentNotProvided(
+            "Could not run push. Parameter order is file set, source root path, source push path, destination storage location type, destination path in storage location, report output path");
+    }
+
+    var fileSet = args[0];
+    var sourceRootPath = FileSystemPath.Create(args[1], replaceBackslashes: OperatingSystem.IsWindows());
+    var sourcePushPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
+    var destinationType =
+        (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[3])!;
+    var destinationRootPath = FileSystemPath.Create(args[4], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[5];
+
+    var builder = ConfigureAndRegisterServices(fileSet, destinationType);
+    using var host = builder.Build();
+
+    var service = host.Services.GetService<IFilePusher>();
+    var clock = host.Services.GetRequiredService<IClock>();
+    if (service == null)
+    {
+        throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
+    }
+
+    var result = await service.PushFilesInDir(StorageLocationType.Local, sourceRootPath, sourcePushPath,
+        destinationType, destinationRootPath);
     Console.WriteLine("New Files:");
     foreach (var newFile in result)
     {
