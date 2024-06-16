@@ -38,9 +38,14 @@ public sealed class EntityFrameworkCoreFileRepository(
         return await dbContext.Files.FirstOrDefaultAsync(x => x.Path == path);
     }
 
-    public async Task SetAllAsUnverified()
+    public async Task SetAllAsUnverified(FileSystemPath path)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        if (path.Value != "")
+        {
+            await dbContext.FilesThatStartWith(path).ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
+            return;
+        }
         await dbContext.Files.ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
     }
 
@@ -50,19 +55,9 @@ public sealed class EntityFrameworkCoreFileRepository(
         return await dbContext.Files.Where(x => !x.IsVerified).ToListAsync();
     }
 
-    /// <summary>
-    /// Generates the following query:
-    ///         SELECT f.id, f.file_creation, f.first_sync, f.is_verified, f.last_sync, f.path, f.sha256_checksum, f.size
-    ///         FROM file_systems.files AS f
-    ///         WHERE f.path::text LIKE @__path_Value_0_startswith
-    /// </summary>
     public async Task<IEnumerable<DotFile>> GetFilesByPath(FileSystemPath path)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-
-        // https://stackoverflow.com/a/63862850/1251396
-        // Tricks the EF Core LINQ to SQL translator to just write WHERE Path like "value%"
-        // This executes server-side
-        return await dbContext.Files.Where(x => ((string)(object)x.Path).StartsWith(path.Value)).ToListAsync();
+        return await dbContext.FilesThatStartWith(path).ToListAsync();
     }
 }
