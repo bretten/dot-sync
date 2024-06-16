@@ -1,10 +1,10 @@
 ﻿using System.Collections.Concurrent;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 
@@ -12,10 +12,10 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Service
 /// Verifies the integrity of files on a local filesystem
 /// </summary>
 public sealed class LocalFileSystemFileIntegrityVerifier(
-    IFileRepository fileRepository,
+    IFileStorageRepository fileStorageRepository,
     IFileChecksumGenerator checksumGenerator,
     IFileMetadataReader metadataReader)
-    : BaseFileIntegrityVerifier(fileRepository, checksumGenerator)
+    : BaseFileIntegrityVerifier(fileStorageRepository, checksumGenerator)
 {
     /// <summary>
     /// Verifies the integrity of all files within the specified directory
@@ -78,7 +78,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             replaceBackslashes: OperatingSystem.IsWindows());
 
         // See if the file's checksum already exists
-        var existingFileByChecksum = await FileRepository.GetFileByChecksum(FileSha256Checksum.Create(checksum));
+        var existingFileByChecksum = await FileStorageRepository.GetFileByChecksum(FileSha256Checksum.Create(checksum));
         if (existingFileByChecksum != null)
         {
             // The checksum matched, but its path is out of date. Update the path and then verify the file
@@ -89,13 +89,13 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
 
             // The checksum and path match, so the file can be verified
             existingFileByChecksum.SetAsVerified();
-            await FileRepository.Update(existingFileByChecksum);
+            await FileStorageRepository.Update(existingFileByChecksum);
             return FileIntegrityVerificationResult.Verified(existingFileByChecksum.Path,
                 existingFileByChecksum.Sha256Checksum, fileInfo.Length);
         }
 
         // The file could not be found via checksum, so check to see if the path is being used
-        var existingFileByPath = await FileRepository.GetFileByPath(relativePath);
+        var existingFileByPath = await FileStorageRepository.GetFileByPath(relativePath);
         if (existingFileByPath != null)
         {
             // The path was being used, so it could be a couple of cases
@@ -110,7 +110,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         var newFile = new DotFile(Guid.NewGuid(), relativePath, FileSha256Checksum.Create(checksum), fileInfo.Length,
             fileCreation);
         newFile.SetAsVerified();
-        await FileRepository.Add(newFile);
+        await FileStorageRepository.Add(newFile);
         return FileIntegrityVerificationResult.Verified(newFile.Path, newFile.Sha256Checksum, fileInfo.Length);
     }
 }

@@ -4,9 +4,9 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services.Exceptions;
@@ -33,7 +33,8 @@ public class AmazonS3FileIntegrityVerifierTests
         };
         var stubS3 = MockS3ListObjectsV2Paginator(responses);
 
-        var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
+        var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileStorageRepository>(),
+            Mock.Of<IFileChecksumGenerator>(),
             stubS3.Object);
 
         var action = async () => await verifier.Verify(FileSystemPath.Create(""));
@@ -71,7 +72,8 @@ public class AmazonS3FileIntegrityVerifierTests
                 y => y.Key == key && y.BucketName == bucketName), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GetObjectMetadataResponse)null!);
 
-        var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
+        var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileStorageRepository>(),
+            Mock.Of<IFileChecksumGenerator>(),
             stubS3.Object);
 
         var action = async () => await verifier.Verify(FileSystemPath.Create(bucketName));
@@ -136,7 +138,7 @@ public class AmazonS3FileIntegrityVerifierTests
                 y => y.Key == unverifiedKey && y.BucketName == bucketName), It.IsAny<CancellationToken>()))
             .ReturnsAsync(unverifiedMetadata);
 
-        var stubFileRepository = new Mock<IFileRepository>();
+        var stubFileRepository = new Mock<IFileStorageRepository>();
         stubFileRepository.Setup(x => x.GetFileByChecksum(verifiedChecksum))
             .ReturnsAsync(Faker.FakeFile(path: "verified", checksum: "verified256"));
         stubFileRepository.Setup(x => x.GetFileByChecksum(unverifiedChecksum))

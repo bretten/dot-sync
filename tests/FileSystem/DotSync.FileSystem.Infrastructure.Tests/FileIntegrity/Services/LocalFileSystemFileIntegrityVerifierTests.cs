@@ -1,9 +1,9 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
@@ -47,7 +47,7 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("new_file.txt")))
             .Returns(newFile.Sha256Checksum.Value);
         // It will try to verify files by their checksum
-        var stubFileRepository = new Mock<IFileRepository>();
+        var stubFileRepository = new Mock<IFileStorageRepository>();
         stubFileRepository.Setup(x => x.GetFileByChecksum(verifiedFile.Sha256Checksum))
             .ReturnsAsync(verifiedFile);
         stubFileRepository.Setup(x => x.GetFileByChecksum(pathChangedFile.Sha256Checksum))

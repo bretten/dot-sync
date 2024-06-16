@@ -7,18 +7,17 @@ using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
+using com.brettnamba.DotSync.FileSystem.ConsoleApp;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileStorage.EntityFrameworkCore;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileStorage.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -145,11 +144,11 @@ static async Task StorageLocationAction(string[] args)
     var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
     using var host = builder.Build();
 
-    var service = host.Services.GetService<IStorageLocationRepository>();
+    var service = host.Services.GetService<IFileStorageRepository>();
     if (service == null)
     {
         throw new ServiceNotFoundException(
-            $"Verify could not resolve service of type {nameof(IStorageLocationRepository)}");
+            $"Verify could not resolve service of type {nameof(IFileStorageRepository)}");
     }
 
     switch (action)
@@ -211,16 +210,11 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     builder.Services.AddTransient<ITenantAware, TenantAware>();
     builder.Services.AddTransient<IClock, Clock>();
 
-    builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder =>
+    builder.Services.AddDbContextFactory<FileStorageDbContext>(optionsBuilder =>
     {
-        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"));
+        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileStorage_{fileSet}"));
     });
-    builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
-    builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
-    {
-        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));
-    });
-    builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
+    builder.Services.AddTransient<IFileStorageRepository, EntityFrameworkCoreFileStorageRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
     if (storageLocationType == StorageLocationType.Local)
@@ -248,13 +242,16 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     return builder;
 }
 
-internal sealed class UnknownCommandException(string? message) : Exception(message);
+namespace com.brettnamba.DotSync.FileSystem.ConsoleApp
+{
+    internal sealed class UnknownCommandException(string? message) : Exception(message);
 
-internal sealed class RequiredArgumentNotProvided(string? message) : Exception(message);
+    internal sealed class RequiredArgumentNotProvided(string? message) : Exception(message);
 
-internal sealed class ServiceNotFoundException(string? message) : Exception(message);
+    internal sealed class ServiceNotFoundException(string? message) : Exception(message);
 
-internal sealed class StorageLocationNotFoundException(string? message = "No storage location found")
-    : Exception(message);
+    internal sealed class StorageLocationNotFoundException(string? message = "No storage location found")
+        : Exception(message);
 
-internal sealed class InvalidStorageLocationActionException(string? message) : Exception(message);
+    internal sealed class InvalidStorageLocationActionException(string? message) : Exception(message);
+}

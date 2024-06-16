@@ -4,8 +4,8 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services.Exceptions;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
@@ -23,11 +23,12 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="fileRepository">Stores the expected state of the files</param>
+    /// <param name="fileStorageRepository">Stores the expected state of the files</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
     /// <param name="s3">Amazon S3 client</param>
-    public AmazonS3FileIntegrityVerifier(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
-        IAmazonS3 s3) : base(fileRepository, fileChecksumGenerator)
+    public AmazonS3FileIntegrityVerifier(IFileStorageRepository fileStorageRepository,
+        IFileChecksumGenerator fileChecksumGenerator,
+        IAmazonS3 s3) : base(fileStorageRepository, fileChecksumGenerator)
     {
         _s3 = s3;
     }
@@ -97,12 +98,12 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
         var s3Path = FileSystemPath.Create(s3Object.Key);
 
         // See if the S3 Object's checksum matches a synced file
-        var existingFileByChecksum = await FileRepository.GetFileByChecksum(s3Checksum);
+        var existingFileByChecksum = await FileStorageRepository.GetFileByChecksum(s3Checksum);
         if (existingFileByChecksum != null && s3Path == existingFileByChecksum.Path)
         {
             // The checksum and path matched, so the file has been verified
             existingFileByChecksum.SetAsVerified();
-            await FileRepository.Update(existingFileByChecksum);
+            await FileStorageRepository.Update(existingFileByChecksum);
             return FileIntegrityVerificationResult.Verified(s3Path, s3Checksum, s3Object.Size);
         }
 

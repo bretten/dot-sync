@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.FileIntegrity.ValueObjects.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 

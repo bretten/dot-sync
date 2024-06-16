@@ -1,6 +1,6 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 

@@ -1,6 +1,6 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 using Microsoft.Extensions.Logging;
 using Moq;
 

@@ -1,8 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.FileIntegrity.ValueObjects.TestClasses;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Tests.Reporting;
@@ -44,7 +44,7 @@ public class HtmlIntegrityReporterTests
             new List<DotFile>
                 { fileFromPreviousRun1, fileFromPreviousRun2, fileFromPreviousRun3, fileFromPreviousRun4 });
 
-        var fakeStorageLocation = Domain.Tests.StorageLocations.TestClasses.Faker.FakeStorageLocation(path: "root/path",
+        var fakeStorageLocation = Domain.Tests.Files.TestClasses.Faker.FakeStorageLocation(path: "root/path",
             type: StorageLocationType.Local);
         var reporter = new HtmlIntegrityReporter();
 

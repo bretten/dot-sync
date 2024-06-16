@@ -45,7 +45,7 @@
       <None Update="FileIntegrity\Services\TestFiles\Sha256FileChecksumGenerator\checksum_file.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
-      <None Update="FileSystems\Services\TestFiles\LocalFileSystemScanner\newFile.txt">
+      <None Update="FileStorage\Services\TestFiles\LocalFileSystemScanner\newFile.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>

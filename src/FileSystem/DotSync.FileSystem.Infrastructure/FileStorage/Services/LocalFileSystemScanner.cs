@@ -1,0 +1,116 @@
+﻿using System.Collections.Immutable;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
+
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileStorage.Services;
+
+/// <summary>
+/// Scans the local filesystem for new files
+/// </summary>
+public sealed class LocalFileSystemScanner : IFileSystemScanner
+{
+    /// <summary>
+    /// Stores the expected state of the files
+    /// </summary>
+    private readonly IFileStorageRepository _fileStorageRepository;
+
+    /// <summary>
+    /// Metadata reader used to get the date of the file
+    /// </summary>
+    private readonly IFileMetadataReader _fileMetadataReader;
+
+    /// <summary>
+    /// Generates checksums for files
+    /// </summary>
+    private readonly IFileChecksumGenerator _fileChecksumGenerator;
+
+    /// <summary>
+    /// Constructor
+    /// </summary>
+    /// <param name="fileStorageRepository">Stores the expected state of the files</param>
+    /// <param name="fileMetadataReader">Metadata reader used to get the date of the file</param>
+    /// <param name="fileChecksumGenerator">Generates checksums for files</param>
+    public LocalFileSystemScanner(IFileStorageRepository fileStorageRepository, IFileMetadataReader fileMetadataReader,
+        IFileChecksumGenerator fileChecksumGenerator)
+    {
+        _fileStorageRepository = fileStorageRepository;
+        _fileMetadataReader = fileMetadataReader;
+        _fileChecksumGenerator = fileChecksumGenerator;
+    }
+
+    /// <inheritdoc />
+    public async Task<FileSystemScannerResult> Scan(FileSystemPath path)
+    {
+        var tasks = ScanDirectory(new DirectoryInfo(path.Value), path);
+        var newFiles = new List<DotFile>();
+        await Parallel.ForEachAsync(tasks, async (task, token) =>
+        {
+            var result = await task;
+            if (result != null) newFiles.Add(result);
+        });
+        return new FileSystemScannerResult(newFiles.ToImmutableList());
+    }
+
+    /// <summary>
+    /// Scans the specified directory for new files
+    /// </summary>
+    /// <param name="directoryInfo">The directory to scan</param>
+    /// <param name="rootDirectoryPath">The original root directory that is being scanned</param>
+    /// <returns>New files found in the directory</returns>
+    private IEnumerable<Task<DotFile?>> ScanDirectory(DirectoryInfo directoryInfo,
+        FileSystemPath rootDirectoryPath)
+    {
+        var entries = directoryInfo.EnumerateFileSystemInfos();
+        var tasks = new List<Task<DotFile?>>();
+        foreach (var entry in entries)
+        {
+            switch (entry)
+            {
+                case FileInfo info:
+                    tasks.Add(ScanFile(info, rootDirectoryPath));
+                    break;
+                case DirectoryInfo info:
+                    tasks.AddRange(ScanDirectory(info, rootDirectoryPath));
+                    break;
+            }
+        }
+
+        return tasks;
+    }
+
+    /// <summary>
+    /// Checks if a file is not yet synced with the domain
+    /// </summary>
+    /// <param name="fileInfo">The file</param>
+    /// <param name="rootDirectoryPath">The original root directory of the file</param>
+    /// <returns><see cref="DotFile"/> if it is a new file, otherwise null</returns>
+    private async Task<DotFile?> ScanFile(FileInfo fileInfo, FileSystemPath rootDirectoryPath)
+    {
+        // Determine its relative path compared to the root directory
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName),
+            replaceBackslashes: OperatingSystem.IsWindows());
+
+        // See if the file's path exists
+        var existingFileByPath = await _fileStorageRepository.GetFileByPath(relativePath);
+        if (existingFileByPath != null)
+        {
+            // The file exists, no further work needed
+            return null;
+        }
+
+        // File creation time (or best estimation)
+        var fileCreation = _fileMetadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
+
+        // Generate a checksum for the new file
+        var checksum = FileSha256Checksum.Create(_fileChecksumGenerator.GenerateChecksum(fileInfo));
+
+        // The file could not be found via checksum or file path. It is a new file, so add it
+        var newFile = new DotFile(Guid.NewGuid(), relativePath, checksum, fileInfo.Length, fileCreation);
+        newFile.SetAsVerified();
+        await _fileStorageRepository.Add(newFile);
+        return newFile;
+    }
+}

@@ -1,5 +1,5 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileStorage.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 
