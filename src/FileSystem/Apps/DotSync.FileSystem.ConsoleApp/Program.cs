@@ -56,17 +56,19 @@ static Task DetermineCommand(string[] args)
 
 static async Task Verify(string[] args)
 {
-    if (args.Length != 4)
+    if (args.Length != 5)
     {
         throw new RequiredArgumentNotProvided(
-            "Could not run verify. Parameter order is file set, storage location type, path in storage location, report output path");
+            "Could not run verify. Parameter order is file set, storage location type, path in storage location, verify path, report output path");
     }
 
     var fileSet = args[0];
     var storageLocationType =
         (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[1])!;
     var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
-    var reportOutputPath = args[3];
+    var verifyPath =
+        FileSystemPath.Create(args[3] == "." ? "" : args[3], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[4];
 
     var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
     using var host = builder.Build();
@@ -79,7 +81,7 @@ static async Task Verify(string[] args)
             $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
     }
 
-    var result = await service.Execute(storageLocationType, storageLocationPath);
+    var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath);
     Console.WriteLine($"Storage location type: {result.StorageLocation.Type.GetDisplayName()}");
     Console.WriteLine($"Storage location path: {result.StorageLocation.Path.Value}");
     Console.WriteLine($"Total files: {result.Result.FileCount}");
@@ -314,6 +316,15 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
+    builder.Services.AddTransient<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
+    builder.Services.AddTransient<IAmazonS3>(sp =>
+    {
+        var awsAccessKeyId = builder.Configuration[$"AmazonS3:{fileSet}:AwsAccessKey"];
+        var awsSecretAccessKey = builder.Configuration[$"AmazonS3:{fileSet}:AwsSecretAccessKey"];
+        var region = builder.Configuration[$"AmazonS3:{fileSet}:Region"];
+        return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
+            RegionEndpoint.GetBySystemName(region));
+    });
     if (storageLocationType == StorageLocationType.Local)
     {
         builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
@@ -321,14 +332,6 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     }
     else if (storageLocationType == StorageLocationType.AmazonS3)
     {
-        builder.Services.AddTransient<IAmazonS3>(sp =>
-        {
-            var awsAccessKeyId = builder.Configuration[$"AmazonS3:{fileSet}:AwsAccessKey"];
-            var awsSecretAccessKey = builder.Configuration[$"AmazonS3:{fileSet}:AwsSecretAccessKey"];
-            var region = builder.Configuration[$"AmazonS3:{fileSet}:Region"];
-            return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
-                RegionEndpoint.GetBySystemName(region));
-        });
         builder.Services.AddTransient<IFileIntegrityVerifier, AmazonS3FileIntegrityVerifier>();
         builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>();
     }

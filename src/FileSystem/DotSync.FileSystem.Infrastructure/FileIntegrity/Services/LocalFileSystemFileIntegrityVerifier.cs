@@ -14,7 +14,8 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Service
 public sealed class LocalFileSystemFileIntegrityVerifier(
     IFileRepository fileRepository,
     IFileChecksumGenerator checksumGenerator,
-    IFileMetadataReader metadataReader)
+    IFileMetadataReader metadataReader,
+    FileSystemPath rootPath)
     : BaseFileIntegrityVerifier(fileRepository, checksumGenerator)
 {
     /// <summary>
@@ -25,7 +26,8 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
         FileSystemPath directoryPath)
     {
-        var tasks = VerifyDirectory(new DirectoryInfo(directoryPath.Value), directoryPath);
+        var dirPath = Path.Combine(rootPath.Value, directoryPath.Value);
+        var tasks = VerifyDirectory(new DirectoryInfo(dirPath));
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
@@ -40,10 +42,8 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// Verifies the integrity of all files within the specified directory
     /// </summary>
     /// <param name="directoryInfo">The directory to verify</param>
-    /// <param name="rootDirectoryPath">The original root directory that is being verified</param>
     /// <returns>Verification results for each file within the directory</returns>
-    private IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(DirectoryInfo directoryInfo,
-        FileSystemPath rootDirectoryPath)
+    private IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(DirectoryInfo directoryInfo)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
         var tasks = new List<Task<FileIntegrityVerificationResult>>();
@@ -52,10 +52,10 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             switch (entry)
             {
                 case FileInfo info:
-                    tasks.Add(VerifyFile(info, rootDirectoryPath));
+                    tasks.Add(VerifyFile(info));
                     break;
                 case DirectoryInfo info:
-                    tasks.AddRange(VerifyDirectory(info, rootDirectoryPath));
+                    tasks.AddRange(VerifyDirectory(info));
                     break;
             }
         }
@@ -67,14 +67,13 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// Verifies the integrity of a single file
     /// </summary>
     /// <param name="fileInfo">The file</param>
-    /// <param name="rootDirectoryPath">The original root directory that is being verified</param>
     /// <returns>Verification result of the file</returns>
-    private async Task<FileIntegrityVerificationResult> VerifyFile(FileInfo fileInfo, FileSystemPath rootDirectoryPath)
+    private async Task<FileIntegrityVerificationResult> VerifyFile(FileInfo fileInfo)
     {
         // Generate the checksum of the file on the filesystem
         var checksum = ChecksumGenerator.GenerateChecksum(fileInfo);
         // Determine its relative path compared to the root directory
-        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName),
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath.Value, fileInfo.FullName),
             replaceBackslashes: OperatingSystem.IsWindows());
 
         // See if the file's checksum already exists

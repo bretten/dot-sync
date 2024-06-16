@@ -67,12 +67,12 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .Returns(new DateTime(2024, 4, 25));
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
-            stubMetadataReader.Object);
+            stubMetadataReader.Object, FileSystemPath.Create(LocalFileSystemFilesPath));
 
         /*
          * Act
          */
-        var actual = await verifier.Verify(FileSystemPath.Create(LocalFileSystemFilesPath));
+        var actual = await verifier.Verify(FileSystemPath.Create(""));
 
         /*
          * Assert

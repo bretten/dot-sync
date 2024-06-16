@@ -21,26 +21,28 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     private readonly IAmazonS3 _s3;
 
     /// <summary>
+    /// The bucket name
+    /// </summary>
+    private readonly string _bucketName;
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
     /// <param name="s3">Amazon S3 client</param>
+    /// <param name="bucketName">The bucket name</param>
     public AmazonS3FileIntegrityVerifier(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
-        IAmazonS3 s3) : base(fileRepository, fileChecksumGenerator)
+        IAmazonS3 s3, string bucketName) : base(fileRepository, fileChecksumGenerator)
     {
         _s3 = s3;
+        _bucketName = bucketName;
     }
 
     /// <summary>
     /// Max number of keys in a S3 ListObjectsV2 request
     /// </summary>
     private const int MaxKeys = 1000;
-
-    /// <summary>
-    /// The bucket name
-    /// </summary>
-    private string _bucketName = null!;
 
     /// <summary>
     /// Verifies the directory, in this case, an Amazon S3 bucket
@@ -51,9 +53,6 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
         FileSystemPath directoryPath)
     {
-        // Set the bucket name
-        _bucketName = directoryPath.Value;
-
         // Will hold the individual S3 Object verification results
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
 
@@ -62,6 +61,7 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
         {
             BucketName = _bucketName,
             MaxKeys = MaxKeys,
+            Prefix = directoryPath.Value
         };
         var paginator = _s3.Paginators.ListObjectsV2(request);
         await foreach (var response in paginator.Responses)
