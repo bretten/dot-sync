@@ -33,7 +33,8 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="fileRepository">Stores the expected state of the files</param>
     /// <param name="fileMetadataReader">Metadata reader used to get the date of the file</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
-    public LocalFileSystemScanner(IFileRepository fileRepository, IFileMetadataReader fileMetadataReader, IFileChecksumGenerator fileChecksumGenerator)
+    public LocalFileSystemScanner(IFileRepository fileRepository, IFileMetadataReader fileMetadataReader,
+        IFileChecksumGenerator fileChecksumGenerator)
     {
         _fileRepository = fileRepository;
         _fileMetadataReader = fileMetadataReader;
@@ -108,7 +109,6 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
 
         // The file could not be found via checksum or file path. It is a new file, so add it
         var newFile = new DotFile(Guid.NewGuid(), relativePath, checksum, fileInfo.Length, fileCreation);
-        newFile.SetAsVerified();
         await _fileRepository.Add(newFile);
         return newFile;
     }

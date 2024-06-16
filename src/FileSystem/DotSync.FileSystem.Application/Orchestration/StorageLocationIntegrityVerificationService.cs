@@ -1,6 +1,7 @@
 ﻿using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.Common.Extensions;
+using com.brettnamba.DotSync.FileSystem.Application.Orchestration.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -63,6 +64,4 @@ public sealed class StorageLocationIntegrityVerificationService(
 
         return new StorageLocationIntegrityVerificationResult(storageLocation, result, report);
     }
-
-    private sealed class DirectoryNotStorageLocationException(string? message) : Exception(message);
 }
