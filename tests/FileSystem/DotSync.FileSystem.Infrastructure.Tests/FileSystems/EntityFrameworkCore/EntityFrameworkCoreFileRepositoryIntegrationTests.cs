@@ -178,7 +178,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
-        await repo.SetAllAsUnverified();
+        await repo.SetAllAsUnverified(FileSystemPath.Create(""));
 
         // Assert
         var actual = assertDbContext.Files.ToList();

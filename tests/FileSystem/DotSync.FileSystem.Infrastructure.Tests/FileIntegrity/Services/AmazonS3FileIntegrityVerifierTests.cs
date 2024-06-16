@@ -34,7 +34,7 @@ public class AmazonS3FileIntegrityVerifierTests
         var stubS3 = MockS3ListObjectsV2Paginator(responses);
 
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
-            stubS3.Object);
+            stubS3.Object, "bucket");
 
         var action = async () => await verifier.Verify(FileSystemPath.Create(""));
 
@@ -72,7 +72,7 @@ public class AmazonS3FileIntegrityVerifierTests
             .ReturnsAsync((GetObjectMetadataResponse)null!);
 
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
-            stubS3.Object);
+            stubS3.Object, bucketName);
 
         var action = async () => await verifier.Verify(FileSystemPath.Create(bucketName));
 
@@ -143,7 +143,7 @@ public class AmazonS3FileIntegrityVerifierTests
             .ReturnsAsync((DotFile?)null);
 
         var verifier = new AmazonS3FileIntegrityVerifier(stubFileRepository.Object, Mock.Of<IFileChecksumGenerator>(),
-            stubS3.Object);
+            stubS3.Object, bucketName);
 
         // Act
         var actual = await verifier.Verify(FileSystemPath.Create(bucketName));

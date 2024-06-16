@@ -1,6 +1,7 @@
 ﻿using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.Common.Extensions;
+using com.brettnamba.DotSync.FileSystem.Application.Orchestration.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -13,7 +14,7 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 /// <inheritdoc cref="IStorageLocationIntegrityVerificationService"/>
 /// </summary>
 public sealed class StorageLocationIntegrityVerificationService(
-    IFileIntegrityVerifier fileIntegrityVerifier,
+    IFileIntegrityVerifierFactory fileIntegrityVerifierFactory,
     IStorageLocationRepository storageLocationRepository,
     IIntegrityReporter integrityReporter,
     IClock clock,
@@ -23,7 +24,7 @@ public sealed class StorageLocationIntegrityVerificationService(
     /// <summary>
     /// Verifies the integrity of the files in the directory
     /// </summary>
-    private readonly IFileIntegrityVerifier _fileIntegrityVerifier = fileIntegrityVerifier;
+    private readonly IFileIntegrityVerifierFactory _fileIntegrityVerifierFactory = fileIntegrityVerifierFactory;
 
     /// <summary>
     /// Retrieves the storage location for the directory
@@ -44,16 +45,18 @@ public sealed class StorageLocationIntegrityVerificationService(
     /// <inheritdoc cref="IStorageLocationIntegrityVerificationService.Execute"/>
     /// </summary>
     public async Task<StorageLocationIntegrityVerificationResult> Execute(StorageLocationType storageLocationType,
-        FileSystemPath path)
+        FileSystemPath storageLocationPath, FileSystemPath verifyPath)
     {
-        var storageLocation = await _storageLocationRepository.GetByTypeAndPath(storageLocationType, path);
+        var storageLocation =
+            await _storageLocationRepository.GetByTypeAndPath(storageLocationType, storageLocationPath);
         if (storageLocation == null)
         {
             throw new DirectoryNotStorageLocationException(
                 $"No storage location of type {storageLocationType.GetDisplayName()} for file set {TenantContext.CurrentTenant}");
         }
 
-        var result = await _fileIntegrityVerifier.Verify(storageLocation.Path);
+        var fileIntegrityVerifier = _fileIntegrityVerifierFactory.GetBy(storageLocation);
+        var result = await fileIntegrityVerifier.Verify(verifyPath);
 
         storageLocation.UpdateStatistics(fileCount: result.FileCount, storageSize: result.TotalSize,
             _clock.GetUtcNow());
@@ -63,6 +66,4 @@ public sealed class StorageLocationIntegrityVerificationService(
 
         return new StorageLocationIntegrityVerificationResult(storageLocation, result, report);
     }
-
-    private sealed class DirectoryNotStorageLocationException(string? message) : Exception(message);
 }

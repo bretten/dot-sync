@@ -13,8 +13,9 @@ public interface IStorageLocationIntegrityVerificationService
     /// Should execute a integrity verification on the specified <see cref="StorageLocation"/>
     /// </summary>
     /// <param name="storageLocationType">The storage location type</param>
-    /// <param name="path">The path in the storage location</param>
+    /// <param name="storageLocationPath">The path of the storage location</param>
+    /// <param name="verifyPath">The path to verify</param>
     /// <returns>The result of the verification</returns>
     Task<StorageLocationIntegrityVerificationResult> Execute(StorageLocationType storageLocationType,
-        FileSystemPath path);
+        FileSystemPath storageLocationPath, FileSystemPath verifyPath);
 }

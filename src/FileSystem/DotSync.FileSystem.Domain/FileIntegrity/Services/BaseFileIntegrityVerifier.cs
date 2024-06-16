@@ -33,7 +33,7 @@ public abstract class BaseFileIntegrityVerifier(
     public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path)
     {
         // Reset the verified flag
-        await FileRepository.SetAllAsUnverified();
+        await FileRepository.SetAllAsUnverified(path);
 
         // Verify all files at the specified directory
         var results = await VerifyDirectory(path);

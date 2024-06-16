@@ -46,6 +46,8 @@ static Task DetermineCommand(string[] args)
     {
         "verify" => Verify(remainingArgs.ToArray()),
         "scan" => Scan(remainingArgs.ToArray()),
+        "push" => Push(remainingArgs.ToArray()),
+        "push_dir" => PushDir(remainingArgs.ToArray()),
         "storage_location" => StorageLocationAction(remainingArgs.ToArray()),
         "sort" => Sort(remainingArgs.ToArray()),
         _ => throw new UnknownCommandException($"Unknown command {command}")
@@ -54,29 +56,32 @@ static Task DetermineCommand(string[] args)
 
 static async Task Verify(string[] args)
 {
-    if (args.Length != 4)
+    if (args.Length != 5)
     {
         throw new RequiredArgumentNotProvided(
-            "Could not run verify. Parameter order is file set, storage location type, path in storage location, report output path");
+            "Could not run verify. Parameter order is file set, storage location type, path in storage location, verify path, report output path");
     }
 
     var fileSet = args[0];
     var storageLocationType =
         (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[1])!;
     var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
-    var reportOutputPath = args[3];
+    var verifyPath =
+        FileSystemPath.Create(args[3] == "." ? "" : args[3], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[4];
 
     var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
     using var host = builder.Build();
 
     var service = host.Services.GetService<IStorageLocationIntegrityVerificationService>();
+    var clock = host.Services.GetRequiredService<IClock>();
     if (service == null)
     {
         throw new ServiceNotFoundException(
             $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
     }
 
-    var result = await service.Execute(storageLocationType, storageLocationPath);
+    var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath);
     Console.WriteLine($"Storage location type: {result.StorageLocation.Type.GetDisplayName()}");
     Console.WriteLine($"Storage location path: {result.StorageLocation.Path.Value}");
     Console.WriteLine($"Total files: {result.Result.FileCount}");
@@ -84,7 +89,8 @@ static async Task Verify(string[] args)
     Console.WriteLine($"Unverified files: {result.Result.UnverifiedFiles.Count}");
     Console.WriteLine($"Files no longer in set: {result.Result.FilesNoLongerInSet.Count}");
     Console.WriteLine($"Total size (bytes): {result.Result.TotalSize}");
-    var reportFileName = $"verify_{fileSet}_{storageLocationType.GetDisplayName()}.html";
+    var reportFileName =
+        $"verify_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
     await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
 
     await host.StopAsync();
@@ -108,6 +114,7 @@ static async Task Scan(string[] args)
     using var host = builder.Build();
 
     var service = host.Services.GetService<IFileSystemScanner>();
+    var clock = host.Services.GetRequiredService<IClock>();
     if (service == null)
     {
         throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
@@ -120,10 +127,96 @@ static async Task Scan(string[] args)
         Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
     }
 
-    var reportFileName = $"scan_{fileSet}_{storageLocationType.GetDisplayName()}.html";
+    var reportFileName =
+        $"scan_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
     await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
         string.Join("<br/>",
             result.NewFiles.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
+
+    await host.StopAsync();
+}
+
+static async Task Push(string[] args)
+{
+    if (args.Length != 5)
+    {
+        throw new RequiredArgumentNotProvided(
+            "Could not run push. Parameter order is file set, source path, destination storage location type, destination path in storage location, report output path");
+    }
+
+    var fileSet = args[0];
+    var sourcePath = FileSystemPath.Create(args[1], replaceBackslashes: OperatingSystem.IsWindows());
+    var destinationType =
+        (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[2])!;
+    var destinationPath = FileSystemPath.Create(args[3], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[4];
+
+    var builder = ConfigureAndRegisterServices(fileSet, destinationType);
+    using var host = builder.Build();
+
+    var service = host.Services.GetService<IFilePusher>();
+    var clock = host.Services.GetRequiredService<IClock>();
+    if (service == null)
+    {
+        throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
+    }
+
+    var result =
+        await service.PushUnverifiedFiles(StorageLocationType.Local, sourcePath, destinationType, destinationPath);
+    Console.WriteLine("New Files:");
+    foreach (var newFile in result)
+    {
+        Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
+    }
+
+    var reportFileName =
+        $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
+        string.Join("<br/>",
+            result.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
+
+    await host.StopAsync();
+}
+
+static async Task PushDir(string[] args)
+{
+    if (args.Length != 6)
+    {
+        throw new RequiredArgumentNotProvided(
+            "Could not run push. Parameter order is file set, source root path, source push path, destination storage location type, destination path in storage location, report output path");
+    }
+
+    var fileSet = args[0];
+    var sourceRootPath = FileSystemPath.Create(args[1], replaceBackslashes: OperatingSystem.IsWindows());
+    var sourcePushPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
+    var destinationType =
+        (StorageLocationType)TypeDescriptor.GetConverter(typeof(StorageLocationType)).ConvertFrom(args[3])!;
+    var destinationRootPath = FileSystemPath.Create(args[4], replaceBackslashes: OperatingSystem.IsWindows());
+    var reportOutputPath = args[5];
+
+    var builder = ConfigureAndRegisterServices(fileSet, destinationType);
+    using var host = builder.Build();
+
+    var service = host.Services.GetService<IFilePusher>();
+    var clock = host.Services.GetRequiredService<IClock>();
+    if (service == null)
+    {
+        throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
+    }
+
+    var result = await service.PushFilesInDir(StorageLocationType.Local, sourceRootPath, sourcePushPath,
+        destinationType, destinationRootPath);
+    Console.WriteLine("New Files:");
+    foreach (var newFile in result)
+    {
+        Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
+    }
+
+    var reportFileName =
+        $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
+        string.Join("<br/>",
+            result.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
 
     await host.StopAsync();
 }
@@ -223,6 +316,15 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
+    builder.Services.AddTransient<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
+    builder.Services.AddTransient<IAmazonS3>(sp =>
+    {
+        var awsAccessKeyId = builder.Configuration[$"AmazonS3:{fileSet}:AwsAccessKey"];
+        var awsSecretAccessKey = builder.Configuration[$"AmazonS3:{fileSet}:AwsSecretAccessKey"];
+        var region = builder.Configuration[$"AmazonS3:{fileSet}:Region"];
+        return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
+            RegionEndpoint.GetBySystemName(region));
+    });
     if (storageLocationType == StorageLocationType.Local)
     {
         builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
@@ -230,20 +332,14 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     }
     else if (storageLocationType == StorageLocationType.AmazonS3)
     {
-        builder.Services.AddTransient<IAmazonS3>(sp =>
-        {
-            var awsAccessKeyId = builder.Configuration[$"AmazonS3:{fileSet}:AwsAccessKey"];
-            var awsSecretAccessKey = builder.Configuration[$"AmazonS3:{fileSet}:AwsSecretAccessKey"];
-            var region = builder.Configuration[$"AmazonS3:{fileSet}:Region"];
-            return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
-                RegionEndpoint.GetBySystemName(region));
-        });
         builder.Services.AddTransient<IFileIntegrityVerifier, AmazonS3FileIntegrityVerifier>();
+        builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>();
     }
 
     builder.Services
         .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
     builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
+    builder.Services.AddTransient<IFilePusher, FilePusher>();
 
     return builder;
 }
