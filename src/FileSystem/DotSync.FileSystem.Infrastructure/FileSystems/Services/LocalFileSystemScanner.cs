@@ -67,6 +67,12 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         var tasks = new List<Task<DotFile?>>();
         foreach (var entry in entries)
         {
+            if (entry.Attributes.HasFlag(FileAttributes.Hidden))
+            {
+                Console.WriteLine($"Skipping hidden file {entry.FullName}");
+                continue;
+            }
+
             switch (entry)
             {
                 case FileInfo info:

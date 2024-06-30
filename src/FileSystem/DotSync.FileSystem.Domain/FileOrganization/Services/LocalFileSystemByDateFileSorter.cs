@@ -61,6 +61,12 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
         var files = new List<FileInfo>();
         foreach (var entry in directory.EnumerateFileSystemInfos())
         {
+            if (entry.Attributes.HasFlag(FileAttributes.Hidden))
+            {
+                Console.WriteLine($"Skipping hidden file {entry.FullName}");
+                continue;
+            }
+
             switch (entry)
             {
                 case FileInfo info:
