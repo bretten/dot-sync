@@ -33,7 +33,8 @@ public sealed class AmazonS3FileCopier : IFileCopier
             FilePath = fileInfo.FullName,
             ChecksumAlgorithm = ChecksumAlgorithm.SHA256,
             ChecksumSHA256 = _fileChecksumGenerator.GenerateChecksum(fileInfo),
-            ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256
+            ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256,
+            StorageClass = S3StorageClass.GlacierInstantRetrieval
         };
 
         await _s3.PutObjectAsync(request);

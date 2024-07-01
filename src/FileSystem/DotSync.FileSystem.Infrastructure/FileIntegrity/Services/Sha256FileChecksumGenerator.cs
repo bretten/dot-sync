@@ -14,7 +14,7 @@ public sealed class Sha256FileChecksumGenerator : IFileChecksumGenerator
     public string GenerateChecksum(FileInfo fileInfo)
     {
         using SHA256 sha256 = SHA256.Create();
-        using FileStream fileStream = fileInfo.Open(FileMode.Open);
+        using FileStream fileStream = fileInfo.OpenRead();
 
         // Beginning of the file stream
         fileStream.Position = 0;
