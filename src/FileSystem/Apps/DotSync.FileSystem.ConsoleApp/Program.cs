@@ -68,7 +68,7 @@ static async Task Verify(string[] args)
     var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
     var verifyPath =
         FileSystemPath.Create(args[3] == "." ? "" : args[3], replaceBackslashes: OperatingSystem.IsWindows());
-    var pathsToSkip = args[4] == ""
+    var pathsToSkip = args[4] == "."
         ? new List<FileSystemPath>()
         : args[4].Split(",").Select(FileSystemPath.Create);
     var reportOutputPath = args[5];
