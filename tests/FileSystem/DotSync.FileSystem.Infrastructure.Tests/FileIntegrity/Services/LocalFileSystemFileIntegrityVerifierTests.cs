@@ -7,6 +7,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileIntegrity.Services;
@@ -69,7 +70,8 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .Returns(new DateTime(2024, 4, 25));
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
-            stubMetadataReader.Object, FileSystemPath.Create(LocalFileSystemFilesPath));
+            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubMetadataReader.Object,
+            FileSystemPath.Create(LocalFileSystemFilesPath));
 
         /*
          * Act

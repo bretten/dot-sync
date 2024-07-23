@@ -5,6 +5,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 
@@ -14,9 +15,10 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Service
 public sealed class LocalFileSystemFileIntegrityVerifier(
     IFileRepository fileRepository,
     IFileChecksumGenerator checksumGenerator,
+    ILogger<IFileIntegrityVerifier> logger,
     IFileMetadataReader metadataReader,
     FileSystemPath rootPath)
-    : BaseFileIntegrityVerifier(fileRepository, checksumGenerator)
+    : BaseFileIntegrityVerifier(fileRepository, checksumGenerator, logger)
 {
     /// <summary>
     /// Verifies the integrity of all files within the specified directory
@@ -62,13 +64,14 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden))
             {
-                Console.WriteLine($"Skipping hidden file {entry.FullName}");
+                Logger.LogWarning($"Skipping hidden file {entry.FullName}");
                 continue;
             }
 
             switch (entry)
             {
                 case FileInfo info:
+                    Logger.LogInformation($"Verifying {info.FullName}");
                     tasks.Add(VerifyFile(info));
                     break;
                 case DirectoryInfo info:
