@@ -12,6 +12,7 @@ public interface IFileIntegrityVerifier
     /// Should verify the integrity of all files within the specified path
     /// </summary>
     /// <param name="path">The path that will be verified</param>
+    /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification result for the path</returns>
-    Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path);
+    Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path, IEnumerable<FileSystemPath> pathsToSkip);
 }

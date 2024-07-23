@@ -36,7 +36,7 @@ public class AmazonS3FileIntegrityVerifierTests
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
             stubS3.Object, "bucket");
 
-        var action = async () => await verifier.Verify(FileSystemPath.Create(""));
+        var action = async () => await verifier.Verify(FileSystemPath.Create(""), Array.Empty<FileSystemPath>());
 
         // Act
         var actual = await Record.ExceptionAsync(action);
@@ -74,7 +74,8 @@ public class AmazonS3FileIntegrityVerifierTests
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
             stubS3.Object, bucketName);
 
-        var action = async () => await verifier.Verify(FileSystemPath.Create(bucketName));
+        var action = async () =>
+            await verifier.Verify(FileSystemPath.Create(bucketName), Array.Empty<FileSystemPath>());
 
         // Act
         var actual = await Record.ExceptionAsync(action);
@@ -91,6 +92,7 @@ public class AmazonS3FileIntegrityVerifierTests
         const string bucketName = "bucket";
         const string verifiedKey = "verified";
         const string unverifiedKey = "unverified";
+        const string skipKey = "skip/this/file";
         var responses = new List<ListObjectsV2Response>()
         {
             new()
@@ -112,6 +114,17 @@ public class AmazonS3FileIntegrityVerifierTests
                     new S3Object
                     {
                         Key = unverifiedKey
+                    }
+                ]
+            },
+            new()
+            {
+                HttpStatusCode = HttpStatusCode.OK,
+                S3Objects =
+                [
+                    new S3Object
+                    {
+                        Key = skipKey
                     }
                 ]
             }
@@ -146,7 +159,10 @@ public class AmazonS3FileIntegrityVerifierTests
             stubS3.Object, bucketName);
 
         // Act
-        var actual = await verifier.Verify(FileSystemPath.Create(bucketName));
+        var actual = await verifier.Verify(FileSystemPath.Create(bucketName), new List<FileSystemPath>()
+        {
+            FileSystemPath.Create("skip")
+        });
 
         // Assert
         Assert.Equal(2, actual.FileCount);
@@ -158,6 +174,10 @@ public class AmazonS3FileIntegrityVerifierTests
         Assert.Contains(
             FileIntegrityVerificationResult.Unverified(FileSystemPath.Create("unverified"), unverifiedChecksum, 0),
             actual.Results);
+        stubS3.Verify(
+            x => x.GetObjectMetadataAsync(
+                It.Is<GetObjectMetadataRequest>(y => y.Key == skipKey && y.BucketName == bucketName),
+                It.IsAny<CancellationToken>()), Times.Never);
     }
 
     private static Mock<IAmazonS3> MockS3ListObjectsV2Paginator(IEnumerable<ListObjectsV2Response> responses)

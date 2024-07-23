@@ -22,12 +22,13 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// Verifies the integrity of all files within the specified directory
     /// </summary>
     /// <param name="directoryPath">The path to the directory that will be verified</param>
+    /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the directory</returns>
     protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
-        FileSystemPath directoryPath)
+        FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip)
     {
         var dirPath = Path.Combine(rootPath.Value, directoryPath.Value);
-        var tasks = VerifyDirectory(new DirectoryInfo(dirPath));
+        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), pathsToSkip.ToList());
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
@@ -42,9 +43,19 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// Verifies the integrity of all files within the specified directory
     /// </summary>
     /// <param name="directoryInfo">The directory to verify</param>
+    /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the directory</returns>
-    private IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(DirectoryInfo directoryInfo)
+    private IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(DirectoryInfo directoryInfo,
+        List<FileSystemPath> pathsToSkip)
     {
+        // Determine this directory's relative path compared to the root directory to see if it should be skipped
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath.Value, directoryInfo.FullName),
+            replaceBackslashes: OperatingSystem.IsWindows());
+        if (pathsToSkip.Contains(relativePath))
+        {
+            return Array.Empty<Task<FileIntegrityVerificationResult>>();
+        }
+
         var entries = directoryInfo.EnumerateFileSystemInfos();
         var tasks = new List<Task<FileIntegrityVerificationResult>>();
         foreach (var entry in entries)
@@ -61,7 +72,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
                     tasks.Add(VerifyFile(info));
                     break;
                 case DirectoryInfo info:
-                    tasks.AddRange(VerifyDirectory(info));
+                    tasks.AddRange(VerifyDirectory(info, pathsToSkip));
                     break;
             }
         }

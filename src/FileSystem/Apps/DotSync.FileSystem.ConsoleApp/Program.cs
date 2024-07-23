@@ -56,10 +56,10 @@ static Task DetermineCommand(string[] args)
 
 static async Task Verify(string[] args)
 {
-    if (args.Length != 5)
+    if (args.Length != 6)
     {
         throw new RequiredArgumentNotProvided(
-            "Could not run verify. Parameter order is file set, storage location type, path in storage location, verify path, report output path");
+            "Could not run verify. Parameter order is file set, storage location type, path in storage location, verify path, paths to skip CSV, report output path");
     }
 
     var fileSet = args[0];
@@ -68,7 +68,10 @@ static async Task Verify(string[] args)
     var storageLocationPath = FileSystemPath.Create(args[2], replaceBackslashes: OperatingSystem.IsWindows());
     var verifyPath =
         FileSystemPath.Create(args[3] == "." ? "" : args[3], replaceBackslashes: OperatingSystem.IsWindows());
-    var reportOutputPath = args[4];
+    var pathsToSkip = args[4] == ""
+        ? new List<FileSystemPath>()
+        : args[4].Split(",").Select(FileSystemPath.Create);
+    var reportOutputPath = args[5];
 
     var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
     using var host = builder.Build();
@@ -81,7 +84,7 @@ static async Task Verify(string[] args)
             $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
     }
 
-    var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath);
+    var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath, pathsToSkip);
     Console.WriteLine($"Storage location type: {result.StorageLocation.Type.GetDisplayName()}");
     Console.WriteLine($"Storage location path: {result.StorageLocation.Path.Value}");
     Console.WriteLine($"Total files: {result.Result.FileCount}");

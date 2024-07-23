@@ -31,6 +31,8 @@ public class LocalFileSystemFileIntegrityVerifierTests
             Faker.FakeFile(path: "dir/checksum_fail_path_match.txt", checksum: "checksum_fail_path_match");
         // This is a new file
         var newFile = Faker.FakeFile(path: "dir2/new_file.txt", checksum: "new_file");
+        // This file is in the dir that will be skipped
+        var skipFile = Faker.FakeFile(path: "skipDir/skip.txt", checksum: "skip");
 
         // The checksum generator should generate checksums for each file
         var stubChecksumGenerator = new Mock<IFileChecksumGenerator>();
@@ -72,7 +74,10 @@ public class LocalFileSystemFileIntegrityVerifierTests
         /*
          * Act
          */
-        var actual = await verifier.Verify(FileSystemPath.Create(""));
+        var actual = await verifier.Verify(FileSystemPath.Create(""), new List<FileSystemPath>()
+        {
+            FileSystemPath.Create("skipDir")
+        });
 
         /*
          * Assert
@@ -88,6 +93,11 @@ public class LocalFileSystemFileIntegrityVerifierTests
         stubFileRepository.Verify(x => x.Add(IsDotFileWith("dir2/new_file.txt", "new_file", true)), Times.Once);
         // The other files should not have been added
         stubFileRepository.Verify(x => x.Add(It.IsAny<DotFile>()), Times.AtMostOnce);
+
+        // The skip directory should not have been touched
+        stubChecksumGenerator.Verify(x => x.GenerateChecksum(IsFileInfoWith("skip.txt")), Times.Never);
+        stubFileRepository.Verify(x => x.GetFileByChecksum(skipFile.Sha256Checksum), Times.Never);
+        stubFileRepository.Verify(x => x.GetFileByPath(skipFile.Path), Times.Never);
 
         // There should be 4 results
         Assert.Equal(4, actual.Results.Count);
