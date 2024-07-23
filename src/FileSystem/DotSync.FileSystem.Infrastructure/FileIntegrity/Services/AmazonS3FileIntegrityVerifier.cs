@@ -7,6 +7,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services.Exceptions;
+using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 
@@ -30,10 +31,12 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
+    /// <param name="logger">Logger</param>
     /// <param name="s3">Amazon S3 client</param>
     /// <param name="bucketName">The bucket name</param>
     public AmazonS3FileIntegrityVerifier(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
-        IAmazonS3 s3, string bucketName) : base(fileRepository, fileChecksumGenerator)
+        ILogger<IFileIntegrityVerifier> logger, IAmazonS3 s3, string bucketName) : base(fileRepository,
+        fileChecksumGenerator, logger)
     {
         _s3 = s3;
         _bucketName = bucketName;
@@ -81,10 +84,12 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
                 // See if the object should be skipped
                 if (prefixesToSkip.Any(prefixToSkip => s3Object.Key.StartsWith(prefixToSkip)))
                 {
+                    Logger.LogInformation($"Skipping {s3Object.Key}");
                     return;
                 }
 
                 // Verify the object
+                Logger.LogInformation($"Verifying {s3Object.Key}");
                 var result = await VerifyS3Object(s3Object);
                 results.Add(result);
             });

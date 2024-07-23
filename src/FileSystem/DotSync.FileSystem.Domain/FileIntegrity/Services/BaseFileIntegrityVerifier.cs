@@ -2,6 +2,7 @@
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 
@@ -12,7 +13,8 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 /// <param name="checksumGenerator">Generates checksums for files</param>
 public abstract class BaseFileIntegrityVerifier(
     IFileRepository fileRepository,
-    IFileChecksumGenerator checksumGenerator)
+    IFileChecksumGenerator checksumGenerator,
+    ILogger<IFileIntegrityVerifier> logger)
     : IFileIntegrityVerifier
 {
     /// <summary>
@@ -26,12 +28,18 @@ public abstract class BaseFileIntegrityVerifier(
     protected readonly IFileChecksumGenerator ChecksumGenerator = checksumGenerator;
 
     /// <summary>
+    /// Logger
+    /// </summary>
+    protected readonly ILogger<IFileIntegrityVerifier> Logger = logger;
+
+    /// <summary>
     /// Verifies the integrity of all files within the specified path
     /// </summary>
     /// <param name="path">The path that will be verified</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification result for the path</returns>
-    public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path, IEnumerable<FileSystemPath> pathsToSkip)
+    public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path,
+        IEnumerable<FileSystemPath> pathsToSkip)
     {
         // Reset the verified flag
         await FileRepository.SetAllAsUnverified(path);
@@ -54,5 +62,6 @@ public abstract class BaseFileIntegrityVerifier(
     /// <param name="directoryPath">The path to the directory that will be verified</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the directory</returns>
-    protected abstract Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip);
+    protected abstract Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath,
+        IEnumerable<FileSystemPath> pathsToSkip);
 }

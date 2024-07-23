@@ -10,6 +10,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services.Exceptions;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileIntegrity.Services;
@@ -34,7 +35,7 @@ public class AmazonS3FileIntegrityVerifierTests
         var stubS3 = MockS3ListObjectsV2Paginator(responses);
 
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
-            stubS3.Object, "bucket");
+            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object, "bucket");
 
         var action = async () => await verifier.Verify(FileSystemPath.Create(""), Array.Empty<FileSystemPath>());
 
@@ -72,7 +73,7 @@ public class AmazonS3FileIntegrityVerifierTests
             .ReturnsAsync((GetObjectMetadataResponse)null!);
 
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
-            stubS3.Object, bucketName);
+            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object, bucketName);
 
         var action = async () =>
             await verifier.Verify(FileSystemPath.Create(bucketName), Array.Empty<FileSystemPath>());
@@ -156,7 +157,7 @@ public class AmazonS3FileIntegrityVerifierTests
             .ReturnsAsync((DotFile?)null);
 
         var verifier = new AmazonS3FileIntegrityVerifier(stubFileRepository.Object, Mock.Of<IFileChecksumGenerator>(),
-            stubS3.Object, bucketName);
+            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object, bucketName);
 
         // Act
         var actual = await verifier.Verify(FileSystemPath.Create(bucketName), new List<FileSystemPath>()
