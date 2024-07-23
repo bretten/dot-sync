@@ -45,7 +45,7 @@ public sealed class StorageLocationIntegrityVerificationService(
     /// <inheritdoc cref="IStorageLocationIntegrityVerificationService.Execute"/>
     /// </summary>
     public async Task<StorageLocationIntegrityVerificationResult> Execute(StorageLocationType storageLocationType,
-        FileSystemPath storageLocationPath, FileSystemPath verifyPath)
+        FileSystemPath storageLocationPath, FileSystemPath verifyPath, IEnumerable<FileSystemPath> pathsToSkip)
     {
         var storageLocation =
             await _storageLocationRepository.GetByTypeAndPath(storageLocationType, storageLocationPath);
@@ -56,7 +56,7 @@ public sealed class StorageLocationIntegrityVerificationService(
         }
 
         var fileIntegrityVerifier = _fileIntegrityVerifierFactory.GetBy(storageLocation);
-        var result = await fileIntegrityVerifier.Verify(verifyPath);
+        var result = await fileIntegrityVerifier.Verify(verifyPath, pathsToSkip);
 
         storageLocation.UpdateStatistics(fileCount: result.FileCount, storageSize: result.TotalSize,
             _clock.GetUtcNow());

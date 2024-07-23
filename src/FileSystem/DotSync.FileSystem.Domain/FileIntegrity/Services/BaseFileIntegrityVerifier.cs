@@ -29,14 +29,15 @@ public abstract class BaseFileIntegrityVerifier(
     /// Verifies the integrity of all files within the specified path
     /// </summary>
     /// <param name="path">The path that will be verified</param>
+    /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification result for the path</returns>
-    public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path)
+    public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path, IEnumerable<FileSystemPath> pathsToSkip)
     {
         // Reset the verified flag
         await FileRepository.SetAllAsUnverified(path);
 
         // Verify all files at the specified directory
-        var results = await VerifyDirectory(path);
+        var results = await VerifyDirectory(path, pathsToSkip);
 
         // There may have been files in the repo from a previous run, but are no longer in the current filesystem
         // Files should have been verified at this point by VerifyDirectory, so we can get the remaining unverified
@@ -51,6 +52,7 @@ public abstract class BaseFileIntegrityVerifier(
     /// Verifies the integrity of all files within the specified directory
     /// </summary>
     /// <param name="directoryPath">The path to the directory that will be verified</param>
+    /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the directory</returns>
-    protected abstract Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath);
+    protected abstract Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip);
 }

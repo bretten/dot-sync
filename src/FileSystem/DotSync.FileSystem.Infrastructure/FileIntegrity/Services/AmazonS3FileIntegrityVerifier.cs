@@ -48,13 +48,16 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// Verifies the directory, in this case, an Amazon S3 bucket
     /// </summary>
     /// <param name="directoryPath">The Amazon S3 bucket name</param>
+    /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the bucket</returns>
     /// <exception cref="AmazonS3ListObjectsPaginationException">Thrown if paginating over the keys in the bucket returns a non-OK status</exception>
     protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
-        FileSystemPath directoryPath)
+        FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip)
     {
         // Will hold the individual S3 Object verification results
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
+        // Prefixes to skip since they are virtual paths
+        var prefixesToSkip = pathsToSkip.Select(x => x.Value).ToList();
 
         // Paginate over all the S3 objects in the bucket
         var request = new ListObjectsV2Request
@@ -75,6 +78,13 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
             // For each page of S3 objects, verify their checksums
             await Parallel.ForEachAsync(response.S3Objects, async (s3Object, token) =>
             {
+                // See if the object should be skipped
+                if (prefixesToSkip.Any(prefixToSkip => s3Object.Key.StartsWith(prefixToSkip)))
+                {
+                    return;
+                }
+
+                // Verify the object
                 var result = await VerifyS3Object(s3Object);
                 results.Add(result);
             });
