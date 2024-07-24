@@ -106,7 +106,14 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
         foreach (var containingDirectory in containingDirectories)
         {
             _logger.LogInformation($"Deleting containing directory {containingDirectory.FullName}");
-            containingDirectory.Delete();
+            try
+            {
+                containingDirectory.Delete();
+            }
+            catch (DirectoryNotFoundException)
+            {
+                // Directory is already removed
+            }
         }
     }
 
