@@ -55,11 +55,13 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     {
         var tasks = ScanDirectory(new DirectoryInfo(path.Value), path);
         var newFiles = new ConcurrentBag<DotFile>();
+        await _fileRepository.BeginTransaction();
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
             var result = await task;
             if (result != null) newFiles.Add(result);
         });
+        await _fileRepository.CommitTransaction();
         return new FileSystemScannerResult(newFiles.ToImmutableList());
     }
 

@@ -10,6 +10,16 @@ public sealed class EntityFrameworkCoreFileRepository(
     IDbContextFactory<FileSystemsDbContext> dbContextFactory,
     IClock clock) : IFileRepository
 {
+    public Task BeginTransaction()
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task CommitTransaction()
+    {
+        return Task.CompletedTask;
+    }
+
     public async Task Add(DotFile file)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
@@ -43,9 +53,11 @@ public sealed class EntityFrameworkCoreFileRepository(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         if (path.Value != "")
         {
-            await dbContext.FilesThatStartWith(path).ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
+            await dbContext.FilesThatStartWith(path)
+                .ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
             return;
         }
+
         await dbContext.Files.ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
     }
 
