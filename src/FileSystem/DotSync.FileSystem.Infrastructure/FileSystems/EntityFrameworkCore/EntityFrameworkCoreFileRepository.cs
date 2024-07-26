@@ -10,16 +10,6 @@ public sealed class EntityFrameworkCoreFileRepository(
     IDbContextFactory<FileSystemsDbContext> dbContextFactory,
     IClock clock) : IFileRepository
 {
-    public Task BeginTransaction()
-    {
-        return Task.CompletedTask;
-    }
-
-    public Task CommitTransaction()
-    {
-        return Task.CompletedTask;
-    }
-
     public async Task Add(DotFile file)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
