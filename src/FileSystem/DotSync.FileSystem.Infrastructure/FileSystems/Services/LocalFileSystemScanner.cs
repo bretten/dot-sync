@@ -1,9 +1,11 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 
@@ -28,24 +30,31 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     private readonly IFileChecksumGenerator _fileChecksumGenerator;
 
     /// <summary>
+    /// Logger
+    /// </summary>
+    private readonly ILogger<IFileSystemScanner> _logger;
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
     /// <param name="fileMetadataReader">Metadata reader used to get the date of the file</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
+    /// <param name="logger">Logger</param>
     public LocalFileSystemScanner(IFileRepository fileRepository, IFileMetadataReader fileMetadataReader,
-        IFileChecksumGenerator fileChecksumGenerator)
+        IFileChecksumGenerator fileChecksumGenerator, ILogger<IFileSystemScanner> logger)
     {
         _fileRepository = fileRepository;
         _fileMetadataReader = fileMetadataReader;
         _fileChecksumGenerator = fileChecksumGenerator;
+        _logger = logger;
     }
 
     /// <inheritdoc />
     public async Task<FileSystemScannerResult> Scan(FileSystemPath path)
     {
         var tasks = ScanDirectory(new DirectoryInfo(path.Value), path);
-        var newFiles = new List<DotFile>();
+        var newFiles = new ConcurrentBag<DotFile>();
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
             var result = await task;
@@ -69,13 +78,14 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden))
             {
-                Console.WriteLine($"Skipping hidden file {entry.FullName}");
+                _logger.LogWarning($"Skipping hidden file {entry.FullName}");
                 continue;
             }
 
             switch (entry)
             {
                 case FileInfo info:
+                    _logger.LogInformation($"Verifying {info.FullName}");
                     tasks.Add(ScanFile(info, rootDirectoryPath));
                     break;
                 case DirectoryInfo info:

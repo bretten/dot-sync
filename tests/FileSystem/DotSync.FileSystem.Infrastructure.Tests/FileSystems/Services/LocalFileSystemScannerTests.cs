@@ -6,6 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
+using Microsoft.Extensions.Logging;
 using Moq;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileSystems.Services;
@@ -36,7 +37,7 @@ public class LocalFileSystemScannerTests
             .Returns(newFile.Sha256Checksum.Value);
 
         var scanner = new LocalFileSystemScanner(stubFileRepository.Object, stubFileMetadataReader.Object,
-            stubChecksumGenerator.Object);
+            stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>());
 
         // Act
         var actual = await scanner.Scan(FileSystemPath.Create(LocalFileSystemFilesPath));
