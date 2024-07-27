@@ -43,9 +43,11 @@ public sealed class EntityFrameworkCoreFileRepository(
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         if (path.Value != "")
         {
-            await dbContext.FilesThatStartWith(path).ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
+            await dbContext.FilesThatStartWith(path)
+                .ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
             return;
         }
+
         await dbContext.Files.ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
     }
 

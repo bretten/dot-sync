@@ -18,11 +18,13 @@ using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Npgsql;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Npgsql;
 
 var commandTask = DetermineCommand(args);
 
@@ -311,7 +313,14 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"));
     });
-    builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
+    //builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
+    builder.Services.AddTransient<IFileRepository, NpgsqlFileRepository>(sp =>
+    {
+        var dataSource =
+            new NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"))
+                .Build();
+        return new NpgsqlFileRepository(dataSource);
+    });
     builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));

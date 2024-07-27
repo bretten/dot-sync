@@ -87,4 +87,13 @@ public sealed class DotFile(
     {
         IsVerified = true;
     }
+
+    public DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha256Checksum, long size, DateTime fileCreation,
+        bool isVerified, DateTimeOffset lastSync, DateTimeOffset firstSync) : this(id, path, sha256Checksum, size,
+        fileCreation)
+    {
+        IsVerified = isVerified;
+        LastSync = lastSync;
+        FirstSync = firstSync;
+    }
 }
