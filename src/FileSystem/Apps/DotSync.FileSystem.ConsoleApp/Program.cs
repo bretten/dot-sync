@@ -129,14 +129,14 @@ static async Task Scan(string[] args)
     Console.WriteLine("New Files:");
     foreach (var newFile in result.NewFiles)
     {
-        Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
+        Console.WriteLine($"{newFile.Item2.Value}\t{newFile.Item1.Value}");
     }
 
     var reportFileName =
         $"scan_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
     await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
         string.Join("<br/>",
-            result.NewFiles.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
+            result.NewFiles.Select(x => $"{x.Item2.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Item1.Value}")));
 
     await host.StopAsync();
 }

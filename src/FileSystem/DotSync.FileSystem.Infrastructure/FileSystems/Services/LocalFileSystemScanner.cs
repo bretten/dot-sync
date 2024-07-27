@@ -54,7 +54,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     public async Task<FileSystemScannerResult> Scan(FileSystemPath path)
     {
         var tasks = ScanDirectory(new DirectoryInfo(path.Value), path);
-        var newFiles = new ConcurrentBag<DotFile>();
+        var newFiles = new ConcurrentBag<Tuple<FileSystemPath, FileSha256Checksum>>();
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
             var result = await task;
@@ -69,11 +69,11 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="directoryInfo">The directory to scan</param>
     /// <param name="rootDirectoryPath">The original root directory that is being scanned</param>
     /// <returns>New files found in the directory</returns>
-    private IEnumerable<Task<DotFile?>> ScanDirectory(DirectoryInfo directoryInfo,
+    private IEnumerable<Task<Tuple<FileSystemPath, FileSha256Checksum>?>> ScanDirectory(DirectoryInfo directoryInfo,
         FileSystemPath rootDirectoryPath)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
-        var tasks = new List<Task<DotFile?>>();
+        var tasks = new List<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>();
         foreach (var entry in entries)
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden))
@@ -85,7 +85,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             switch (entry)
             {
                 case FileInfo info:
-                    _logger.LogInformation($"Verifying {info.FullName}");
+                    _logger.LogInformation($"Scanning {info.FullName}");
                     tasks.Add(ScanFile(info, rootDirectoryPath));
                     break;
                 case DirectoryInfo info:
@@ -103,7 +103,8 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="fileInfo">The file</param>
     /// <param name="rootDirectoryPath">The original root directory of the file</param>
     /// <returns><see cref="DotFile"/> if it is a new file, otherwise null</returns>
-    private async Task<DotFile?> ScanFile(FileInfo fileInfo, FileSystemPath rootDirectoryPath)
+    private async Task<Tuple<FileSystemPath, FileSha256Checksum>?> ScanFile(FileInfo fileInfo,
+        FileSystemPath rootDirectoryPath)
     {
         // Determine its relative path compared to the root directory
         var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName),
@@ -126,6 +127,6 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         // The file could not be found via checksum or file path. It is a new file, so add it
         var newFile = new DotFile(Guid.NewGuid(), relativePath, checksum, fileInfo.Length, fileCreation);
         await _fileRepository.Add(newFile);
-        return newFile;
+        return new Tuple<FileSystemPath, FileSha256Checksum>(relativePath, checksum);
     }
 }
