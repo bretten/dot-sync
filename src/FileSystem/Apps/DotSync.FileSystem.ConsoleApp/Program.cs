@@ -345,7 +345,14 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     else if (storageLocationType == StorageLocationType.AmazonS3)
     {
         builder.Services.AddTransient<IFileIntegrityVerifier, AmazonS3FileIntegrityVerifier>();
-        builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>();
+        builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>(sp =>
+        {
+            var storageClass = S3StorageClass.FindValue(builder.Configuration[$"AmazonS3:{fileSet}:StorageClass"]) ??
+                               throw new ArgumentException($"Storage class not defined for {fileSet}");
+
+            return new AmazonS3FileCopier(sp.GetRequiredService<IFileChecksumGenerator>(),
+                sp.GetRequiredService<IAmazonS3>(), storageClass);
+        });
     }
 
     builder.Services
