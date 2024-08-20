@@ -6,6 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
+using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
@@ -13,7 +14,8 @@ public sealed class FilePusher(
     IStorageLocationRepository storageLocationRepository,
     IFileRepository fileRepository,
     ITenantContext tenantContext,
-    IFileCopier fileCopier) : TenantAware(tenantContext), IFilePusher
+    IFileCopier fileCopier,
+    ILogger<FilePusher> logger) : TenantAware(tenantContext), IFilePusher
 {
     public async Task<IEnumerable<DotFile>> PushUnverifiedFiles(StorageLocationType sourceType,
         FileSystemPath sourceRootPath, StorageLocationType destinationType, FileSystemPath destinationRootPath)
@@ -35,6 +37,7 @@ public sealed class FilePusher(
 
         foreach (var file in unverifiedFiles)
         {
+            logger.LogInformation($"Uploading {file.Path}");
             await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
         }
 
@@ -62,6 +65,7 @@ public sealed class FilePusher(
 
         foreach (var file in files)
         {
+            logger.LogInformation($"Uploading {file.Path}");
             await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
         }
 
