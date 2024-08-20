@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -21,9 +22,12 @@ public sealed class NpgsqlFileRepository : IFileRepository
     //private TransactionScope _transaction;
     private readonly NpgsqlDataSource _dataSource;
 
-    public NpgsqlFileRepository(NpgsqlDataSource dataSource)
+    private readonly IClock _clock;
+
+    public NpgsqlFileRepository(NpgsqlDataSource dataSource, IClock clock)
     {
         _dataSource = dataSource;
+        _clock = clock;
     }
 
     // public async Task BeginTransaction()
@@ -45,6 +49,8 @@ public sealed class NpgsqlFileRepository : IFileRepository
 
     public async Task Add(DotFile file)
     {
+        file.LastSync = _clock.GetUtcNow();
+
         await using var connection = await _dataSource.OpenConnectionAsync();
         //connection.EnlistTransaction(Transaction.Current);
         await using var command = new NpgsqlCommand(FilesInsertCommand, connection);
@@ -54,20 +60,25 @@ public sealed class NpgsqlFileRepository : IFileRepository
         command.Parameters.Add(new NpgsqlParameter { Value = file.Size, DbType = DbType.Int64 });
         command.Parameters.Add(new NpgsqlParameter { Value = file.FileCreation, DbType = DbType.Date });
         command.Parameters.Add(new NpgsqlParameter { Value = file.IsVerified, DbType = DbType.Boolean });
-        command.Parameters.Add(new NpgsqlParameter { Value = file.LastSync, DbType = DbType.DateTimeOffset });
-        command.Parameters.Add(new NpgsqlParameter { Value = file.FirstSync, DbType = DbType.DateTimeOffset });
+        command.Parameters.Add(new NpgsqlParameter
+            { Value = file.LastSync.ToUniversalTime(), DbType = DbType.DateTimeOffset });
+        command.Parameters.Add(new NpgsqlParameter
+            { Value = file.FirstSync.ToUniversalTime(), DbType = DbType.DateTimeOffset });
         await command.ExecuteScalarAsync();
     }
 
     public async Task Update(DotFile file)
     {
+        file.LastSync = _clock.GetUtcNow();
+
         await using var connection = await _dataSource.OpenConnectionAsync();
         //connection.EnlistTransaction(Transaction.Current);
         await using var command = new NpgsqlCommand(FilesUpdateCommand, connection);
         command.Parameters.Add(new NpgsqlParameter { Value = file.Id, DbType = DbType.Guid });
         command.Parameters.Add(new NpgsqlParameter { Value = file.Path.Value, DbType = DbType.String });
         command.Parameters.Add(new NpgsqlParameter { Value = file.IsVerified, DbType = DbType.Boolean });
-        command.Parameters.Add(new NpgsqlParameter { Value = file.LastSync, DbType = DbType.DateTimeOffset });
+        command.Parameters.Add(new NpgsqlParameter
+            { Value = file.LastSync.ToUniversalTime(), DbType = DbType.DateTimeOffset });
         await command.ExecuteScalarAsync();
     }
 
@@ -87,8 +98,8 @@ public sealed class NpgsqlFileRepository : IFileRepository
         var size = reader.GetInt64(3);
         var fileCreation = reader.GetDateTime(4);
         var isVerified = reader.GetBoolean(5);
-        var lastSync = reader.GetDateTime(6);
-        var firstSync = reader.GetDateTime(7);
+        var lastSync = reader.GetDateTime(6).ToUniversalTime();
+        var firstSync = reader.GetDateTime(7).ToUniversalTime();
         await reader.CloseAsync();
         return new DotFile(id, FileSystemPath.Create(path), checksum, size, fileCreation, isVerified, lastSync,
             firstSync);
@@ -110,8 +121,8 @@ public sealed class NpgsqlFileRepository : IFileRepository
         var size = reader.GetInt64(3);
         var fileCreation = reader.GetDateTime(4);
         var isVerified = reader.GetBoolean(5);
-        var lastSync = reader.GetDateTime(6);
-        var firstSync = reader.GetDateTime(7);
+        var lastSync = reader.GetDateTime(6).ToUniversalTime();
+        var firstSync = reader.GetDateTime(7).ToUniversalTime();
         await reader.CloseAsync();
         return new DotFile(id, path, FileSha256Checksum.Create(checksum), size, fileCreation, isVerified, lastSync,
             firstSync);
@@ -148,8 +159,8 @@ public sealed class NpgsqlFileRepository : IFileRepository
             var size = reader.GetInt64(3);
             var fileCreation = reader.GetDateTime(4);
             var isVerified = reader.GetBoolean(5);
-            var lastSync = reader.GetDateTime(6);
-            var firstSync = reader.GetDateTime(7);
+            var lastSync = reader.GetDateTime(6).ToUniversalTime();
+            var firstSync = reader.GetDateTime(7).ToUniversalTime();
             entries.Add(new DotFile(id, FileSystemPath.Create(path), FileSha256Checksum.Create(checksum), size,
                 fileCreation, isVerified, lastSync, firstSync));
         }
@@ -175,8 +186,8 @@ public sealed class NpgsqlFileRepository : IFileRepository
             var size = reader.GetInt64(3);
             var fileCreation = reader.GetDateTime(4);
             var isVerified = reader.GetBoolean(5);
-            var lastSync = reader.GetDateTime(6);
-            var firstSync = reader.GetDateTime(7);
+            var lastSync = reader.GetDateTime(6).ToUniversalTime();
+            var firstSync = reader.GetDateTime(7).ToUniversalTime();
             entries.Add(new DotFile(id, FileSystemPath.Create(pathStr), FileSha256Checksum.Create(checksum), size,
                 fileCreation, isVerified, lastSync, firstSync));
         }

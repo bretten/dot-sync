@@ -1,10 +1,12 @@
 ﻿using System.Data.Common;
+using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Npgsql;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -67,7 +69,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
 
         fakeFile.SetAsVerified();
         fakeFile.UpdatePath(FileSystemPath.Create("updated/path/file.txt"));
-        fakeFile.LastSync = new DateTimeOffset(2024, 7, 27, 1, 1, 1, TimeSpan.Zero);
+        fakeFile.LastSync = ClockTime;
 
         var repo = await GetRepo();
         await repo.Add(fakeFile);
@@ -82,7 +84,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
         Assert.NotNull(actual);
         Assert.NotNull(actual2);
         var expectedFile = Faker.FakeFile(path: "updated/path/file.txt", checksum: "file", size: 10, isVerified: true,
-            lastSync: new DateTimeOffset(2024, 7, 27, 1, 1, 1, TimeSpan.Zero));
+            lastSync: ClockTime);
         var expectedFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
             isVerified: false);
         Assert.True(Equal(expectedFile, actual));
@@ -263,17 +265,19 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _container.StopAsync();
 
+    private static readonly DateTimeOffset ClockTime = new(2024, 7, 26, 1, 2, 3, TimeSpan.FromHours(0));
+
     private async Task<NpgsqlFileRepository> GetRepo()
     {
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
         await dbContext.Database.MigrateAsync();
 
-        // var stubClock = new Mock<IClock>();
-        // stubClock.Setup(x => x.GetUtcNow())
-        //     .Returns(new DateTimeOffset(2024, 7, 26, 1, 2, 3, TimeSpan.FromHours(-7)));
+        var stubClock = new Mock<IClock>();
+        stubClock.Setup(x => x.GetUtcNow())
+            .Returns(ClockTime);
 
-        return new NpgsqlFileRepository(GetNpgsqlDataSource());
+        return new NpgsqlFileRepository(GetNpgsqlDataSource(), stubClock.Object);
     }
 
     private NpgsqlDataSource GetNpgsqlDataSource()

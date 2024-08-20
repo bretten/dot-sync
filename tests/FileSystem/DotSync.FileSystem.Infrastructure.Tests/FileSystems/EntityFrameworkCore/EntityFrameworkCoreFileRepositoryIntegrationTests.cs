@@ -158,8 +158,8 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
     public async Task SetAllAsUnverified_VerifiedFiles_SetsAllAsUnverified()
     {
         // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file");
-        var fakeFile2 = Faker.FakeFile(path: "path/to/file2.txt", checksum: "file2");
+        var fakeFile = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
+        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
@@ -192,10 +192,10 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
     public async Task GetUnverifiedFiles_MixOfVerifiedAndUnverifiedFiles_ReturnsUnverifiedFiles()
     {
         // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file");
-        var fakeFile2 = Faker.FakeFile(path: "path/to/file2.txt", checksum: "file2");
-        var fakeFile3 = Faker.FakeFile(path: "path/to/file3.txt", checksum: "file3");
-        var fakeFile4 = Faker.FakeFile(path: "path/to/file4.txt", checksum: "file4");
+        var fakeFile = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
+        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
+        var fakeFile3 = Faker.FakeFile(id: Faker.Guid3, path: "path/to/file3.txt", checksum: "file3");
+        var fakeFile4 = Faker.FakeFile(id: Faker.Guid4, path: "path/to/file4.txt", checksum: "file4");
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);

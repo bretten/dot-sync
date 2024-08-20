@@ -313,14 +313,14 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"));
     });
-    //builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
-    builder.Services.AddTransient<IFileRepository, NpgsqlFileRepository>(sp =>
-    {
-        var dataSource =
-            new NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"))
-                .Build();
-        return new NpgsqlFileRepository(dataSource);
-    });
+    builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
+    // builder.Services.AddTransient<IFileRepository, NpgsqlFileRepository>(sp =>
+    // {
+    //     var dataSource =
+    //         new NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"))
+    //             .Build();
+    //     return new NpgsqlFileRepository(dataSource, sp.GetRequiredService<IClock>());
+    // });
     builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));
