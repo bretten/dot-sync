@@ -5,6 +5,7 @@ using Amazon.S3.Transfer;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Aws;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 
@@ -54,6 +55,7 @@ public sealed class AmazonS3FileCopier : IFileCopier
             ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256,
             StorageClass = S3StorageClass.GlacierInstantRetrieval
         };
+        request.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum, _fileChecksumGenerator.GenerateChecksum(fileInfo));
 
         await _s3.PutObjectAsync(request);
     }
@@ -72,6 +74,8 @@ public sealed class AmazonS3FileCopier : IFileCopier
             // The SHA256 checksum cannot be set for a multipart upload because it is generated as a composite of all the files, so we will force a copy and a regeneration of the checksum on S3's side
             StorageClass = S3StorageClass.Standard,
         };
+        fileTransferUtilityRequest.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum,
+            _fileChecksumGenerator.GenerateChecksum(fileInfo));
 
         await fileTransferUtility.UploadAsync(fileTransferUtilityRequest);
 

@@ -6,6 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Aws;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services.Exceptions;
 using Microsoft.Extensions.Logging;
 
@@ -127,6 +128,10 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
 
     /// <summary>
     /// Gets the SHA256 checksum of the S3 Object specified by the key
+    ///
+    /// S3 checksum needs to be present. If the s3 and metadata (user defined) checksums are not equal, that means
+    /// the file was uploaded in parts and the checksum is based on all parts. So use the fallback checksum in
+    /// the metadata which is based on the whole file.
     /// </summary>
     /// <param name="key">The key of the S3 Object</param>
     /// <returns>The SHA256 checksum</returns>
@@ -134,12 +139,17 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     private async Task<string> GetS3ObjectSha256Checksum(string key)
     {
         var metaData = await GetObjectMetadata(key);
-        if (string.IsNullOrWhiteSpace(metaData?.ChecksumSHA256))
+        var s3Checksum = metaData?.ChecksumSHA256;
+        var metadataChecksum = metaData?.Metadata[Constants.Metadata.Keys.Sha256Checksum];
+
+        if (string.IsNullOrWhiteSpace(s3Checksum))
         {
             throw new AmazonS3MissingChecksumException($"No checksum for S3 Object: {key}");
         }
 
-        return metaData.ChecksumSHA256;
+        var equal = s3Checksum == metadataChecksum;
+
+        return !equal && !string.IsNullOrWhiteSpace(metadataChecksum) ? metadataChecksum : s3Checksum;
     }
 
     /// <summary>
