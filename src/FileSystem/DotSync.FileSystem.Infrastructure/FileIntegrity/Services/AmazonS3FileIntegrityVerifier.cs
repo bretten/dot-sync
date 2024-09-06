@@ -6,6 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Aws;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services.Exceptions;
 using Microsoft.Extensions.Logging;
 
@@ -134,12 +135,13 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     private async Task<string> GetS3ObjectSha256Checksum(string key)
     {
         var metaData = await GetObjectMetadata(key);
-        if (string.IsNullOrWhiteSpace(metaData?.ChecksumSHA256))
+        var checksum = metaData?.ChecksumSHA256 ?? metaData?.Metadata[Constants.Metadata.Keys.Sha256Checksum] ?? null;
+        if (string.IsNullOrWhiteSpace(checksum))
         {
             throw new AmazonS3MissingChecksumException($"No checksum for S3 Object: {key}");
         }
 
-        return metaData.ChecksumSHA256;
+        return checksum;
     }
 
     /// <summary>
