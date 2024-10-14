@@ -54,7 +54,7 @@ public sealed class HtmlIntegrityReporter : IIntegrityReporter
         b.AppendLine("<h2>Files no longer in set</h2>");
         b.AppendLine("<table>");
         b.AppendLine("<tr><th>Path</th><th>Checksum</th></tr>");
-        foreach (var file in result.FilesNoLongerInSet)
+        foreach (var file in result.FilesNoLongerInSet.OrderBy(x => x.Path.Value))
         {
             b.AppendLine($"<tr><td>{file.Path.Value}</td><td>{file.Sha256Checksum.Value}</td></tr>");
         }
