@@ -18,13 +18,12 @@ using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Npgsql;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Npgsql;
+using Microsoft.Extensions.Logging;
 
 var commandTask = DetermineCommand(args);
 
@@ -211,11 +210,11 @@ static async Task PushDir(string[] args)
 
     var result = await service.PushFilesInDir(StorageLocationType.Local, sourceRootPath, sourcePushPath,
         destinationType, destinationRootPath);
-    Console.WriteLine("New Files:");
-    foreach (var newFile in result)
-    {
-        Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
-    }
+    // Console.WriteLine("New Files:");
+    // foreach (var newFile in result)
+    // {
+    //     Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
+    // }
 
     var reportFileName =
         $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
@@ -351,7 +350,7 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
                                throw new ArgumentException($"Storage class not defined for {fileSet}");
 
             return new AmazonS3FileCopier(sp.GetRequiredService<IFileChecksumGenerator>(),
-                sp.GetRequiredService<IAmazonS3>(), storageClass);
+                sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
         });
     }
 

@@ -37,7 +37,7 @@ public sealed class FilePusher(
 
         foreach (var file in unverifiedFiles)
         {
-            logger.LogInformation($"Uploading {file.Path}");
+            //logger.LogInformation($"Uploading {file.Path}");
             await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
         }
 
@@ -65,7 +65,7 @@ public sealed class FilePusher(
 
         foreach (var file in files)
         {
-            logger.LogInformation($"Uploading {file.Path}");
+            //logger.LogInformation($"Uploading {file.Path}");
             await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
         }
 
