@@ -6,6 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Aws;
+using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 
@@ -17,19 +18,24 @@ public sealed class AmazonS3FileCopier : IFileCopier
 
     private readonly S3StorageClass _storageClass;
 
+    private readonly ILogger<AmazonS3FileCopier> _logger;
+
     private const long SinglePartUploadMaxSize = 5368709120;
 
-    public AmazonS3FileCopier(IFileChecksumGenerator fileChecksumGenerator, IAmazonS3 s3, S3StorageClass storageClass)
+    public AmazonS3FileCopier(IFileChecksumGenerator fileChecksumGenerator, IAmazonS3 s3, S3StorageClass storageClass,
+        ILogger<AmazonS3FileCopier> logger)
     {
         _fileChecksumGenerator = fileChecksumGenerator;
         _s3 = s3;
         _storageClass = storageClass;
+        _logger = logger;
     }
 
     public async Task CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination)
     {
         var exists = await Exists(destination.Value, sourceFile.Value);
         if (exists) return;
+        _logger.LogInformation($"Uploading {sourcePath.Value}/{sourceFile.Value}");
 
         var fileInfo =
             new FileInfo(FileSystemPath.Create(Path.Combine(sourcePath.Value, sourceFile.Value), true).Value);
@@ -53,7 +59,7 @@ public sealed class AmazonS3FileCopier : IFileCopier
             ChecksumAlgorithm = ChecksumAlgorithm.SHA256,
             ChecksumSHA256 = _fileChecksumGenerator.GenerateChecksum(fileInfo),
             ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256,
-            StorageClass = S3StorageClass.GlacierInstantRetrieval
+            StorageClass = _storageClass
         };
         request.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum, _fileChecksumGenerator.GenerateChecksum(fileInfo));
 
@@ -72,15 +78,15 @@ public sealed class AmazonS3FileCopier : IFileCopier
             ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256,
             PartSize = 6291456, // 6 MB, the size of the parts uploaded
             // The SHA256 checksum cannot be set for a multipart upload because it is generated as a composite of all the files, so we will force a copy and a regeneration of the checksum on S3's side
-            StorageClass = S3StorageClass.Standard,
+            StorageClass = _storageClass
         };
         fileTransferUtilityRequest.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum,
             _fileChecksumGenerator.GenerateChecksum(fileInfo));
 
         await fileTransferUtility.UploadAsync(fileTransferUtilityRequest);
 
-        // Force a copy and regeneration of the checksum on s3's side
-        await UpdateStorageClass(destination.Value, sourceFile.Value);
+        // Force a copy and regeneration of the checksum on s3's side. NOTE: This doesn't work because the same logic applies to copying as well as uploading, copy file size can't exceed the upload size
+        //await UpdateStorageClass(destination.Value, sourceFile.Value);
     }
 
     /// <summary>
