@@ -14,11 +14,14 @@
 
     <ItemGroup>
       <PackageReference Include="AWSSDK.S3" Version="3.7.309.4" />
+      <PackageReference Include="Hangfire.AspNetCore" Version="1.8.20" />
+      <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.4" />
+      <PackageReference Include="Microsoft.Extensions.Logging.Configuration" Version="9.0.6" />
       <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
     </ItemGroup>
 

@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <RootNamespace>com.brettnamba.DotSync.FileSystem.ConsoleApp</RootNamespace>
+        <UserSecretsId>9898efc3-54fc-4215-bab9-b1e5961f297d</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>

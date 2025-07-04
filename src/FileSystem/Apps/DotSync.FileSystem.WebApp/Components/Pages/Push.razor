@@ -1,0 +1,121 @@
+@page "/Push"
+@inject JobComponent JobComponent
+@using System.ComponentModel.DataAnnotations
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
+@implements IDisposable
+@rendermode InteractiveServer
+
+<div class="container">
+    <h3>Push</h3>
+</div>
+
+<div class="container">
+    <EditForm Model="PushModel" OnSubmit="ExecutePush" FormName="Push">
+        <div class="mb-3">
+            <label class="form-label">Source Root Path:</label>
+            <InputText @bind-Value="PushModel!.SourceRootPath" class="form-control"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Source Push Path:</label>
+            <InputText @bind-Value="PushModel!.SourcePushPath" class="form-control"/>
+        </div>
+        <div class="input-group mb-3">
+            <label class="input-group-text">Destination Type</label>
+            <InputSelect @bind-Value="PushModel!.DestinationType" class="form-select">
+                @foreach (var t in Enum.GetValues<StorageLocationType>())
+                {
+                    <option value="@t">@t</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Destination Path:</label>
+            <InputText @bind-Value="PushModel!.DestinationPath" class="form-control"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </EditForm>
+</div>
+
+<hr/>
+
+<div class="container">
+    <JobProgress Messages="@_progressMessages"/>
+</div>
+
+<hr/>
+
+<div class="container">
+    <FileList Files="@_result"/>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm(FormName = "Push")]
+    private PushForm? PushModel { get; set; }
+
+    private readonly List<string> _progressMessages = new List<string>();
+    private List<string>? _result;
+
+    protected override void OnInitialized()
+    {
+        JobComponent.OnInitialized();
+
+        JobComponent.JobResultProvider.JobCompleted += ParseResult;
+        JobComponent.ProgressReporter.ProgressReported += ReportProgress;
+        PushModel ??= new PushForm()
+        {
+            SourceRootPath = JobComponent.DefaultLocalStorage,
+            DestinationType = StorageLocationType.AmazonS3,
+            DestinationPath = JobComponent.DefaultS3Storage
+        };
+    }
+
+    private async Task ExecutePush()
+    {
+        JobComponent.Logger.LogInformation($"Pushing {PushModel!.SourceRootPath} {PushModel.SourcePushPath} to {PushModel.DestinationType} {PushModel.DestinationPath}");
+        await JobComponent.JobManager.RunJob(new PushParameters(PushModel.SourceRootPath, PushModel.SourcePushPath, PushModel.DestinationType, PushModel.DestinationPath));
+    }
+
+    private void ParseResult(object? sender, JobResult data)
+    {
+        if (data.JobParameters is not PushParameters)
+        {
+            throw new ArgumentException("Invalid parameters");
+        }
+
+        _result = (data.Result as IEnumerable<DotFile> ?? []).Select(x => x.Path.Value).ToList();
+
+        InvokeAsync(StateHasChanged);
+        _progressMessages.Clear();
+    }
+
+    private void ReportProgress(object? sender, string progress)
+    {
+        _progressMessages.Add(progress);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        JobComponent.JobResultProvider.JobCompleted -= ParseResult;
+        JobComponent.ProgressReporter.ProgressReported -= ReportProgress;
+        JobComponent.Dispose();
+    }
+
+    public class PushForm
+    {
+        public string SourceRootPath { get; set; } = null!;
+        public string SourcePushPath { get; set; } = null!;
+
+        [Required, EnumDataType(typeof(StorageLocationType))]
+        public StorageLocationType DestinationType { get; set; }
+
+        public string DestinationPath { get; set; } = null!;
+    }
+
+}

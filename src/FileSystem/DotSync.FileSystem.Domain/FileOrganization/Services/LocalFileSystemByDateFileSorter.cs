@@ -33,7 +33,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <summary>
     /// <inheritdoc cref="IFileSorter.Sort"/>
     /// </summary>
-    public Task Sort(FileSystemPath sourcePath, FileSystemPath destinationPath)
+    public Task<IEnumerable<string>> Sort(FileSystemPath sourcePath, FileSystemPath destinationPath)
     {
         var sourceDirectoryInfo = new DirectoryInfo(sourcePath.Value);
 
@@ -41,16 +41,18 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
         var sourceDirectories = sourceDirectoryInfo.EnumerateFileSystemInfos()
             .OfType<DirectoryInfo>();
 
+        var result = new List<string>();
+
         // Each directory in the source path will be used to determine where each file will be sorted
         foreach (var sourceDirectory in sourceDirectories)
         {
             // Get the files in the source dir
             var files = GetFilesInDirectory(sourceDirectory);
             // Move the files to the destination
-            MoveFiles(sourceDirectory, files, destinationPath);
+            result.AddRange(MoveFiles(sourceDirectory, files, destinationPath));
         }
 
-        return Task.CompletedTask;
+        return Task.FromResult(result.AsEnumerable());
     }
 
     /// <summary>
@@ -87,8 +89,11 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <param name="sourceDirectory">The original top-level directory of the file</param>
     /// <param name="files">The files to be moved</param>
     /// <param name="destinationPath">The destination</param>
-    private void MoveFiles(DirectoryInfo sourceDirectory, IEnumerable<FileInfo> files, FileSystemPath destinationPath)
+    /// <returns>Files that were moved</returns>
+    private List<string> MoveFiles(DirectoryInfo sourceDirectory, IEnumerable<FileInfo> files,
+        FileSystemPath destinationPath)
     {
+        var result = new List<string>();
         var containingDirectories = new List<DirectoryInfo>();
         foreach (var file in files)
         {
@@ -99,7 +104,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
             if (file.Directory != null) containingDirectories.Add(file.Directory);
 
             // Move the file
-            MoveFile(sourceDirectory, date, destinationPath, file);
+            result.Add(MoveFile(sourceDirectory, date, destinationPath, file));
         }
 
         // Remove the containing directories
@@ -115,6 +120,8 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
                 // Directory is already removed
             }
         }
+
+        return result;
     }
 
     /// <summary>
@@ -124,8 +131,9 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <param name="fileDate">The date of the file</param>
     /// <param name="destinationPath">The destination path</param>
     /// <param name="file">The file to move</param>
+    /// <returns>New path</returns>
     /// <exception cref="FileAlreadyExistsAtMoveDestinationException">Thrown if there is already a file at the specified location</exception>
-    private void MoveFile(DirectoryInfo sourceDirectory, DateTime fileDate, FileSystemPath destinationPath,
+    private string MoveFile(DirectoryInfo sourceDirectory, DateTime fileDate, FileSystemPath destinationPath,
         FileInfo file)
     {
         // If the file was located at path/to/file.txt, the sourceDirectory would be "path"
@@ -142,6 +150,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
 
         _logger.LogInformation($"Moving {file.FullName} to {newPath}");
         File.Move(file.FullName, newPath);
+        return newPath;
     }
 
     private sealed class FileAlreadyExistsAtMoveDestinationException(string? message) : Exception(message);

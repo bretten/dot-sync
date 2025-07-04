@@ -1,0 +1,15 @@
+<div class="overflow-auto progress-window">
+    @foreach (var msg in Messages ?? [])
+    {
+        @msg<br/>
+    }
+</div>
+<div class="container">
+    <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="Clear">Clear</button>
+</div>
+
+@code {
+    [Parameter] public List<string>? Messages { get; set; }
+
+    private void Clear() => Messages?.Clear();
+}

@@ -279,7 +279,11 @@ static async Task Sort(string[] args)
     var builder = Host.CreateApplicationBuilder();
     var env = builder.Environment.EnvironmentName;
     builder.Configuration.AddJsonFile("appsettings.json");
-    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json", optional: true);
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddUserSecrets<Program>();
+    }
 
     builder.Services.AddLogging();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
@@ -302,7 +306,11 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
 
     var env = builder.Environment.EnvironmentName;
     builder.Configuration.AddJsonFile("appsettings.json");
-    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json", optional: true);
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddUserSecrets<Program>();
+    }
 
     builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant(fileSet)));
     builder.Services.AddTransient<ITenantAware, TenantAware>();
