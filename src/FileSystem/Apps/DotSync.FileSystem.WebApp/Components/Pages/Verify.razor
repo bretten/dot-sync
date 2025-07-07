@@ -90,10 +90,12 @@
 
         var files = data.Result is StorageLocationIntegrityVerificationResult ? (StorageLocationIntegrityVerificationResult)data.Result : default;
         var verifiedFiles = files.Result.Results.Select(x => (string[])[x.Path.Value, x.Checksum.Value, x.Size.ToString()]).ToImmutableList();
+        var unverifiedFiles = files.Result.UnverifiedFiles.Select(x => (string[])[x.Path.Value, x.Checksum.Value, x.Size.ToString()]).ToImmutableList();
         var noLongerInSetFiles = files.Result.FilesNoLongerInSet.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         _result = new Dictionary<string, IReadOnlyList<string[]>>()
         {
             { "Verified", verifiedFiles },
+            { "Unverified", unverifiedFiles },
             { "No Longer in Set", noLongerInSetFiles }
         };
 
