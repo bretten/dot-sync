@@ -1,0 +1,104 @@
+@page "/Sort"
+@inject JobComponent JobComponent
+@using System.Collections.Immutable
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
+@implements IDisposable
+@rendermode InteractiveServer
+
+<div class="container">
+    <h3>Sort</h3>
+</div>
+
+<div class="container">
+    <EditForm Model="SortModel" OnSubmit="ExecuteSort" FormName="Sort">
+        <div class="mb-3">
+            <label class="form-label">Source Path:</label>
+            <InputText @bind-Value="SortModel!.SourcePath" class="form-control"/>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Destination Path:</label>
+            <InputText @bind-Value="SortModel!.DestinationPath" class="form-control"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </EditForm>
+</div>
+
+<hr/>
+
+<div class="container">
+    <JobProgress Messages="@_progressMessages"/>
+</div>
+
+<hr/>
+
+<div class="container">
+    <FileList Files="@_result"/>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm(FormName = "Sort")]
+    private SortForm? SortModel { get; set; }
+
+    private readonly List<string> _progressMessages = new List<string>();
+    private Dictionary<string, IReadOnlyList<string[]>>? _result;
+
+    protected override void OnInitialized()
+    {
+        JobComponent.OnInitialized();
+
+        JobComponent.JobResultProvider.JobCompleted += ParseResult;
+        JobComponent.ProgressReporter.ProgressReported += ReportProgress;
+        SortModel ??= new SortForm()
+        {
+            DestinationPath = JobComponent.DefaultLocalStorage
+        };
+    }
+
+    private async Task ExecuteSort()
+    {
+        JobComponent.Logger.LogInformation($"Sorting {SortModel!.SourcePath} to {SortModel.DestinationPath}");
+        await JobComponent.JobManager.RunJob(new SortParameters(SortModel.SourcePath, SortModel.DestinationPath));
+    }
+
+    private void ParseResult(object? sender, JobResult data)
+    {
+        if (data.JobParameters is not SortParameters)
+        {
+            throw new ArgumentException("Invalid parameters");
+        }
+
+        _result = new Dictionary<string, IReadOnlyList<string[]>>()
+        {
+            {
+                "Files", ((List<string>)data.Result).Select(x => (string[])[x]).ToImmutableList()
+            }
+        };
+
+        InvokeAsync(StateHasChanged);
+        _progressMessages.Clear();
+    }
+
+    private void ReportProgress(object? sender, string progress)
+    {
+        _progressMessages.Add(progress);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        JobComponent.JobResultProvider.JobCompleted -= ParseResult;
+        JobComponent.ProgressReporter.ProgressReported -= ReportProgress;
+        JobComponent.Dispose();
+    }
+
+    public class SortForm
+    {
+        public string SourcePath { get; set; } = null!;
+        public string DestinationPath { get; set; } = null!;
+    }
+
+}

@@ -77,7 +77,9 @@ static async Task Verify(string[] args)
     var builder = ConfigureAndRegisterServices(fileSet, storageLocationType);
     using var host = builder.Build();
 
-    var service = host.Services.GetService<IStorageLocationIntegrityVerificationService>();
+    var scopeFactory = host.Services.GetRequiredService<IServiceScopeFactory>();
+    using var scope = scopeFactory.CreateScope();
+    var service = scope.ServiceProvider.GetService<IStorageLocationIntegrityVerificationService>();
     var clock = host.Services.GetRequiredService<IClock>();
     if (service == null)
     {
@@ -201,8 +203,10 @@ static async Task PushDir(string[] args)
     var builder = ConfigureAndRegisterServices(fileSet, destinationType);
     using var host = builder.Build();
 
-    var service = host.Services.GetService<IFilePusher>();
-    var clock = host.Services.GetRequiredService<IClock>();
+    var scopeFactory = host.Services.GetRequiredService<IServiceScopeFactory>();
+    using var scope = scopeFactory.CreateScope();
+    var service = scope.ServiceProvider.GetService<IFilePusher>();
+    var clock = scope.ServiceProvider.GetRequiredService<IClock>();
     if (service == null)
     {
         throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
@@ -279,7 +283,11 @@ static async Task Sort(string[] args)
     var builder = Host.CreateApplicationBuilder();
     var env = builder.Environment.EnvironmentName;
     builder.Configuration.AddJsonFile("appsettings.json");
-    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json", optional: true);
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddUserSecrets<Program>();
+    }
 
     builder.Services.AddLogging();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
@@ -302,7 +310,11 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
 
     var env = builder.Environment.EnvironmentName;
     builder.Configuration.AddJsonFile("appsettings.json");
-    builder.Configuration.AddJsonFile($"appsettings.{env}.json");
+    builder.Configuration.AddJsonFile($"appsettings.{env}.json", optional: true);
+    if (builder.Environment.IsDevelopment())
+    {
+        builder.Configuration.AddUserSecrets<Program>();
+    }
 
     builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant(fileSet)));
     builder.Services.AddTransient<ITenantAware, TenantAware>();
@@ -312,6 +324,10 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}"));
     });
+    builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder =>
+            optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems_{fileSet}")),
+        ServiceLifetime.Scoped
+    );
     builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
     // builder.Services.AddTransient<IFileRepository, NpgsqlFileRepository>(sp =>
     // {
@@ -324,6 +340,10 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     {
         optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));
     });
+    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
+            optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}")),
+        ServiceLifetime.Scoped
+    );
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
@@ -336,23 +356,15 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
         return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
             RegionEndpoint.GetBySystemName(region));
     });
-    if (storageLocationType == StorageLocationType.Local)
+    builder.Services.AddTransient<IFileSystemScanner, LocalFileSystemScanner>();
+    builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>(sp =>
     {
-        builder.Services.AddTransient<IFileIntegrityVerifier, LocalFileSystemFileIntegrityVerifier>();
-        builder.Services.AddTransient<IFileSystemScanner, LocalFileSystemScanner>();
-    }
-    else if (storageLocationType == StorageLocationType.AmazonS3)
-    {
-        builder.Services.AddTransient<IFileIntegrityVerifier, AmazonS3FileIntegrityVerifier>();
-        builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>(sp =>
-        {
-            var storageClass = S3StorageClass.FindValue(builder.Configuration[$"AmazonS3:{fileSet}:StorageClass"]) ??
-                               throw new ArgumentException($"Storage class not defined for {fileSet}");
+        var storageClass = S3StorageClass.FindValue(builder.Configuration[$"AmazonS3:{fileSet}:StorageClass"]) ??
+                           throw new ArgumentException($"Storage class not defined for {fileSet}");
 
-            return new AmazonS3FileCopier(sp.GetRequiredService<IFileChecksumGenerator>(),
-                sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
-        });
-    }
+        return new AmazonS3FileCopier(sp.GetRequiredService<IFileChecksumGenerator>(),
+            sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
+    });
 
     builder.Services
         .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();

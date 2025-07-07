@@ -1,0 +1,101 @@
+@page "/Scan"
+@page "/"
+@inject JobComponent JobComponent
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
+@implements IDisposable
+@rendermode InteractiveServer
+
+<div class="container">
+    <h3>Scan</h3>
+</div>
+
+<div class="container">
+    <EditForm Model="ScanModel" OnSubmit="ExecuteScan" FormName="Scan">
+        <div class="mb-3">
+            <label class="form-label">Path:</label>
+            <InputText @bind-Value="ScanModel!.Path" class="form-control"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </EditForm>
+</div>
+
+<hr/>
+
+<div class="container">
+    <JobProgress Messages="@_progressMessages"/>
+</div>
+
+<hr/>
+
+<div class="container">
+    <FileList Files="@_result"/>
+</div>
+
+@code {
+
+    [SupplyParameterFromForm(FormName = "Scan")]
+    private ScanForm? ScanModel { get; set; }
+
+    private readonly List<string> _progressMessages = new List<string>();
+    private Dictionary<string, IReadOnlyList<string[]>>? _result;
+
+    protected override void OnInitialized()
+    {
+        JobComponent.OnInitialized();
+
+        JobComponent.JobResultProvider.JobCompleted += ParseResult;
+        JobComponent.ProgressReporter.ProgressReported += ReportProgress;
+        ScanModel ??= new ScanForm()
+        {
+            Path = JobComponent.DefaultLocalStorage
+        };
+    }
+
+    private async Task ExecuteScan()
+    {
+        JobComponent.Logger.LogInformation($"Scanning {ScanModel!.Path}");
+        await JobComponent.JobManager.RunJob(new ScanParameters(ScanModel!.Path!));
+    }
+
+    private void ParseResult(object? sender, JobResult data)
+    {
+        if (data.JobParameters is not ScanParameters)
+        {
+            throw new ArgumentException("Invalid parameters");
+        }
+
+        var files = data.Result is FileSystemScannerResult ? (FileSystemScannerResult)data.Result : default;
+        _result = new Dictionary<string, IReadOnlyList<string[]>>()
+        {
+            {
+                "Files", files.NewFiles.Select(x => (string[])[x.Item1.Value]).ToList()
+            }
+        };
+
+        InvokeAsync(StateHasChanged);
+        _progressMessages.Clear();
+    }
+
+    private void ReportProgress(object? sender, string progress)
+    {
+        _progressMessages.Add(progress);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        JobComponent.JobResultProvider.JobCompleted -= ParseResult;
+        JobComponent.ProgressReporter.ProgressReported -= ReportProgress;
+        JobComponent.Dispose();
+    }
+
+    public class ScanForm
+    {
+        public string? Path { get; set; }
+    }
+
+}
