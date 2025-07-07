@@ -41,7 +41,7 @@
     private ScanForm? ScanModel { get; set; }
 
     private readonly List<string> _progressMessages = new List<string>();
-    private List<string>? _result;
+    private Dictionary<string, IReadOnlyList<string[]>>? _result;
 
     protected override void OnInitialized()
     {
@@ -69,7 +69,12 @@
         }
 
         var files = data.Result is FileSystemScannerResult ? (FileSystemScannerResult)data.Result : default;
-        _result = files.NewFiles.Select(x => x.Item1.Value).ToList();
+        _result = new Dictionary<string, IReadOnlyList<string[]>>()
+        {
+            {
+                "Files", files.NewFiles.Select(x => (string[])[x.Item1.Value]).ToList()
+            }
+        };
 
         InvokeAsync(StateHasChanged);
         _progressMessages.Clear();

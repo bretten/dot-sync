@@ -1,5 +1,6 @@
 @page "/Verify"
 @inject JobComponent JobComponent
+@using System.Collections.Immutable
 @using System.ComponentModel.DataAnnotations
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Application.Orchestration
@@ -59,7 +60,7 @@
     private VerifyForm? VerifyModel { get; set; }
 
     private readonly List<string> _progressMessages = new List<string>();
-    private List<string>? _result;
+    private Dictionary<string, IReadOnlyList<string[]>>? _result;
 
     protected override void OnInitialized()
     {
@@ -88,7 +89,13 @@
         }
 
         var files = data.Result is StorageLocationIntegrityVerificationResult ? (StorageLocationIntegrityVerificationResult)data.Result : default;
-        _result = files.Result.Results.Select(x => x.Path.Value).ToList();
+        var verifiedFiles = files.Result.Results.Select(x => (string[])[x.Path.Value, x.Checksum.Value, x.Size.ToString()]).ToImmutableList();
+        var noLongerInSetFiles = files.Result.FilesNoLongerInSet.Select(x => (string[])[x.Path.Value]).ToImmutableList();
+        _result = new Dictionary<string, IReadOnlyList<string[]>>()
+        {
+            { "Verified", verifiedFiles },
+            { "No Longer in Set", noLongerInSetFiles }
+        };
 
         InvokeAsync(StateHasChanged);
         _progressMessages.Clear();
