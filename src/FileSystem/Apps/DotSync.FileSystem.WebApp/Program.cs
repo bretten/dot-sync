@@ -73,7 +73,16 @@ builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =
 );
 builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
 builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
-builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
+if (!OperatingSystem.IsWindows())
+{
+    builder.Services.AddTransient<IFileMetadataReader, CrossPlatformFileMetadataReader>();
+}
+else
+{
+    //builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();
+    builder.Services.AddTransient<IFileMetadataReader, CrossPlatformFileMetadataReader>();
+}
+
 builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
 builder.Services.AddTransient<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
 builder.Services.AddTransient<IAmazonS3>(sp =>
