@@ -7,4 +7,7 @@ public sealed record PushParameters(
     string? SourceRootPath,
     string? SourcePushPath,
     StorageLocationType DestinationType,
-    string? DestinationPath) : IJobParameters;
+    string? DestinationPath) : IJobParameters
+{
+    public string JobId => "Push";
+}

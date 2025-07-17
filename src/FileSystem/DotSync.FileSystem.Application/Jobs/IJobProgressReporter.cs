@@ -8,10 +8,10 @@ public interface IJobProgressReporter
     /// <summary>
     /// Invoked on a progress update
     /// </summary>
-    event EventHandler<string>? ProgressReported;
+    event ProgressReportedHandler ProgressReported;
 
     /// <summary>
     /// Handles a progress update
     /// </summary>
-    void ReportProgress(string progress);
+    void ReportProgress(string jobId, string progress);
 }

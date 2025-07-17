@@ -6,11 +6,11 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
 public sealed class JobProgressReporter : IJobProgressReporter
 {
     /// <inheritdoc />
-    public event EventHandler<string>? ProgressReported;
+    public event ProgressReportedHandler? ProgressReported;
 
     /// <inheritdoc />
-    public void ReportProgress(string progress)
+    public void ReportProgress(string jobId, string progress)
     {
-        ProgressReported?.Invoke(this, progress);
+        ProgressReported?.Invoke(jobId, progress);
     }
 }

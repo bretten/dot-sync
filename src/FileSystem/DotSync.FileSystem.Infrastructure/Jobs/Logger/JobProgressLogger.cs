@@ -17,12 +17,13 @@ public sealed class JobProgressLogger(
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
         Func<TState, Exception?, string> formatter)
     {
-        if (!IsEnabled(logLevel) || !config.IsServiceConfigured(name))
+        var jobService = config.GetJobService(name);
+        if (!IsEnabled(logLevel) || jobService == null)
         {
             return;
         }
 
-        progressReporter.ReportProgress($"{formatter(state, exception)}");
+        progressReporter.ReportProgress(jobService.JobId, $"{formatter(state, exception)}");
     }
 
     public bool IsEnabled(LogLevel logLevel)
