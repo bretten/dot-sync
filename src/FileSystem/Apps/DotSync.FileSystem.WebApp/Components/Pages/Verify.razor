@@ -55,6 +55,7 @@
 </div>
 
 @code {
+    private const string JobId = "Verify";
 
     [SupplyParameterFromForm(FormName = "Verify")]
     private VerifyForm? VerifyModel { get; set; }
@@ -83,6 +84,7 @@
 
     private void ParseResult(object? sender, JobResult data)
     {
+        if (!string.Equals(JobId, data.JobParameters.JobId)) return;
         if (data.JobParameters is not VerifyParameters)
         {
             throw new ArgumentException("Invalid parameters");
@@ -103,8 +105,9 @@
         _progressMessages.Clear();
     }
 
-    private void ReportProgress(object? sender, string progress)
+    private void ReportProgress(string jobId, string progress)
     {
+        if (!string.Equals(JobId, jobId)) return;
         _progressMessages.Add(progress);
         InvokeAsync(StateHasChanged);
     }

@@ -8,20 +8,20 @@ public sealed class JobProgressLoggerConfiguration
     /// <summary>
     /// Services that should have progress reported
     /// </summary>
-    private readonly Dictionary<string, Type> _jobProgressServices =
-        new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, JobService> _jobProgressServices = new(StringComparer.OrdinalIgnoreCase);
 
-    public void AddService(params Type[] serviceTypes)
+    public void AddService(params JobService[] jobServices)
     {
-        foreach (var type in serviceTypes)
+        foreach (var jobService in jobServices)
         {
-            var key = type.FullName!;
-            _jobProgressServices.TryAdd(key, type);
+            _jobProgressServices.TryAdd(jobService.ServiceName, jobService);
         }
     }
 
-    public bool IsServiceConfigured(string serviceName)
+    public JobService? GetJobService(string serviceName)
     {
-        return _jobProgressServices.ContainsKey(serviceName);
+        return _jobProgressServices.GetValueOrDefault(serviceName);
     }
+
+    public sealed record JobService(string ServiceName, string JobId);
 }

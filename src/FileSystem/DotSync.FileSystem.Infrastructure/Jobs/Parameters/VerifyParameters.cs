@@ -7,4 +7,7 @@ public sealed record VerifyParameters(
     StorageLocationType StorageType,
     string? StoragePath,
     string? VerifyPath,
-    string? PathsToSkip) : IJobParameters;
+    string? PathsToSkip) : IJobParameters
+{
+    public string JobId => "Verify";
+}

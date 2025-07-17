@@ -46,8 +46,12 @@ if (builder.Environment.IsDevelopment())
 builder.Services.AddSingleton<JobProgressLoggerConfiguration>();
 builder.Logging.AddJobProgressLogger(config =>
 {
-    config.AddService(typeof(IFileSystemScanner), typeof(IFileIntegrityVerifier), typeof(IFileSorter),
-        typeof(AmazonS3FileCopier));
+    config.AddService(
+        new JobProgressLoggerConfiguration.JobService(typeof(IFileSystemScanner).FullName!, "Scan"),
+        new JobProgressLoggerConfiguration.JobService(typeof(IFileIntegrityVerifier).FullName!, "Verify"),
+        new JobProgressLoggerConfiguration.JobService(typeof(IFileSorter).FullName!, "Sort"),
+        new JobProgressLoggerConfiguration.JobService(typeof(AmazonS3FileCopier).FullName!, "Push")
+    );
 });
 
 builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant("")));
