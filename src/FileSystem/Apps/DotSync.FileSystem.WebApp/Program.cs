@@ -19,7 +19,9 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs;
+using com.brettnamba.DotSync.FileSystem.WebApp.Hangfire;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.MemoryStorage;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,7 +35,10 @@ builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseMemoryStorage());
+    .UseMemoryStorage(new MemoryStorageOptions()
+    {
+        FetchNextJobTimeout = TimeSpan.FromHours(24)
+    }));
 builder.Services.AddHangfireServer();
 
 builder.Configuration.AddJsonFile("appsettings.json");
@@ -42,6 +47,8 @@ if (builder.Environment.IsDevelopment())
 {
     builder.Configuration.AddUserSecrets<Program>();
 }
+
+builder.Configuration.AddEnvironmentVariables();
 
 builder.Services.AddSingleton<JobProgressLoggerConfiguration>();
 builder.Logging.AddJobProgressLogger(config =>
@@ -119,21 +126,38 @@ builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();
 
 var app = builder.Build();
 
+using var scope = app.Services.CreateScope();
+scope.ServiceProvider.GetRequiredService<FileSystemsDbContext>().Database.Migrate();
+scope.ServiceProvider.GetRequiredService<StorageLocationsDbContext>().Database.Migrate();
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 app.UseAntiforgery();
 
-app.UseHangfireDashboard();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+var authFilters = new List<IDashboardAuthorizationFilter>();
+if (app.Environment.IsDevelopment())
+{
+    authFilters.Add(new LocalRequestsOnlyAuthorizationFilter());
+}
+
+authFilters.Add(new IpAuthorizationFilter(
+    new IpAuthorizationFilterOptions(app.Configuration.GetSection("Hangfire:AllowedIps").Get<string[]>()!)));
+
+app.UseHangfireDashboard(options: new DashboardOptions
+{
+    Authorization = authFilters,
+    IgnoreAntiforgeryToken = app.Configuration.GetValue<bool?>("Hangfire:IgnoreAntiforgeryToken") ?? false
+});
 
 app.Run();
