@@ -24,6 +24,7 @@ using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.MemoryStorage;
 using Microsoft.EntityFrameworkCore;
+using Constants = com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,21 +66,30 @@ builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantCont
 builder.Services.AddTransient<ITenantAware, TenantAware>();
 builder.Services.AddTransient<IClock, Clock>();
 
+const string migrationsTable = "__EFMigrationsHistory";
+const string fileSystemsSchema =
+    Constants.Schema;
+const string storageLocationSchema = com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore.Constants.Schema;
+
 builder.Services.AddDbContext<FileSystemsDbContext>(optionsBuilder =>
 {
-    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems"));
+    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("FileSystems"),
+        b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema));
 });
-builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder =>
-        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"FileSystems")),
+builder.Services.AddDbContextFactory<FileSystemsDbContext>(
+    optionsBuilder => optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("FileSystems"),
+        b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema)),
     ServiceLifetime.Scoped
 );
 builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
 builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
 {
-    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations"));
+    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("StorageLocations"),
+        b => b.MigrationsHistoryTable(migrationsTable, storageLocationSchema));
 });
-builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
-        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations")),
+builder.Services.AddDbContextFactory<StorageLocationsDbContext>(
+    optionsBuilder => optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("StorageLocations"),
+        b => b.MigrationsHistoryTable(migrationsTable, storageLocationSchema)),
     ServiceLifetime.Scoped
 );
 builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
@@ -98,9 +108,9 @@ builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
 builder.Services.AddTransient<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
 builder.Services.AddTransient<IAmazonS3>(sp =>
 {
-    var awsAccessKeyId = builder.Configuration[$"AmazonS3:AwsAccessKey"];
-    var awsSecretAccessKey = builder.Configuration[$"AmazonS3:AwsSecretAccessKey"];
-    var region = builder.Configuration[$"AmazonS3:Region"];
+    var awsAccessKeyId = builder.Configuration["AmazonS3:AwsAccessKey"];
+    var awsSecretAccessKey = builder.Configuration["AmazonS3:AwsSecretAccessKey"];
+    var region = builder.Configuration["AmazonS3:Region"];
     return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
         RegionEndpoint.GetBySystemName(region));
 });
@@ -108,7 +118,7 @@ builder.Services.AddTransient<IAmazonS3>(sp =>
 builder.Services.AddTransient<IFileSystemScanner, LocalFileSystemScanner>();
 builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>(sp =>
 {
-    var storageClass = S3StorageClass.FindValue(builder.Configuration[$"AmazonS3:StorageClass"]) ??
+    var storageClass = S3StorageClass.FindValue(builder.Configuration["AmazonS3:StorageClass"]) ??
                        throw new ArgumentException($"Storage class not defined");
 
     return new AmazonS3FileCopier(sp.GetRequiredService<IFileChecksumGenerator>(),
