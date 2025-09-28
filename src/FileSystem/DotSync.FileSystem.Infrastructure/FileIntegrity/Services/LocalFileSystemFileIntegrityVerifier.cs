@@ -31,9 +31,10 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     {
         var dbFiles = await FileRepository.GetFilesByPath(directoryPath);
         var trackedFiles = new TrackedFiles(dbFiles);
+        var skips = pathsToSkip.ToList();
 
         var dirPath = Path.Combine(rootPath.Value, directoryPath.Value);
-        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), pathsToSkip.ToList(), trackedFiles);
+        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), skips, trackedFiles);
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
@@ -45,6 +46,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         // Any leftover tracked files that could not be verified are considered missing
         foreach (var trackedFile in trackedFiles.AllFiles)
         {
+            if (skips.Any(x => trackedFile.Path.StartsWith(x.Value))) continue;
             results.Add(FileIntegrityVerificationResult.Missing(FileSystemPath.Create(trackedFile.Path),
                 FileSha256Checksum.Create(trackedFile.Checksum), 0));
         }
