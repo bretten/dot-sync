@@ -39,16 +39,16 @@ public class LocalFileSystemFileIntegrityVerifierTests
         var stubChecksumGenerator = new Mock<IFileChecksumGenerator>();
         stubChecksumGenerator
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("verified.txt")))
-            .Returns(verifiedFile.Sha256Checksum.Value);
+            .ReturnsAsync(verifiedFile.Sha256Checksum.Value);
         stubChecksumGenerator
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("path_changed.txt")))
-            .Returns(pathChangedFile.Sha256Checksum.Value);
+            .ReturnsAsync(pathChangedFile.Sha256Checksum.Value);
         stubChecksumGenerator
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("checksum_fail_path_match.txt")))
-            .Returns("invalid checksum");
+            .ReturnsAsync("invalid checksum");
         stubChecksumGenerator
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("new_file.txt")))
-            .Returns(newFile.Sha256Checksum.Value);
+            .ReturnsAsync(newFile.Sha256Checksum.Value);
         // It will try to verify files by their checksum
         var stubFileRepository = new Mock<IFileRepository>();
         stubFileRepository.Setup(x => x.GetFilesByPath(FileSystemPath.Create("")))
