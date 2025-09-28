@@ -45,25 +45,14 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .Returns(pathChangedFile.Sha256Checksum.Value);
         stubChecksumGenerator
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("checksum_fail_path_match.txt")))
-            .Returns(checksumFailPathMatchFile.Sha256Checksum.Value);
+            .Returns("invalid checksum");
         stubChecksumGenerator
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("new_file.txt")))
             .Returns(newFile.Sha256Checksum.Value);
         // It will try to verify files by their checksum
         var stubFileRepository = new Mock<IFileRepository>();
-        stubFileRepository.Setup(x => x.GetFileByChecksum(verifiedFile.Sha256Checksum))
-            .ReturnsAsync(verifiedFile);
-        stubFileRepository.Setup(x => x.GetFileByChecksum(pathChangedFile.Sha256Checksum))
-            .ReturnsAsync(pathChangedFile);
-        stubFileRepository.Setup(x => x.GetFileByChecksum(checksumFailPathMatchFile.Sha256Checksum))
-            .ReturnsAsync((DotFile?)null);
-        stubFileRepository.Setup(x => x.GetFileByChecksum(newFile.Sha256Checksum))
-            .ReturnsAsync((DotFile?)null);
-        // It will try to verify files by their path if they could not be found by their checksum
-        stubFileRepository.Setup(x => x.GetFileByPath(checksumFailPathMatchFile.Path))
-            .ReturnsAsync(checksumFailPathMatchFile);
-        stubFileRepository.Setup(x => x.GetFileByPath(newFile.Path))
-            .ReturnsAsync((DotFile?)null);
+        stubFileRepository.Setup(x => x.GetFilesByPath(FileSystemPath.Create("")))
+            .ReturnsAsync(new List<DotFile>() { verifiedFile, pathChangedFile, checksumFailPathMatchFile });
         // Metadata reader
         var stubMetadataReader = new Mock<IFileMetadataReader>();
         stubMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<FileSystemPath>()))
@@ -84,29 +73,17 @@ public class LocalFileSystemFileIntegrityVerifierTests
         /*
          * Assert
          */
-        // The verified file was verified because its checksum and path matched
-        Assert.True(verifiedFile.IsVerified);
-        // The file that had a checksum match, but different path should be verified and have the new path
-        Assert.True(pathChangedFile.IsVerified);
-        Assert.Equal("dir/dir_nested/path_changed.txt".AsPath(), pathChangedFile.Path.Value);
-        // The file that had no checksum match, but its path was matched should not be verified
-        Assert.False(checksumFailPathMatchFile.IsVerified);
-        // The new file should be added
-        stubFileRepository.Verify(x => x.Add(IsDotFileWith("dir2/new_file.txt", "new_file", true)), Times.Once);
-        // The other files should not have been added
-        stubFileRepository.Verify(x => x.Add(It.IsAny<DotFile>()), Times.AtMostOnce);
-
-        // The skip directory should not have been touched
-        stubChecksumGenerator.Verify(x => x.GenerateChecksum(IsFileInfoWith("skip.txt")), Times.Never);
-        stubFileRepository.Verify(x => x.GetFileByChecksum(skipFile.Sha256Checksum), Times.Never);
-        stubFileRepository.Verify(x => x.GetFileByPath(skipFile.Path), Times.Never);
-
         // There should be 4 results
-        Assert.Equal(4, actual.Results.Count);
-        Assert.True(actual.Results.First(ResultFor(verifiedFile)).IsVerified);
-        Assert.True(actual.Results.First(ResultFor(pathChangedFile)).IsVerified);
-        Assert.False(actual.Results.First(ResultFor(checksumFailPathMatchFile)).IsVerified);
-        Assert.True(actual.Results.First(ResultFor(newFile)).IsVerified);
+        Assert.Equal(1, actual.TotalVerified);
+
+        Assert.Single(actual.Moved);
+        Assert.False(actual.Moved.Exists(x => x.Path == pathChangedFile.Path));
+
+        Assert.Single(actual.Unverified);
+        Assert.True(actual.Unverified.Exists(x => x.Path == checksumFailPathMatchFile.Path));
+
+        Assert.Single(actual.New);
+        Assert.True(actual.New.Exists(x => x.Path == newFile.Path));
     }
 
     private static FileInfo IsFileInfoWith(string path)

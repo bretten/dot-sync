@@ -90,11 +90,6 @@ static async Task Verify(string[] args)
     var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath, pathsToSkip);
     Console.WriteLine($"Storage location type: {result.StorageLocation.Type.GetDisplayName()}");
     Console.WriteLine($"Storage location path: {result.StorageLocation.Path.Value}");
-    Console.WriteLine($"Total files: {result.Result.FileCount}");
-    Console.WriteLine($"Verified files: {result.Result.SuccessfulVerifications}");
-    Console.WriteLine($"Unverified files: {result.Result.UnverifiedFiles.Count}");
-    Console.WriteLine($"Files no longer in set: {result.Result.FilesNoLongerInSet.Count}");
-    Console.WriteLine($"Total size (bytes): {result.Result.TotalSize}");
     var reportFileName =
         $"verify_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
     await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
