@@ -38,6 +38,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
             var result = await task;
+            Logger.LogInformation($"Verified {result.Path.Value}");
             results.Add(result);
         });
 
@@ -82,7 +83,6 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             switch (entry)
             {
                 case FileInfo info:
-                    Logger.LogInformation($"Verifying {info.FullName}");
                     tasks.Add(VerifyFile(info, trackedFiles));
                     break;
                 case DirectoryInfo info:
@@ -103,7 +103,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     private async Task<FileIntegrityVerificationResult> VerifyFile(FileInfo fileInfo, TrackedFiles trackedFiles)
     {
         // Generate the checksum of the file on the filesystem
-        var checksum = FileSha256Checksum.Create(ChecksumGenerator.GenerateChecksum(fileInfo));
+        var checksum = FileSha256Checksum.Create(await ChecksumGenerator.GenerateChecksum(fileInfo));
         // Determine its relative path compared to the root directory
         var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath.Value, fileInfo.FullName),
             replaceBackslashes: OperatingSystem.IsWindows());
