@@ -1,5 +1,7 @@
 ﻿using System.Collections.Immutable;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.Extensions.Logging;
@@ -41,19 +43,18 @@ public abstract class BaseFileIntegrityVerifier(
     public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path,
         IEnumerable<FileSystemPath> pathsToSkip)
     {
-        // Reset the verified flag
-        await FileRepository.SetAllAsUnverified(path);
-
         // Verify all files at the specified directory
-        var results = await VerifyDirectory(path, pathsToSkip);
+        var results = (await VerifyDirectory(path, pathsToSkip)).ToImmutableList();
 
-        // There may have been files in the repo from a previous run, but are no longer in the current filesystem
-        // Files should have been verified at this point by VerifyDirectory, so we can get the remaining unverified
-        // and remove the intersection between the unverified from the recent run to determine files no longer in the filesystem
-        var filesNotFoundInTheDirectory = await FileRepository.GetUnverifiedFiles();
+        foreach (var result in results)
+        {
+            if (result.Status != FileIntegrityStatus.New) continue;
+            var newFile = new DotFile(Guid.NewGuid(), result.Path, result.Checksum, result.Size,
+                result.FileCreated!.Value);
+            await FileRepository.Add(newFile);
+        }
 
-        return new FileSetIntegrityVerificationResult(results.ToImmutableList(),
-            filesNotFoundInTheDirectory.ToImmutableList());
+        return new FileSetIntegrityVerificationResult(results);
     }
 
     /// <summary>

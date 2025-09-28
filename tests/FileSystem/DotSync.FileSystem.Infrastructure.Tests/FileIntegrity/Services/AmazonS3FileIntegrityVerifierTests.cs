@@ -68,8 +68,10 @@ public class AmazonS3FileIntegrityVerifierTests
             }
         };
         var stubS3 = MockS3ListObjectsV2Paginator(responses);
-        stubS3.Setup(x => x.GetObjectMetadataAsync(It.Is<GetObjectMetadataRequest>(
-                y => y.Key == key && y.BucketName == bucketName), It.IsAny<CancellationToken>()))
+        stubS3.Setup(x =>
+                x.GetObjectMetadataAsync(
+                    It.Is<GetObjectMetadataRequest>(y => y.Key == key && y.BucketName == bucketName),
+                    It.IsAny<CancellationToken>()))
             .ReturnsAsync((GetObjectMetadataResponse)null!);
 
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
@@ -143,11 +145,15 @@ public class AmazonS3FileIntegrityVerifierTests
         var unverifiedChecksum = FileSha256Checksum.Create("unverified256");
 
         var stubS3 = MockS3ListObjectsV2Paginator(responses);
-        stubS3.Setup(x => x.GetObjectMetadataAsync(It.Is<GetObjectMetadataRequest>(
-                y => y.Key == verifiedKey && y.BucketName == bucketName), It.IsAny<CancellationToken>()))
+        stubS3.Setup(x =>
+                x.GetObjectMetadataAsync(
+                    It.Is<GetObjectMetadataRequest>(y => y.Key == verifiedKey && y.BucketName == bucketName),
+                    It.IsAny<CancellationToken>()))
             .ReturnsAsync(verifiedMetadata);
-        stubS3.Setup(x => x.GetObjectMetadataAsync(It.Is<GetObjectMetadataRequest>(
-                y => y.Key == unverifiedKey && y.BucketName == bucketName), It.IsAny<CancellationToken>()))
+        stubS3.Setup(x =>
+                x.GetObjectMetadataAsync(
+                    It.Is<GetObjectMetadataRequest>(y => y.Key == unverifiedKey && y.BucketName == bucketName),
+                    It.IsAny<CancellationToken>()))
             .ReturnsAsync(unverifiedMetadata);
 
         var stubFileRepository = new Mock<IFileRepository>();
@@ -166,15 +172,11 @@ public class AmazonS3FileIntegrityVerifierTests
         });
 
         // Assert
-        Assert.Equal(2, actual.FileCount);
-        Assert.Equal(1, actual.SuccessfulVerifications);
-        Assert.Equal(1, actual.UnverifiedFiles.Count);
-        Assert.Contains(
-            FileIntegrityVerificationResult.Verified(FileSystemPath.Create("verified"), verifiedChecksum, 0),
-            actual.Results);
+        Assert.Equal(1, actual.TotalVerified);
+        Assert.Single(actual.Unverified);
         Assert.Contains(
             FileIntegrityVerificationResult.Unverified(FileSystemPath.Create("unverified"), unverifiedChecksum, 0),
-            actual.Results);
+            actual.Unverified);
         stubS3.Verify(
             x => x.GetObjectMetadataAsync(
                 It.Is<GetObjectMetadataRequest>(y => y.Key == skipKey && y.BucketName == bucketName),

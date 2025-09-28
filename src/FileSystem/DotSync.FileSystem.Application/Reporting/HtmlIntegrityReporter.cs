@@ -30,34 +30,6 @@ public sealed class HtmlIntegrityReporter : IIntegrityReporter
         b.AppendLine("<br/>");
         b.AppendLine($"<strong>Storage Location Path:</strong> {storageLocation.Path.Value}");
         b.AppendLine("<h2>Overview</h2>");
-        b.AppendLine($"""
-                                  <ul>
-                                      <li>Total files: {result.FileCount}</li>
-                                      <li>Verified files: {result.SuccessfulVerifications}</li>
-                                      <li>Unverified files: {result.UnverifiedFiles.Count}</li>
-                                      <li>Files no longer in set: {result.FilesNoLongerInSet.Count}</li>
-                                      <li>Total size (bytes): {result.TotalSize}</li>
-                                      <li>Total size: {FormatBytes(result.TotalSize)}</li>
-                                  </ul>
-                      """);
-
-        b.AppendLine("<h2>Unverified Files</h2>");
-        b.AppendLine("<table>");
-        b.AppendLine("<tr><th>Path</th><th>Checksum</th></tr>");
-        foreach (var file in result.UnverifiedFiles)
-        {
-            b.AppendLine($"<tr><td>{file.Path.Value}</td><td>{file.Checksum.Value}</td></tr>");
-        }
-
-        b.AppendLine("</table>");
-
-        b.AppendLine("<h2>Files no longer in set</h2>");
-        b.AppendLine("<table>");
-        b.AppendLine("<tr><th>Path</th><th>Checksum</th></tr>");
-        foreach (var file in result.FilesNoLongerInSet.OrderBy(x => x.Path.Value))
-        {
-            b.AppendLine($"<tr><td>{file.Path.Value}</td><td>{file.Sha256Checksum.Value}</td></tr>");
-        }
 
         b.AppendLine("</table>");
 

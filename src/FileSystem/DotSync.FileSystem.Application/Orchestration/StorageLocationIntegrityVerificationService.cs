@@ -58,8 +58,6 @@ public sealed class StorageLocationIntegrityVerificationService(
         var fileIntegrityVerifier = _fileIntegrityVerifierFactory.GetBy(storageLocation);
         var result = await fileIntegrityVerifier.Verify(verifyPath, pathsToSkip);
 
-        storageLocation.UpdateStatistics(fileCount: result.FileCount, storageSize: result.TotalSize,
-            _clock.GetUtcNow());
         await _storageLocationRepository.Update(storageLocation);
 
         var report = await _integrityReporter.OutputFileSetResult(storageLocation, result);
