@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 
 # appsettings
 **/appsettings.Local.json
+
+# Webroot reports
+**/wwwroot/reports/*

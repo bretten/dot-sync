@@ -1,6 +1,5 @@
 @page "/Verify"
 @inject JobComponent JobComponent
-@using System.Collections.Immutable
 @using System.ComponentModel.DataAnnotations
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Application.Orchestration
@@ -90,20 +89,10 @@
             throw new ArgumentException("Invalid parameters");
         }
 
+        var jobParams = data.JobParameters as VerifyParameters;
+
         var files = data.Result is StorageLocationIntegrityVerificationResult ? (StorageLocationIntegrityVerificationResult)data.Result : default;
-        var verified = new List<string[]>() { new string[] { "Verified Count", files.Result.TotalVerified.ToString() } };
-        var unverified = files.Result.Unverified.Select(x => (string[]) [x.Path.Value, x.Checksum.Value, x.Size.ToString()]).ToImmutableList();
-        var moved = files.Result.Moved.Select(x => (string[]) [x.Path.Value]).ToImmutableList();
-        var missing = files.Result.Missing.Select(x => (string[]) [x.Path.Value]).ToImmutableList();
-        var newFiles = files.Result.New.Select(x => (string[]) [x.Path.Value]).ToImmutableList();
-        _result = new Dictionary<string, IReadOnlyList<string[]>>()
-        {
-            { "Verified", verified },
-            { "Unverified", unverified },
-            { "Moved", moved },
-            { "Missing", missing },
-            { "New", newFiles },
-        };
+        _result = files.GenerateReport(jobParams!.StorageType.ToString(), jobParams.StoragePath!, jobParams.VerifyPath!, jobParams.PathsToSkip!);
 
         InvokeAsync(StateHasChanged);
         _progressMessages.Clear();
