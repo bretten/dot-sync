@@ -122,7 +122,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         var fileCreation = _fileMetadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
 
         // Generate a checksum for the new file
-        var checksum = FileSha256Checksum.Create(await _fileChecksumGenerator.GenerateChecksum(fileInfo));
+        var checksum = FileSha256Checksum.Create(_fileChecksumGenerator.GenerateChecksum(fileInfo));
 
         // The file could not be found via checksum or file path. It is a new file, so add it
         var newFile = new DotFile(Guid.NewGuid(), relativePath, checksum, fileInfo.Length, fileCreation);

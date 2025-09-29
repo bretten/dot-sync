@@ -11,15 +11,15 @@ public sealed class Sha256FileChecksumGenerator : IFileChecksumGenerator
     /// <summary>
     /// <inheritdoc cref="IFileChecksumGenerator"/>
     /// </summary>
-    public async Task<string> GenerateChecksum(FileInfo fileInfo)
+    public string GenerateChecksum(FileInfo fileInfo)
     {
-        using var sha256 = SHA256.Create();
-        await using var fileStream = fileInfo.OpenRead();
+        using SHA256 sha256 = SHA256.Create();
+        using FileStream fileStream = fileInfo.OpenRead();
 
         // Beginning of the file stream
         fileStream.Position = 0;
 
-        var hashValue = await sha256.ComputeHashAsync(fileStream);
+        byte[] hashValue = sha256.ComputeHash(fileStream);
 
         return Convert.ToBase64String(hashValue, 0, hashValue.Length);
     }

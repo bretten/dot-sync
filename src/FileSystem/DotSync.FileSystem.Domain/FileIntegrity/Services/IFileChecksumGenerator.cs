@@ -10,5 +10,5 @@ public interface IFileChecksumGenerator
     /// </summary>
     /// <param name="fileInfo">The file to generate the checksum for</param>
     /// <returns>The checksum</returns>
-    Task<string> GenerateChecksum(FileInfo fileInfo);
+    string GenerateChecksum(FileInfo fileInfo);
 }

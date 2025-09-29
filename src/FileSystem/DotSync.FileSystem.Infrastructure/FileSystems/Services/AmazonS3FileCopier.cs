@@ -51,25 +51,23 @@ public sealed class AmazonS3FileCopier : IFileCopier
 
     private async Task SinglePartUpload(FileSystemPath sourceFile, FileSystemPath destination, FileInfo fileInfo)
     {
-        var checksum = await _fileChecksumGenerator.GenerateChecksum(fileInfo);
         var request = new PutObjectRequest
         {
             BucketName = destination.Value,
             Key = sourceFile.Value,
             FilePath = fileInfo.FullName,
             ChecksumAlgorithm = ChecksumAlgorithm.SHA256,
-            ChecksumSHA256 = checksum,
+            ChecksumSHA256 = _fileChecksumGenerator.GenerateChecksum(fileInfo),
             ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256,
             StorageClass = _storageClass
         };
-        request.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum, checksum);
+        request.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum, _fileChecksumGenerator.GenerateChecksum(fileInfo));
 
         await _s3.PutObjectAsync(request);
     }
 
     private async Task MultiPartUpload(FileSystemPath sourceFile, FileSystemPath destination, FileInfo fileInfo)
     {
-        var checksum = await _fileChecksumGenerator.GenerateChecksum(fileInfo);
         using var fileTransferUtility = new TransferUtility(_s3);
         var fileTransferUtilityRequest = new TransferUtilityUploadRequest
         {
@@ -82,7 +80,8 @@ public sealed class AmazonS3FileCopier : IFileCopier
             // The SHA256 checksum cannot be set for a multipart upload because it is generated as a composite of all the files, so we will force a copy and a regeneration of the checksum on S3's side
             StorageClass = _storageClass
         };
-        fileTransferUtilityRequest.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum, checksum);
+        fileTransferUtilityRequest.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum,
+            _fileChecksumGenerator.GenerateChecksum(fileInfo));
 
         await fileTransferUtility.UploadAsync(fileTransferUtilityRequest);
 

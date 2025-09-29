@@ -34,7 +34,7 @@ public class LocalFileSystemScannerTests
         var stubChecksumGenerator = new Mock<IFileChecksumGenerator>();
         stubChecksumGenerator
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("newFile.txt")))
-            .ReturnsAsync(newFile.Sha256Checksum.Value);
+            .Returns(newFile.Sha256Checksum.Value);
 
         var scanner = new LocalFileSystemScanner(stubFileRepository.Object, stubFileMetadataReader.Object,
             stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>());
