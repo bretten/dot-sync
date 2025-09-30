@@ -1,7 +1,8 @@
 @page "/Report"
 @using System.Text.Json
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
-@inject IWebHostEnvironment WebHostEnvironment
+@inject JobConfiguration JobConfiguration
 <h3>Report</h3>
 
 <div class="container">
@@ -16,8 +17,9 @@
 
     protected override void OnInitialized()
     {
-        var reportPath = Path.Combine(WebHostEnvironment.WebRootPath, "reports", File!);
+        var reportPath = Path.Combine(JobConfiguration.ReportPath, File!);
         if (!System.IO.File.Exists(reportPath)) throw new FileNotFoundException();
         _result = JsonSerializer.Deserialize<Dictionary<string, IReadOnlyList<string[]>>>(System.IO.File.ReadAllText(reportPath));
     }
+
 }
