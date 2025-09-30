@@ -1,5 +1,6 @@
-@inject IWebHostEnvironment WebHostEnvironment
+@inject JobConfiguration JobConfiguration
 @page "/Reports"
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration
 
 <div class="container">
     <h3>Reports</h3>
@@ -27,8 +28,7 @@
 
     protected override void OnInitialized()
     {
-        var reportPath = Path.Combine(WebHostEnvironment.WebRootPath, "reports");
-        _reports = Directory.EnumerateFiles(reportPath).ToList();
+        _reports = Directory.EnumerateFiles(JobConfiguration.ReportPath).ToList();
     }
 
 }

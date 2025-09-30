@@ -5,9 +5,9 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 using Hangfire;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
@@ -23,12 +23,12 @@ public sealed class HangfireJobManager : IJobManager
     private readonly IFileSorter _fileSorter;
     private readonly IBackgroundJobClient _jobClient;
     private readonly IJobResultProvider _jobResultProvider;
-    private readonly IWebHostEnvironment _webHostEnvironment;
+    private readonly JobConfiguration _jobConfiguration;
     private readonly ILogger<HangfireJobManager> _logger;
 
     public HangfireJobManager(IFileSystemScanner fileSystemScanner,
         IStorageLocationIntegrityVerificationService verifier, IFilePusher filePusher, IFileSorter fileSorter,
-        IBackgroundJobClient jobClient, IJobResultProvider jobResultProvider, IWebHostEnvironment webHostEnvironment,
+        IBackgroundJobClient jobClient, IJobResultProvider jobResultProvider, JobConfiguration jobConfiguration,
         ILogger<HangfireJobManager> logger)
     {
         _fileSystemScanner = fileSystemScanner;
@@ -37,7 +37,7 @@ public sealed class HangfireJobManager : IJobManager
         _fileSorter = fileSorter;
         _jobClient = jobClient;
         _jobResultProvider = jobResultProvider;
-        _webHostEnvironment = webHostEnvironment;
+        _jobConfiguration = jobConfiguration;
         _logger = logger;
     }
 
@@ -106,9 +106,8 @@ public sealed class HangfireJobManager : IJobManager
                 ? parameters.PathsToSkip.Split(',', StringSplitOptions.TrimEntries).Select(FileSystemPath.Create)
                 : new List<FileSystemPath>());
 
-        var dir = Path.Combine(_webHostEnvironment.WebRootPath, "reports");
-        var dirInfo = Directory.CreateDirectory(dir);
-        var filePath = Path.Combine(dir, startTime.ToString("yyyy-MM-dd__HH-mm-ss") + ".json");
+        var dir = Directory.CreateDirectory(_jobConfiguration.ReportPath);
+        var filePath = Path.Combine(dir.FullName, startTime.ToString("yyyy-MM-dd__HH-mm-ss") + ".json");
         await using var fileStream = File.CreateText(filePath);
         await fileStream.WriteAsync(JsonSerializer.Serialize(result.GenerateReport(parameters.StorageType.ToString(),
             parameters.StoragePath!, parameters.VerifyPath!, parameters.PathsToSkip!)));

@@ -11,6 +11,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
@@ -69,7 +70,8 @@ builder.Services.AddTransient<IClock, Clock>();
 const string migrationsTable = "__EFMigrationsHistory";
 const string fileSystemsSchema =
     Constants.Schema;
-const string storageLocationSchema = com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore.Constants.Schema;
+const string storageLocationSchema = com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations
+    .EntityFrameworkCore.Constants.Schema;
 
 builder.Services.AddDbContext<FileSystemsDbContext>(optionsBuilder =>
 {
@@ -133,6 +135,7 @@ builder.Services.AddSingleton<IJobResultProvider, JobResultProvider>();
 builder.Services.AddTransient<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();
 builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();
+builder.Services.AddSingleton(new JobConfiguration(builder.Configuration["JobConfiguration:ReportPath"]!));
 
 var app = builder.Build();
 
