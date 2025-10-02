@@ -119,11 +119,11 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
             // The checksum and path matched, so the file has been verified
             existingFileByChecksum.SetAsVerified();
             await FileRepository.Update(existingFileByChecksum);
-            return FileIntegrityVerificationResult.Verified(s3Path, s3Checksum, s3Object.Size);
+            return FileIntegrityVerificationResult.Verified(s3Path, s3Checksum, s3Object.Size ?? 0);
         }
 
         // The S3 Object could not be verified against any synced file
-        return FileIntegrityVerificationResult.Unverified(s3Path, s3Checksum, s3Object.Size);
+        return FileIntegrityVerificationResult.Unverified(s3Path, s3Checksum, s3Object.Size ?? 0);
     }
 
     /// <summary>
