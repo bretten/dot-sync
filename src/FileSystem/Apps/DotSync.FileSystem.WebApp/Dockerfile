@@ -70,3 +70,21 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["/home/app/aws_replace_placeholders.sh"]
+
+
+#docker run -dt `
+#    -e CERT_PATH="/mnt/some.crt" `
+#    -e PK_PATH="/mnt/some.key" `
+#    -e TRUST_ARN="trust_arn" `
+#    -e PROFILE_ARN="profile_arn" `
+#    -e ROLE_ARN="role_arn" `
+#    -e REGION="us-east-1" `
+#    -e Aws__Region="us-east-1" `
+#    -e Aws__S3__StorageClass="GLACIER_IR" `
+#    -e Aws__SecretsManager__SecretName="secret-name" `
+#    -e Aws__SecretsManager__Region="us-east-1" `
+#    -e URLS="http://*:7219" `
+#    -p 7219:7219 `
+#    -v "C:\cert\path:/mnt/certs/" `
+#    -v "C:\storage\path:/mnt/storage/" `
+#    --name dot-sync dot-sync

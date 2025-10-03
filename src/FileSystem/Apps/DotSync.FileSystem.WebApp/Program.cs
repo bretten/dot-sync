@@ -121,7 +121,7 @@ builder.Services.AddTransient<IFileIntegrityVerifierFactory, FileIntegrityVerifi
 
 builder.Services.AddScoped<IAmazonS3>(sp =>
 {
-    if (builder.Configuration["Aws:AccessKey"] != null)
+    if (!string.IsNullOrWhiteSpace(builder.Configuration["Aws:AccessKey"]))
     {
         var awsAccessKeyId = builder.Configuration["Aws:AccessKey"];
         var awsSecretAccessKey = builder.Configuration["Aws:SecretAccessKey"];
@@ -204,7 +204,7 @@ static ISecretsProvider GetSecretsProvider(IConfiguration configuration)
 {
     var secretName = configuration["Aws:SecretsManager:SecretName"]!;
     var region = RegionEndpoint.GetBySystemName(configuration["Aws:SecretsManager:Region"]);
-    if (configuration["Aws:AccessKey"] != null)
+    if (!string.IsNullOrWhiteSpace(configuration["Aws:AccessKey"]))
     {
         var awsAccessKeyId = configuration["Aws:AccessKey"];
         var awsSecretAccessKey = configuration["Aws:SecretAccessKey"];
