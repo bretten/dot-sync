@@ -8,4 +8,4 @@ public interface ISecretsProvider
     Task<Secrets> GetSecrets();
 }
 
-public sealed record Secrets(string ConnectionString);
+public sealed record Secrets(string ConnectionString, string SslCertPath, string SslCertPass);

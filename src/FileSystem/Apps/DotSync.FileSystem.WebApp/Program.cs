@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using Amazon;
 using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
@@ -161,6 +162,19 @@ builder.Services.AddTransient<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();
 builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();
 builder.Services.AddSingleton(new JobConfiguration(builder.Configuration["JobConfiguration:ReportPath"]!));
+
+if (!builder.Environment.IsDevelopment())
+{
+    builder.WebHost.ConfigureKestrel(async void (x) =>
+    {
+        var secretsProvider = GetSecretsProvider(builder.Configuration);
+        var secrets = await secretsProvider.GetSecrets();
+        x.ConfigureHttpsDefaults(o =>
+        {
+            o.ServerCertificate = new X509Certificate2(secrets.SslCertPath, secrets.SslCertPass);
+        });
+    });
+}
 
 var app = builder.Build();
 
