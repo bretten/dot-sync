@@ -1,8 +1,11 @@
+using System.Security.Cryptography.X509Certificates;
 using Amazon;
 using Amazon.Runtime;
+using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
+using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
@@ -67,30 +70,38 @@ builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantCont
 builder.Services.AddTransient<ITenantAware, TenantAware>();
 builder.Services.AddTransient<IClock, Clock>();
 
+
 const string migrationsTable = "__EFMigrationsHistory";
 const string fileSystemsSchema =
     Constants.Schema;
-const string storageLocationSchema = com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations
-    .EntityFrameworkCore.Constants.Schema;
+const string storageLocationSchema = com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore.Constants.Schema;
+
+var cs = builder.Configuration.GetConnectionString("FileSystems");
+if (string.IsNullOrWhiteSpace(cs))
+{
+    var secretsProvider = GetSecretsProvider(builder.Configuration);
+    var secrets = await secretsProvider.GetSecrets();
+    cs = secrets.ConnectionString;
+}
 
 builder.Services.AddDbContext<FileSystemsDbContext>(optionsBuilder =>
 {
-    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("FileSystems"),
+    optionsBuilder.UseNpgsql(cs,
         b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema));
 });
 builder.Services.AddDbContextFactory<FileSystemsDbContext>(
-    optionsBuilder => optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("FileSystems"),
+    optionsBuilder => optionsBuilder.UseNpgsql(cs,
         b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema)),
     ServiceLifetime.Scoped
 );
 builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
 builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
 {
-    optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("StorageLocations"),
+    optionsBuilder.UseNpgsql(cs,
         b => b.MigrationsHistoryTable(migrationsTable, storageLocationSchema));
 });
 builder.Services.AddDbContextFactory<StorageLocationsDbContext>(
-    optionsBuilder => optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("StorageLocations"),
+    optionsBuilder => optionsBuilder.UseNpgsql(cs,
         b => b.MigrationsHistoryTable(migrationsTable, storageLocationSchema)),
     ServiceLifetime.Scoped
 );
@@ -108,19 +119,34 @@ else
 
 builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
 builder.Services.AddTransient<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
-builder.Services.AddTransient<IAmazonS3>(sp =>
+
+builder.Services.AddScoped<IAmazonS3>(sp =>
 {
-    var awsAccessKeyId = builder.Configuration["AmazonS3:AwsAccessKey"];
-    var awsSecretAccessKey = builder.Configuration["AmazonS3:AwsSecretAccessKey"];
-    var region = builder.Configuration["AmazonS3:Region"];
-    return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
-        RegionEndpoint.GetBySystemName(region));
+    if (!string.IsNullOrWhiteSpace(builder.Configuration["Aws:AccessKey"]))
+    {
+        var awsAccessKeyId = builder.Configuration["Aws:AccessKey"];
+        var awsSecretAccessKey = builder.Configuration["Aws:SecretAccessKey"];
+        var region = builder.Configuration["Aws:Region"];
+        return new AmazonS3Client(new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
+            RegionEndpoint.GetBySystemName(region));
+    }
+    else
+    {
+        var chain = new CredentialProfileStoreChain();
+        AWSConfigs.AWSProfileName = "roles_anywhere";
+        if (!chain.TryGetAWSCredentials("roles_anywhere", out var credentials))
+        {
+            throw new Exception("Missing AWS credentials profile");
+        }
+
+        return new AmazonS3Client(credentials);
+    }
 });
 
 builder.Services.AddTransient<IFileSystemScanner, LocalFileSystemScanner>();
 builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>(sp =>
 {
-    var storageClass = S3StorageClass.FindValue(builder.Configuration["AmazonS3:StorageClass"]) ??
+    var storageClass = S3StorageClass.FindValue(builder.Configuration["Aws:S3:StorageClass"]) ??
                        throw new ArgumentException($"Storage class not defined");
 
     return new AmazonS3FileCopier(sp.GetRequiredService<IFileChecksumGenerator>(),
@@ -136,6 +162,19 @@ builder.Services.AddTransient<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();
 builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();
 builder.Services.AddSingleton(new JobConfiguration(builder.Configuration["JobConfiguration:ReportPath"]!));
+
+if (!builder.Environment.IsDevelopment())
+{
+    builder.WebHost.ConfigureKestrel(async void (x) =>
+    {
+        var secretsProvider = GetSecretsProvider(builder.Configuration);
+        var secrets = await secretsProvider.GetSecrets();
+        x.ConfigureHttpsDefaults(o =>
+        {
+            o.ServerCertificate = new X509Certificate2(secrets.SslCertPath, secrets.SslCertPass);
+        });
+    });
+}
 
 var app = builder.Build();
 
@@ -174,3 +213,28 @@ app.UseHangfireDashboard(options: new DashboardOptions
 });
 
 app.Run();
+
+static ISecretsProvider GetSecretsProvider(IConfiguration configuration)
+{
+    var secretName = configuration["Aws:SecretsManager:SecretName"]!;
+    var region = RegionEndpoint.GetBySystemName(configuration["Aws:SecretsManager:Region"]);
+    if (!string.IsNullOrWhiteSpace(configuration["Aws:AccessKey"]))
+    {
+        var awsAccessKeyId = configuration["Aws:AccessKey"];
+        var awsSecretAccessKey = configuration["Aws:SecretAccessKey"];
+
+        return new AwsSecretsManagerProvider(secretName, new BasicAWSCredentials(awsAccessKeyId, awsSecretAccessKey),
+            region);
+    }
+    else
+    {
+        var chain = new CredentialProfileStoreChain();
+        AWSConfigs.AWSProfileName = "roles_anywhere";
+        if (!chain.TryGetAWSCredentials("roles_anywhere", out var credentials))
+        {
+            throw new Exception("Missing AWS credentials profile");
+        }
+
+        return new AwsSecretsManagerProvider(secretName, credentials, region);
+    }
+}

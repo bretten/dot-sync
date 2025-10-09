@@ -16,11 +16,11 @@ public readonly record struct StorageLocationIntegrityVerificationResult(
         string verifyPath, string pathsToSkip)
     {
         var verified = new List<string[]>() { new string[] { "Verified Count", Result.TotalVerified.ToString() } };
-        var unverified = Result.Unverified.Select(x => (string[]) [x.Path.Value, x.Checksum.Value, x.Size.ToString()])
+        var unverified = Result.Unverified.Select(x => (string[])[x.Path.Value, x.Checksum.Value, x.Size.ToString()])
             .ToImmutableList();
-        var moved = Result.Moved.Select(x => (string[]) [x.Path.Value]).ToImmutableList();
-        var missing = Result.Missing.Select(x => (string[]) [x.Path.Value]).ToImmutableList();
-        var newFiles = Result.New.Select(x => (string[]) [x.Path.Value]).ToImmutableList();
+        var moved = Result.Moved.Select(x => (string[])[x.Path.Value]).ToImmutableList();
+        var missing = Result.Missing.Select(x => (string[])[x.Path.Value]).ToImmutableList();
+        var newFiles = Result.New.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         return new Dictionary<string, IReadOnlyList<string[]>>()
         {
             { "Storage Type", new List<string[]>() { new[] { storageType } }.ToImmutableList() },
