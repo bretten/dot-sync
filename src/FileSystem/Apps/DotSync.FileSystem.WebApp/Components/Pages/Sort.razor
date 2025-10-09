@@ -5,8 +5,10 @@
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
+@using Microsoft.AspNetCore.Authorization
 @implements IDisposable
 @rendermode InteractiveServer
+@attribute [Authorize]
 
 <div class="container">
     <h3>Sort</h3>

@@ -24,6 +24,7 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFr
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs;
 using com.brettnamba.DotSync.FileSystem.WebApp.Hangfire;
+using com.brettnamba.DotSync.FileSystem.WebApp.Startup;
 using Hangfire;
 using Hangfire.Dashboard;
 using Hangfire.MemoryStorage;
@@ -31,6 +32,8 @@ using Microsoft.EntityFrameworkCore;
 using Constants = com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOidc(builder.Configuration);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -196,6 +199,8 @@ app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+app.MapAuthenticationEndpoints();
 
 var authFilters = new List<IDashboardAuthorizationFilter>();
 if (app.Environment.IsDevelopment())
