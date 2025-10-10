@@ -4,12 +4,13 @@
 @using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities
 @using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore
+@using com.brettnamba.DotSync.FileSystem.WebApp.Startup
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @implements IAsyncDisposable
 @inject IDbContextFactory<StorageLocationsDbContext> StorageDbContextFactory
 @inject IJSRuntime JS
-@attribute [Authorize]
+@attribute [Authorize(AuthenticationExtensions.VerifierPolicy)]
 
 <div class="container">
     <h3>Storage Locations</h3>

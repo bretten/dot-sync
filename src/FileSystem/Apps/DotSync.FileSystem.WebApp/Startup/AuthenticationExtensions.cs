@@ -9,6 +9,8 @@ namespace com.brettnamba.DotSync.FileSystem.WebApp.Startup;
 public static class AuthenticationExtensions
 {
     public const string AuthenticationScheme = "oidc";
+    public const string VerifierPolicy = "Verifier";
+    public const string PusherPolicy = "Pusher";
 
     public static void AddOidc(this IServiceCollection services, IConfiguration config)
     {
@@ -46,7 +48,13 @@ public static class AuthenticationExtensions
                 };
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
-        services.AddAuthorization();
+
+        services.AddAuthorizationBuilder()
+            .AddPolicy(VerifierPolicy,
+                policy => policy.RequireClaim(config["OAuth2:UserGroupsClaim"]!, config["OAuth2:VerifyGroup"]!))
+            .AddPolicy(PusherPolicy,
+                policy => policy.RequireClaim(config["OAuth2:UserGroupsClaim"]!, config["OAuth2:PushGroup"]!));
+
         services.AddCascadingAuthenticationState();
     }
 
