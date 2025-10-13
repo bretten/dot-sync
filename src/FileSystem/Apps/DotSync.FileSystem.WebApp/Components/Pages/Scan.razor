@@ -1,13 +1,15 @@
 @page "/Scan"
-@page "/"
 @inject JobComponent JobComponent
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
+@using com.brettnamba.DotSync.FileSystem.WebApp.Startup
+@using Microsoft.AspNetCore.Authorization
 @implements IDisposable
 @rendermode InteractiveServer
+@attribute [Authorize(AuthenticationExtensions.VerifierPolicy)]
 
 <div class="container">
     <h3>Scan</h3>

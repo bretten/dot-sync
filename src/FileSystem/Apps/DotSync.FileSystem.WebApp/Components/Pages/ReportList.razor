@@ -1,6 +1,8 @@
 @inject JobConfiguration JobConfiguration
 @page "/Reports"
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 
 <div class="container">
     <h3>Reports</h3>
