@@ -1,6 +1,7 @@
+@using com.brettnamba.DotSync.FileSystem.Application.Orchestration
 @rendermode InteractiveServer
 
-@if (Files == null || Files.Count == 0)
+@if (FileResults == null || FileResults.Count == 0)
 {
   <b>No result</b>
 }
@@ -8,17 +9,21 @@ else
 {
   var i = 0;
   <div class="accordion" id="file-list-accordion">
-    @foreach (var fileList in Files)
+    @foreach (var fileResult in FileResults)
     {
       var id = "file-list-accordion-" + i;
-      var colCount = fileList.Value.FirstOrDefault()?.Length ?? 0;
+      var colCount = fileResult.FileList.FirstOrDefault()?.Length ?? 0;
 
       <div class="accordion-item">
         <h2 class="accordion-header">
           <button class="accordion-button" type="button" data-bs-toggle="collapse"
                   data-bs-target="#@id" aria-expanded="true"
                   aria-controls="@id">
-            @fileList.Key
+            @fileResult.Name&nbsp;
+            @if (fileResult.ShowFileCount)
+            {
+              @($"({fileResult.FileList.Count})")
+            }
           </button>
         </h2>
         <div id="@id" class="accordion-collapse collapse show">
@@ -33,7 +38,7 @@ else
               </tr>
               </thead>
               <tbody>
-              @foreach (var file in fileList.Value)
+              @foreach (var file in fileResult.FileList)
               {
                 <tr>
                   @foreach (var col in file)
@@ -60,8 +65,8 @@ else
 }
 
 @code {
-  [Parameter] public Dictionary<string, IReadOnlyList<string[]>>? Files { get; set; }
+  [Parameter] public required IReadOnlyList<FileResultList> FileResults { get; set; }
   [Parameter] public bool ShowClear { get; set; } = true;
 
-  private void Clear() => Files?.Clear();
+  private void Clear() => FileResults = new List<FileResultList>().AsReadOnly();
 }

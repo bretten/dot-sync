@@ -1,5 +1,6 @@
 @page "/Report"
 @using System.Text.Json
+@using com.brettnamba.DotSync.FileSystem.Application.Orchestration
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using Microsoft.AspNetCore.Authorization
@@ -9,20 +10,20 @@
 <h3>Report</h3>
 
 <div class="container">
-    <FileList Files="@_result" ShowClear="@false"/>
+    <FileList FileResults="@_result" ShowClear="@false"/>
 </div>
 
 
 @code {
     [SupplyParameterFromQuery] private string? File { get; set; }
 
-    private Dictionary<string, IReadOnlyList<string[]>>? _result;
+    private IReadOnlyList<FileResultList>? _result;
 
     protected override void OnInitialized()
     {
         var reportPath = Path.Combine(JobConfiguration.ReportPath, File!);
         if (!System.IO.File.Exists(reportPath)) throw new FileNotFoundException();
-        _result = JsonSerializer.Deserialize<Dictionary<string, IReadOnlyList<string[]>>>(System.IO.File.ReadAllText(reportPath));
+        _result = JsonSerializer.Deserialize<IReadOnlyList<FileResultList>>(System.IO.File.ReadAllText(reportPath));
     }
 
 }
