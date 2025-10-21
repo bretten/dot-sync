@@ -12,7 +12,7 @@ public readonly record struct StorageLocationIntegrityVerificationResult(
     FileSetIntegrityVerificationResult Result,
     string Report)
 {
-    public Dictionary<string, IReadOnlyList<string[]>> GenerateReport(string storageType, string storagePath,
+    public IReadOnlyList<FileResultList> GenerateReport(string storageType, string storagePath,
         string verifyPath, string pathsToSkip)
     {
         var verified = new List<string[]>() { new string[] { "Verified Count", Result.TotalVerified.ToString() } };
@@ -21,17 +21,20 @@ public readonly record struct StorageLocationIntegrityVerificationResult(
         var moved = Result.Moved.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         var missing = Result.Missing.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         var newFiles = Result.New.Select(x => (string[])[x.Path.Value]).ToImmutableList();
-        return new Dictionary<string, IReadOnlyList<string[]>>()
+
+        return new List<FileResultList>()
         {
-            { "Storage Type", new List<string[]>() { new[] { storageType } }.ToImmutableList() },
-            { "Storage Path", new List<string[]>() { new[] { storagePath } }.ToImmutableList() },
-            { "Verify Path", new List<string[]>() { new[] { verifyPath } }.ToImmutableList() },
-            { "Paths to Skip", new List<string[]>() { new[] { pathsToSkip } }.ToImmutableList() },
-            { "Verified", verified },
-            { "Unverified", unverified },
-            { "Moved", moved },
-            { "Missing", missing },
-            { "New", newFiles },
-        };
+            new("Storage Type", new List<string[]>() { new[] { storageType } }.ToImmutableList(), false),
+            new("Storage Path", new List<string[]>() { new[] { storagePath } }.ToImmutableList(), false),
+            new("Verify Path", new List<string[]>() { new[] { verifyPath } }.ToImmutableList(), false),
+            new("Paths to Skip", new List<string[]>() { new[] { pathsToSkip } }.ToImmutableList(), false),
+            new("Verified", verified, false),
+            new("Unverified", unverified, true),
+            new("Moved", moved, true),
+            new("Missing", missing, true),
+            new("New", newFiles, true)
+        }.AsReadOnly();
     }
-};
+}
+
+public record FileResultList(string Name, IReadOnlyList<string[]> FileList, bool ShowFileCount);

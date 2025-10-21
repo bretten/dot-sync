@@ -2,6 +2,7 @@
 @inject JobComponent JobComponent
 @using System.Collections.Immutable
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Application.Orchestration
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
@@ -38,7 +39,7 @@
 <hr/>
 
 <div class="container">
-    <FileList Files="@_result"/>
+    <FileList FileResults="@_result"/>
 </div>
 
 @code {
@@ -48,7 +49,7 @@
     private SortForm? SortModel { get; set; }
 
     private readonly List<string> _progressMessages = new List<string>();
-    private Dictionary<string, IReadOnlyList<string[]>>? _result;
+    private IReadOnlyList<FileResultList>? _result;
 
     protected override void OnInitialized()
     {
@@ -76,12 +77,10 @@
             throw new ArgumentException("Invalid parameters");
         }
 
-        _result = new Dictionary<string, IReadOnlyList<string[]>>()
+        _result = new List<FileResultList>()
         {
-            {
-                "Files", ((List<string>)data.Result).Select(x => (string[])[x]).ToImmutableList()
-            }
-        };
+            new("Files", ((List<string>)data.Result).Select(x => (string[])[x]).ToImmutableList(), true)
+        }.AsReadOnly();
 
         InvokeAsync(StateHasChanged);
         _progressMessages.Clear();
