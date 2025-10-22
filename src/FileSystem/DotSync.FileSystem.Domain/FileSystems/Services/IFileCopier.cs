@@ -7,5 +7,5 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 /// </summary>
 public interface IFileCopier
 {
-    Task CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination);
+    Task<bool> CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination);
 }
