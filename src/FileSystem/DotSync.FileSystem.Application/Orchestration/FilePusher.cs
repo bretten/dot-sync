@@ -35,13 +35,15 @@ public sealed class FilePusher(
 
         var unverifiedFiles = (await fileRepository.GetUnverifiedFiles()).ToList();
 
+        var pushedFiles = new List<DotFile>();
         foreach (var file in unverifiedFiles)
         {
             //logger.LogInformation($"Uploading {file.Path}");
-            await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
+            var pushed = await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
+            if (pushed) pushedFiles.Add(file);
         }
 
-        return unverifiedFiles;
+        return pushedFiles;
     }
 
     public async Task<IEnumerable<DotFile>> PushFilesInDir(StorageLocationType sourceType,
@@ -63,12 +65,15 @@ public sealed class FilePusher(
 
         var files = (await fileRepository.GetFilesByPath(sourcePushPath)).ToList();
 
+        var pushedFiles = new List<DotFile>();
         foreach (var file in files)
         {
             //logger.LogInformation($"Uploading {file.Path}");
-            await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
+            var pushed = await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
+            if (pushed) pushedFiles.Add(file);
         }
 
-        return files;
+
+        return pushedFiles;
     }
 }

@@ -31,10 +31,10 @@ public sealed class AmazonS3FileCopier : IFileCopier
         _logger = logger;
     }
 
-    public async Task CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination)
+    public async Task<bool> CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination)
     {
         var exists = await Exists(destination.Value, sourceFile.Value);
-        if (exists) return;
+        if (exists) return false;
         _logger.LogInformation($"Uploading {sourcePath.Value}/{sourceFile.Value}");
 
         var fileInfo =
@@ -43,10 +43,11 @@ public sealed class AmazonS3FileCopier : IFileCopier
         if (fileInfo.Length >= SinglePartUploadMaxSize)
         {
             await MultiPartUpload(sourceFile, destination, fileInfo);
-            return;
+            return true;
         }
 
         await SinglePartUpload(sourceFile, destination, fileInfo);
+        return true;
     }
 
     private async Task SinglePartUpload(FileSystemPath sourceFile, FileSystemPath destination, FileInfo fileInfo)
