@@ -33,6 +33,12 @@
 <hr/>
 
 <div class="container">
+    @if (!string.IsNullOrWhiteSpace(_error))
+    {
+        <div id="blazor-error-ui" class="blazor-error-boundary" data-nosnippet>
+            @_error
+        </div>
+    }
     <JobProgress Messages="@_progressMessages"/>
 </div>
 
@@ -50,12 +56,14 @@
 
     private readonly List<string> _progressMessages = new List<string>();
     private IReadOnlyList<FileResultList>? _result;
+    private string? _error;
 
     protected override void OnInitialized()
     {
         JobComponent.OnInitialized();
 
         JobComponent.JobResultProvider.JobCompleted += ParseResult;
+        JobComponent.JobResultProvider.JobFailed += SetError;
         JobComponent.ProgressReporter.ProgressReported += ReportProgress;
         SortModel ??= new SortForm()
         {
@@ -65,7 +73,9 @@
 
     private async Task ExecuteSort()
     {
+        _error = null;
         JobComponent.Logger.LogInformation($"Sorting {SortModel!.SourcePath} to {SortModel.DestinationPath}");
+        await InvokeAsync(StateHasChanged);
         await JobComponent.JobManager.RunJob(new SortParameters(SortModel.SourcePath, SortModel.DestinationPath));
     }
 
@@ -84,6 +94,13 @@
 
         InvokeAsync(StateHasChanged);
         _progressMessages.Clear();
+        _error = null;
+    }
+
+    private void SetError(object? sender, string error)
+    {
+        _error = error;
+        InvokeAsync(StateHasChanged);
     }
 
     private void ReportProgress(string jobId, string progress)
@@ -96,6 +113,7 @@
     public void Dispose()
     {
         JobComponent.JobResultProvider.JobCompleted -= ParseResult;
+        JobComponent.JobResultProvider.JobFailed -= SetError;
         JobComponent.ProgressReporter.ProgressReported -= ReportProgress;
         JobComponent.Dispose();
     }

@@ -26,4 +26,9 @@ public sealed class EntityFrameworkCoreStorageLocationRepository(StorageLocation
         return await dbContext.StorageLocationsWithHistoricalStatistics()
             .FirstOrDefaultAsync(x => x.Type == type && x.Path == path);
     }
+
+    public async Task<IEnumerable<StorageLocation>> GetAll()
+    {
+        return await dbContext.StorageLocations.ToListAsync();
+    }
 }

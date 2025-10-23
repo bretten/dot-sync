@@ -1,5 +1,8 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
@@ -15,6 +18,11 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     private readonly IFileMetadataReader _fileMetadataReader;
 
     /// <summary>
+    /// Used to get local storage locations to prevent sorting directly on them
+    /// </summary>
+    private readonly IStorageLocationRepository _storageLocationRepository;
+
+    /// <summary>
     /// Logger
     /// </summary>
     private readonly ILogger<IFileSorter> _logger;
@@ -23,18 +31,28 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// Constructor
     /// </summary>
     /// <param name="fileMetadataReader">Metadata reader used to get the date of the file</param>
+    /// <param name="storageLocationRepository">Used to get local storage locations to prevent sorting directly on them</param>
     /// <param name="logger">Logger</param>
-    public LocalFileSystemByDateFileSorter(IFileMetadataReader fileMetadataReader, ILogger<IFileSorter> logger)
+    public LocalFileSystemByDateFileSorter(IFileMetadataReader fileMetadataReader,
+        IStorageLocationRepository storageLocationRepository, ILogger<IFileSorter> logger)
     {
         _fileMetadataReader = fileMetadataReader;
+        _storageLocationRepository = storageLocationRepository;
         _logger = logger;
     }
 
     /// <summary>
     /// <inheritdoc cref="IFileSorter.Sort"/>
     /// </summary>
-    public Task<IEnumerable<string>> Sort(FileSystemPath sourcePath, FileSystemPath destinationPath)
+    public async Task<IEnumerable<string>> Sort(FileSystemPath sourcePath, FileSystemPath destinationPath)
     {
+        var localStorageLocations = (await _storageLocationRepository.GetAll())
+            .Where(x => x.Type == StorageLocationType.Local).ToList();
+        if (localStorageLocations.Any(x => x.Path == sourcePath))
+        {
+            throw new SortPathSameAsStoragePathException($"Sort path matches a local storage: {sourcePath.Value}");
+        }
+
         var sourceDirectoryInfo = new DirectoryInfo(sourcePath.Value);
 
         // Get all directories that are within the source path
@@ -52,7 +70,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
             result.AddRange(MoveFiles(sourceDirectory, files, destinationPath));
         }
 
-        return Task.FromResult(result.AsEnumerable());
+        return result.AsEnumerable();
     }
 
     /// <summary>

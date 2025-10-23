@@ -9,4 +9,5 @@ public interface IStorageLocationRepository
     Task Add(StorageLocation storageLocation);
     Task Update(StorageLocation storageLocation);
     Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, FileSystemPath path);
+    Task<IEnumerable<StorageLocation>> GetAll();
 }

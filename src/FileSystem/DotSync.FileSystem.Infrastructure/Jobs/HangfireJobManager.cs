@@ -1,6 +1,7 @@
 using System.Text.Json;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
+using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -127,9 +128,17 @@ public sealed class HangfireJobManager : IJobManager
 
     public async Task Sort(SortParameters parameters)
     {
-        var result = await _fileSorter.Sort(FileSystemPath.Create(parameters.SourcePath ?? ""),
-            FileSystemPath.Create(parameters.DestinationPath ?? ""));
-        _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
+        try
+        {
+            var result = await _fileSorter.Sort(FileSystemPath.Create(parameters.SourcePath ?? ""),
+                FileSystemPath.Create(parameters.DestinationPath ?? ""));
+            _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
+        }
+        catch (SortPathSameAsStoragePathException e)
+        {
+            Console.WriteLine(e);
+            _jobResultProvider.OnJobFailed(e.Message);
+        }
     }
 
     private bool IsJobRunning(string jobName)

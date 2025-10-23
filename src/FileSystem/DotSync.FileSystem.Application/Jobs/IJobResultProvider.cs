@@ -14,6 +14,16 @@ public interface IJobResultProvider
     /// Handles a completed job
     /// </summary>
     void OnJobCompleted(JobResult result);
+
+    /// <summary>
+    /// Invoked when a job fails
+    /// </summary>
+    event EventHandler<string>? JobFailed;
+
+    /// <summary>
+    /// Handles a failed job
+    /// </summary>
+    void OnJobFailed(string error);
 }
 
 /// <summary>

@@ -1,6 +1,7 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -39,7 +40,8 @@ public class LocalFileSystemByDateFileSorterTests
             .Returns(new DateTime(2023, 2, 4));
 
         var mockLogger = Mock.Of<ILogger<IFileSorter>>();
-        var sorter = new LocalFileSystemByDateFileSorter(stubMetadataReader.Object, mockLogger);
+        var sorter = new LocalFileSystemByDateFileSorter(stubMetadataReader.Object,
+            Mock.Of<IStorageLocationRepository>(), mockLogger);
 
         /*
          * Act

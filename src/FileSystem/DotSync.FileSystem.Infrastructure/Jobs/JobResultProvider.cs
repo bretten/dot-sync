@@ -13,4 +13,13 @@ public sealed class JobResultProvider : IJobResultProvider
     {
         JobCompleted?.Invoke(this, result);
     }
+
+    /// <inheritdoc />
+    public event EventHandler<string>? JobFailed;
+
+    /// <inheritdoc />
+    public void OnJobFailed(string error)
+    {
+        JobFailed?.Invoke(this, error);
+    }
 }
