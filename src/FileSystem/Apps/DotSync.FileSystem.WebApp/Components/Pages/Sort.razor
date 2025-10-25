@@ -18,14 +18,6 @@
 
 <div class="container">
     <EditForm Model="SortModel" OnSubmit="ExecuteSort" FormName="Sort">
-        <div class="mb-3">
-            <label class="form-label">Source Path:</label>
-            <InputText @bind-Value="SortModel!.SourcePath" class="form-control"/>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Destination Path:</label>
-            <InputText @bind-Value="SortModel!.DestinationPath" class="form-control"/>
-        </div>
         <button type="submit" class="btn btn-primary">Submit</button>
     </EditForm>
 </div>

@@ -6,6 +6,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 using Hangfire;
@@ -19,6 +20,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
 public sealed class HangfireJobManager : IJobManager
 {
     private readonly IFileSystemScanner _fileSystemScanner;
+    private readonly IStorageLocationRepository _storageLocationRepo;
     private readonly IStorageLocationIntegrityVerificationService _verifier;
     private readonly IFilePusher _filePusher;
     private readonly IFileSorter _fileSorter;
@@ -27,12 +29,15 @@ public sealed class HangfireJobManager : IJobManager
     private readonly JobConfiguration _jobConfiguration;
     private readonly ILogger<HangfireJobManager> _logger;
 
-    public HangfireJobManager(IFileSystemScanner fileSystemScanner,
+    public const string DefaultSortDir = "ToUpload";
+
+    public HangfireJobManager(IFileSystemScanner fileSystemScanner, IStorageLocationRepository storageLocationRepo,
         IStorageLocationIntegrityVerificationService verifier, IFilePusher filePusher, IFileSorter fileSorter,
         IBackgroundJobClient jobClient, IJobResultProvider jobResultProvider, JobConfiguration jobConfiguration,
         ILogger<HangfireJobManager> logger)
     {
         _fileSystemScanner = fileSystemScanner;
+        _storageLocationRepo = storageLocationRepo;
         _verifier = verifier;
         _filePusher = filePusher;
         _fileSorter = fileSorter;
@@ -130,13 +135,20 @@ public sealed class HangfireJobManager : IJobManager
     {
         try
         {
-            var result = await _fileSorter.Sort(FileSystemPath.Create(parameters.SourcePath ?? ""),
-                FileSystemPath.Create(parameters.DestinationPath ?? ""));
+            var location =
+                (await _storageLocationRepo.GetAll()).FirstOrDefault(x => x.Type == StorageLocationType.Local);
+            if (location == null) throw new NoLocalStorageException("No Local storage for sorting");
+
+            var sortSourcePath =
+                FileSystemPath.Create($"{location.Path.Value}{Path.AltDirectorySeparatorChar}{DefaultSortDir}",
+                    OperatingSystem.IsWindows());
+
+            var result = await _fileSorter.Sort(sortSourcePath, location.Path);
             _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
         }
         catch (SortPathSameAsStoragePathException e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e.Message);
             _jobResultProvider.OnJobFailed(e.Message);
         }
     }
