@@ -1,3 +1,62 @@
 @page "/"
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+@rendermode InteractiveServer
+@inject IDbContextFactory<FileSystemsDbContext> DbContextFactory
 
-Home
+<AuthorizeView Context="authContext">
+    <h1>Files</h1>
+    <QuickGrid Items="_context.Files" Pagination="_pagination" Class="table table-striped table-hover">
+        <TemplateColumn Title="" Sortable="false">
+            <img src="favicon.png" class="img-thumbnail" alt="@context.Path.Value"/>
+        </TemplateColumn>
+        <TemplateColumn Sortable="true" SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
+            @context.Path.Value
+        </TemplateColumn>
+
+        <PropertyColumn Property="@(p => p.FileCreation)" Title="Created" Format="g" Sortable="true"/>
+        <PropertyColumn Property="@(p => p.FirstSync)" Title="First Sync" Format="g" Sortable="true"/>
+    </QuickGrid>
+
+    <Paginator State="_pagination"/>
+    <div class="container-fluid text-left">
+        <div class="row">
+            <div class="col-md-1">
+                <div class="form-floating">
+                    <select class="form-select" id="floatingSelect" aria-label="Items Per Page"
+                            @onchange="OnPageCountChanged">
+                        <option value="20">20</option>
+                        <option value="50" selected>50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <label for="floatingSelect">Items Per Page</label>
+                </div>
+            </div>
+        </div>
+    </div>
+</AuthorizeView>
+
+@code {
+    private const int DefaultItemsPerPage = 50;
+    private PaginationState _pagination = new PaginationState { ItemsPerPage = DefaultItemsPerPage };
+    private FileSystemsDbContext _context = default!;
+
+
+    protected override void OnInitialized()
+    {
+        _context = DbContextFactory.CreateDbContext();
+    }
+
+    private void OnPageCountChanged(ChangeEventArgs e)
+    {
+        var parsed = int.TryParse(e.Value?.ToString(), out var itemsPerPage);
+        if (!parsed) itemsPerPage = DefaultItemsPerPage;
+        _pagination.ItemsPerPage = itemsPerPage;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync() => await _context.DisposeAsync();
+
+}
