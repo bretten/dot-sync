@@ -108,6 +108,10 @@ builder.Services.AddDbContextFactory<StorageLocationsDbContext>(
         b => b.MigrationsHistoryTable(migrationsTable, storageLocationSchema)),
     ServiceLifetime.Scoped
 );
+
+// EF-aware IAsyncQueryExecutor
+builder.Services.AddQuickGridEntityFrameworkAdapter();
+
 builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
 builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
 if (!OperatingSystem.IsWindows())
