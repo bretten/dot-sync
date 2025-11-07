@@ -9,15 +9,25 @@
 <AuthorizeView Context="authContext">
     <h1>Files</h1>
     <QuickGrid Items="_context.Files" Pagination="_pagination" Class="table table-striped table-hover">
-        <TemplateColumn Title="" Sortable="false">
-            <img src="favicon.png" class="img-thumbnail" alt="@context.Path.Value"/>
+        <TemplateColumn Title="" Sortable="false" Class="col-2">
+            <a href="#" data-bs-toggle="modal" data-bs-target="#modalPreview"
+               @onclick="@(e => OnThumbnailClicked(e, context.Path.Value))">
+                <img src="@(GetThumbnailUrl(context.Path.Value))" class="file-thumbnail" alt="@context.Path.Value"/>
+            </a>
         </TemplateColumn>
-        <TemplateColumn Sortable="true" SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
-            @context.Path.Value
+        <TemplateColumn Class="col-8 text-left" Title="Path" Sortable="true"
+                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
+            <small>@context.Path.Value</small>
         </TemplateColumn>
 
-        <PropertyColumn Property="@(p => p.FileCreation)" Title="Created" Format="g" Sortable="true"/>
-        <PropertyColumn Property="@(p => p.FirstSync)" Title="First Sync" Format="g" Sortable="true"/>
+        <TemplateColumn Class="col-1" Title="Created" Sortable="true"
+                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.FileCreation))">
+            <small>@context.FileCreation.ToString("g")</small>
+        </TemplateColumn>
+        <TemplateColumn Class="col-1" Title="First Sync" Sortable="true"
+                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.FirstSync))">
+            <small>@context.FirstSync.ToString("g")</small>
+        </TemplateColumn>
     </QuickGrid>
 
     <Paginator State="_pagination"/>
@@ -36,13 +46,25 @@
             </div>
         </div>
     </div>
+
+    <div class="modal fade" id="modalPreview" tabindex="-1" aria-labelledby="modalPreviewLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="col-12 text-center">
+                        <img src="@_currentImgUrl" class="img-fluid" alt="@_currentImgUrl"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </AuthorizeView>
 
 @code {
     private const int DefaultItemsPerPage = 50;
     private PaginationState _pagination = new PaginationState { ItemsPerPage = DefaultItemsPerPage };
     private FileSystemsDbContext _context = default!;
-
+    private string _currentImgUrl = "";
 
     protected override void OnInitialized()
     {
@@ -55,6 +77,18 @@
         if (!parsed) itemsPerPage = DefaultItemsPerPage;
         _pagination.ItemsPerPage = itemsPerPage;
         StateHasChanged();
+    }
+
+    private void OnThumbnailClicked(MouseEventArgs e, string imagePath)
+    {
+        var thumbnailUrl = GetThumbnailUrl(imagePath);
+        _currentImgUrl = thumbnailUrl;
+        StateHasChanged();
+    }
+
+    private string GetThumbnailUrl(string imagePath)
+    {
+        return $"thumbnail?id={imagePath}";
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
