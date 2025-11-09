@@ -10,13 +10,12 @@ using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
+using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
@@ -25,6 +24,7 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFramewo
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Storage;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs;
@@ -176,9 +176,12 @@ builder.Services.AddTransient<JobComponent>();
 builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();
 builder.Services.AddSingleton(new JobConfiguration(builder.Configuration["JobConfiguration:ReportPath"]!));
 
+// Storage provider
+builder.Services.AddScoped<IMainStorageProvider, MainStorageProvider>();
+
 // Thumbnails
-builder.Services.AddSingleton<IThumbnailGenerator, MagickThumbnailGenerator>();
-builder.Services.AddSingleton<IThumbnailProvider, ThumbnailProvider>();
+builder.Services.AddScoped<IThumbnailGenerator, MagickThumbnailGenerator>();
+builder.Services.AddScoped<IThumbnailProvider, ThumbnailProvider>();
 
 if (!builder.Environment.IsDevelopment())
 {
@@ -232,17 +235,10 @@ app.UseHangfireDashboard(options: new DashboardOptions
 });
 
 // Thumbnail provider
-var storageRepo = scope.ServiceProvider.GetRequiredService<IStorageLocationRepository>();
-var defaultStorage = (await storageRepo.GetAll()).FirstOrDefault(x => x.Type == StorageLocationType.Local);
-if (defaultStorage == null) throw new NullReferenceException("No local storage location found");
-app.MapGet("/thumbnail", async ([FromQuery] string id, IThumbnailProvider provider) =>
+app.MapGet("/thumbnail", async ([FromQuery] string path, IThumbnailProvider provider) =>
 {
-    var path = FileSystemPath.Create(Path.Combine(defaultStorage.Path.Value, id));
-    var a = new DotFile(Guid.Empty, path, FileSha256Checksum.Create("A"), 1, DateTime.UtcNow,
-        false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
-    var thumbnail = await provider.GetThumbnail(a);
-
-    return Results.File(thumbnail.Path, contentType: "image/jpeg");
+    var thumbnail = await provider.GetThumbnail(FileSystemPath.Create(path));
+    return Results.File(thumbnail.Path, contentType: thumbnail.ContentType);
 });
 
 app.Run();

@@ -1,5 +1,5 @@
 using com.brettnamba.DotSync.FileSystem.Application.Files;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using ImageMagick;
 using ImageMagick.Formats;
@@ -8,69 +8,138 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
 
 public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 {
-    private const string ThumbnailDir = "/thumbnails";
+    private const string ThumbnailDirPath = "/thumbnails";
+    private const int MaxWidth = 1280;
 
-    public FileSystemPath DetermineThumbnailPath(DotFile file)
+    private readonly IMainStorageProvider _storageProvider;
+
+    private DirectoryInfo? _thumbnailsDir;
+
+    private DirectoryInfo ThumbnailsDir
     {
-        var dir = Directory.CreateDirectory(ThumbnailDir);
-        return FileSystemPath.Create(Path.Combine(dir.FullName,
-            Path.GetFileNameWithoutExtension(file.Path.Value) + ".jpg"), !OperatingSystem.IsWindows());
+        get
+        {
+            if (_thumbnailsDir == null)
+            {
+                _thumbnailsDir = Directory.CreateDirectory(ThumbnailDirPath);
+            }
+
+            return _thumbnailsDir;
+        }
     }
 
-    public async Task<Thumbnail> CreateThumbnail(DotFile file)
+    public MagickThumbnailGenerator(IMainStorageProvider storageProvider)
     {
-        var extension = Path.GetExtension(file.Path.Value).ToLowerInvariant();
+        _storageProvider = storageProvider;
+    }
+
+    public string ThumbnailContentType => "image/jpeg";
+
+    public FileSystemPath DetermineThumbnailPath(FileSystemPath filePath)
+    {
+        var fileDirPath = Path.GetDirectoryName(filePath.Value)!;
+        var thumbnailFilename = $"{Path.GetFileNameWithoutExtension(filePath.Value)}.jpg";
+        return FileSystemPath.Create(Path.Combine(ThumbnailsDir.FullName, fileDirPath, thumbnailFilename),
+            !OperatingSystem.IsWindows());
+    }
+
+    public async Task<Thumbnail> CreateThumbnail(FileSystemPath filePath)
+    {
+        var extension = Path.GetExtension(filePath.Value).ToLowerInvariant();
         if (extension == ".dng")
         {
-            return await CreateThumbnailFromRaw(file);
+            return await CreateThumbnailFromRaw(filePath);
         }
 
-        await using var fileStream = File.Open(file.Path.Value, FileMode.Open, FileAccess.Read);
-        using var image = new MagickImage(fileStream);
+        var fullLocalPath = await GetFileFullLocalPath(filePath);
 
-        var size = new MagickGeometry(image.Height / 2, image.Height / 2);
+        await using var fileStream = File.Open(fullLocalPath, FileMode.Open, FileAccess.Read);
+        using var thumbnail = new MagickImage(fileStream);
 
-        size.IgnoreAspectRatio = false;
+        // Resize
+        ResizeThumbnail(thumbnail);
 
-        image.Resize(size);
-        image.Format = MagickFormat.Jpg;
+        // Compress
+        Compress(thumbnail);
 
-        var path = DetermineThumbnailPath(file);
-        await image.WriteAsync(path.Value);
-        return new Thumbnail(path.Value);
+        // Write
+        var thumbnailPath = GetThumbnailPath(filePath);
+        await thumbnail.WriteAsync(thumbnailPath);
+
+        return new Thumbnail(thumbnailPath, "image/jpeg");
     }
 
-    private Task<Thumbnail> CreateThumbnailFromRaw(DotFile file)
+    private async Task<Thumbnail> CreateThumbnailFromRaw(FileSystemPath filePath)
     {
         var defines = new DngReadDefines
         {
             ReadThumbnail = true
         };
 
-        using var image = new MagickImage();
-        image.Settings.SetDefines(defines);
+        var fullLocalPath = await GetFileFullLocalPath(filePath);
+
+        using var raw = new MagickImage();
+        raw.Settings.SetDefines(defines);
 
         // Gets the metadata of the raw
-        image.Ping(file.Path.Value);
+        raw.Ping(fullLocalPath);
         // Get thumbnail data
-        var thumbnailData = image.GetProfile("dng:thumbnail")?.ToByteArray();
+        var thumbnailData = raw.GetProfile("dng:thumbnail")?.ToByteArray();
 
         if (thumbnailData == null)
         {
-            throw new UnknownRawException($"No raw thumbnail found for {file.Path.Value}");
+            throw new UnknownRawException($"No raw thumbnail found for {fullLocalPath}");
         }
 
         // Read the thumbnail image
         using var thumbnail = new MagickImage(thumbnailData);
-        var size = new MagickGeometry(thumbnail.Height / 2, thumbnail.Height / 2);
 
+        // Resize
+        ResizeThumbnail(thumbnail);
+
+        // Compress
+        Compress(thumbnail);
+
+        // Write
+        var thumbnailPath = GetThumbnailPath(filePath);
+        await thumbnail.WriteAsync(thumbnailPath);
+
+        return new Thumbnail(thumbnailPath, "image/jpeg");
+    }
+
+    private async Task<string> GetFileFullLocalPath(FileSystemPath filePath)
+    {
+        var mainStoragePath = await _storageProvider.GetMainStoragePath();
+        return Path.Combine(mainStoragePath.Value, filePath.Value);
+    }
+
+    private string GetThumbnailPath(FileSystemPath filePath)
+    {
+        var thumbnailPath = DetermineThumbnailPath(filePath);
+        // Create the directory if it does not exist
+        Directory.CreateDirectory(Path.GetDirectoryName(thumbnailPath.Value)!);
+
+        return thumbnailPath.Value;
+    }
+
+    private void ResizeThumbnail(MagickImage thumbnail)
+    {
+        if (thumbnail.Width < MaxWidth)
+        {
+            return;
+        }
+
+        var size = new MagickGeometry(MaxWidth);
         size.IgnoreAspectRatio = false;
 
-        thumbnail.Format = MagickFormat.Jpg;
         thumbnail.Resize(size);
-        var path = DetermineThumbnailPath(file);
-        thumbnail.Write(path.Value);
-        return Task.FromResult(new Thumbnail(path.Value));
+    }
+
+    private void Compress(MagickImage thumbnail)
+    {
+        thumbnail.SetCompression(CompressionMethod.JPEG);
+        thumbnail.Format = MagickFormat.Jpg;
+        thumbnail.Quality = 50;
     }
 
     public sealed class UnknownRawException(string message) : Exception(message);

@@ -15,7 +15,7 @@
             {
                 <a href="#" data-bs-toggle="modal" data-bs-target="#modalPreview"
                    @onclick="@(e => OnThumbnailClicked(e, context.Path.Value))">
-                    <img src="@(GetThumbnailUrl(context.Path.Value))" class="file-thumbnail" alt="@context.Path.Value"/>
+                    <img src="@(GetThumbnailUrl(context.Path.Value))" class="file-thumbnail rounded" alt="@context.Path.Value"/>
                 </a>
             }
             else
@@ -96,7 +96,7 @@
 
     private string GetThumbnailUrl(string imagePath)
     {
-        return $"thumbnail?id={imagePath}";
+        return $"thumbnail?path={imagePath}";
     }
 
     // TODO: Move to DotFile

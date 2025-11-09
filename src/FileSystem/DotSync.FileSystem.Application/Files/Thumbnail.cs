@@ -1,3 +1,3 @@
 namespace com.brettnamba.DotSync.FileSystem.Application.Files;
 
-public readonly record struct Thumbnail(string Path);
+public readonly record struct Thumbnail(string Path, string ContentType);
