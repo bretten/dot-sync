@@ -180,6 +180,8 @@ builder.Services.AddSingleton(new JobConfiguration(builder.Configuration["JobCon
 builder.Services.AddScoped<IMainStorageProvider, MainStorageProvider>();
 
 // Thumbnails
+builder.Services.Configure<ThumbnailConfiguration>(
+    builder.Configuration.GetSection(ThumbnailConfiguration.Section));
 builder.Services.AddScoped<IThumbnailGenerator, MagickThumbnailGenerator>();
 builder.Services.AddScoped<IThumbnailProvider, ThumbnailProvider>();
 

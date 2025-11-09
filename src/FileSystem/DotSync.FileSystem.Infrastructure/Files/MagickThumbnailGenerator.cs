@@ -3,15 +3,14 @@ using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using ImageMagick;
 using ImageMagick.Formats;
+using Microsoft.Extensions.Options;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
 
 public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 {
-    private const string ThumbnailDirPath = "/thumbnails";
-    private const int MaxWidth = 1280;
-
     private readonly IMainStorageProvider _storageProvider;
+    private readonly ThumbnailConfiguration _config;
 
     private DirectoryInfo? _thumbnailsDir;
 
@@ -21,16 +20,17 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
         {
             if (_thumbnailsDir == null)
             {
-                _thumbnailsDir = Directory.CreateDirectory(ThumbnailDirPath);
+                _thumbnailsDir = Directory.CreateDirectory(_config.Path);
             }
 
             return _thumbnailsDir;
         }
     }
 
-    public MagickThumbnailGenerator(IMainStorageProvider storageProvider)
+    public MagickThumbnailGenerator(IMainStorageProvider storageProvider, IOptions<ThumbnailConfiguration> config)
     {
         _storageProvider = storageProvider;
+        _config = config.Value;
     }
 
     public string ThumbnailContentType => "image/jpeg";
@@ -124,12 +124,12 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 
     private void ResizeThumbnail(MagickImage thumbnail)
     {
-        if (thumbnail.Width < MaxWidth)
+        if (thumbnail.Width < _config.MaxWidth)
         {
             return;
         }
 
-        var size = new MagickGeometry(MaxWidth);
+        var size = new MagickGeometry((uint)_config.MaxWidth);
         size.IgnoreAspectRatio = false;
 
         thumbnail.Resize(size);
