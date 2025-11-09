@@ -37,7 +37,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 
         var path = DetermineThumbnailPath(file);
         await image.WriteAsync(path.Value);
-        return new Thumbnail(path.Value, true);
+        return new Thumbnail(path.Value);
     }
 
     private Task<Thumbnail> CreateThumbnailFromRaw(DotFile file)
@@ -70,7 +70,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
         thumbnail.Resize(size);
         var path = DetermineThumbnailPath(file);
         thumbnail.Write(path.Value);
-        return Task.FromResult(new Thumbnail(path.Value, true));
+        return Task.FromResult(new Thumbnail(path.Value));
     }
 
     public sealed class UnknownRawException(string message) : Exception(message);

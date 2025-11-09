@@ -241,10 +241,6 @@ app.MapGet("/thumbnail", async ([FromQuery] string id, IThumbnailProvider provid
     var a = new DotFile(Guid.Empty, path, FileSha256Checksum.Create("A"), 1, DateTime.UtcNow,
         false, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
     var thumbnail = await provider.GetThumbnail(a);
-    if (!thumbnail.IsImage)
-    {
-        return Results.File("svg/file-earmark.svg", contentType: "image/svg+xml");
-    }
 
     return Results.File(thumbnail.Path, contentType: "image/jpeg");
 });

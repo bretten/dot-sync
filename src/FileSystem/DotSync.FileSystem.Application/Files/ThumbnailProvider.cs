@@ -22,13 +22,13 @@ public sealed class ThumbnailProvider : IThumbnailProvider
         var extension = Path.GetExtension(file.Path.Value).ToLowerInvariant();
         if (!_extensions.Contains(extension))
         {
-            return new Thumbnail("", false);
+            return new Thumbnail("");
         }
 
         var thumbnailPath = _thumbnailGenerator.DetermineThumbnailPath(file);
         if (File.Exists(thumbnailPath.Value))
         {
-            return new Thumbnail(thumbnailPath.Value, true);
+            return new Thumbnail(thumbnailPath.Value);
         }
 
         return await _thumbnailGenerator.CreateThumbnail(file);
