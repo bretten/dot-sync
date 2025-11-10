@@ -15,7 +15,8 @@
             {
                 <a href="#" data-bs-toggle="modal" data-bs-target="#modalPreview"
                    @onclick="@(e => OnThumbnailClicked(e, context.Path.Value))">
-                    <img src="@(GetThumbnailUrl(context.Path.Value))" class="file-thumbnail rounded" alt="@context.Path.Value"/>
+                    <img src="@(GetThumbnailUrl(context.Path.Value))" class="file-thumbnail rounded"
+                         alt="@context.Path.Value"/>
                 </a>
             }
             else
@@ -29,7 +30,8 @@
         </TemplateColumn>
 
         <TemplateColumn Class="col-1" Title="Created" Sortable="true"
-                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.FileCreation))">
+                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.FileCreation))"
+                        IsDefaultSortColumn="true" InitialSortDirection="SortDirection.Descending">
             <small>@context.FileCreation.ToString("g")</small>
         </TemplateColumn>
         <TemplateColumn Class="col-1" Title="First Sync" Sortable="true"
