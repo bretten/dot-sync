@@ -29,6 +29,13 @@ public sealed class MainStorageProvider : IMainStorageProvider
         return _mainStoragePath.Value;
     }
 
+    /// <inheritdoc />
+    public async Task<FileSystemPath> GetFileFullLocalPath(FileSystemPath filePath)
+    {
+        var mainStoragePath = await GetMainStoragePath();
+        return FileSystemPath.Create(Path.Combine(mainStoragePath.Value, filePath.Value));
+    }
+
     private async Task<FileSystemPath> GetStoragePath()
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();

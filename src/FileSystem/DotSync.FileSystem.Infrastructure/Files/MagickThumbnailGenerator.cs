@@ -51,7 +51,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
             return await CreateThumbnailFromRaw(filePath);
         }
 
-        var fullLocalPath = await GetFileFullLocalPath(filePath);
+        var fullLocalPath = (await _storageProvider.GetFileFullLocalPath(filePath)).Value;
 
         await using var fileStream = File.Open(fullLocalPath, FileMode.Open, FileAccess.Read);
         using var thumbnail = new MagickImage(fileStream);
@@ -76,7 +76,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
             ReadThumbnail = true
         };
 
-        var fullLocalPath = await GetFileFullLocalPath(filePath);
+        var fullLocalPath = (await _storageProvider.GetFileFullLocalPath(filePath)).Value;
 
         using var raw = new MagickImage();
         raw.Settings.SetDefines(defines);
@@ -105,12 +105,6 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
         await thumbnail.WriteAsync(thumbnailPath);
 
         return new Thumbnail(thumbnailPath, "image/jpeg");
-    }
-
-    private async Task<string> GetFileFullLocalPath(FileSystemPath filePath)
-    {
-        var mainStoragePath = await _storageProvider.GetMainStoragePath();
-        return Path.Combine(mainStoragePath.Value, filePath.Value);
     }
 
     private string GetThumbnailPath(FileSystemPath filePath)
