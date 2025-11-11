@@ -1,4 +1,5 @@
 using System.Text.Json;
+using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
@@ -24,6 +25,7 @@ public sealed class HangfireJobManager : IJobManager
     private readonly IStorageLocationIntegrityVerificationService _verifier;
     private readonly IFilePusher _filePusher;
     private readonly IFileSorter _fileSorter;
+    private readonly IThumbnailProvider _thumbnailProvider;
     private readonly IBackgroundJobClient _jobClient;
     private readonly IJobResultProvider _jobResultProvider;
     private readonly JobConfiguration _jobConfiguration;
@@ -33,14 +35,15 @@ public sealed class HangfireJobManager : IJobManager
 
     public HangfireJobManager(IFileSystemScanner fileSystemScanner, IStorageLocationRepository storageLocationRepo,
         IStorageLocationIntegrityVerificationService verifier, IFilePusher filePusher, IFileSorter fileSorter,
-        IBackgroundJobClient jobClient, IJobResultProvider jobResultProvider, JobConfiguration jobConfiguration,
-        ILogger<HangfireJobManager> logger)
+        IThumbnailProvider thumbnailProvider, IBackgroundJobClient jobClient, IJobResultProvider jobResultProvider,
+        JobConfiguration jobConfiguration, ILogger<HangfireJobManager> logger)
     {
         _fileSystemScanner = fileSystemScanner;
         _storageLocationRepo = storageLocationRepo;
         _verifier = verifier;
         _filePusher = filePusher;
         _fileSorter = fileSorter;
+        _thumbnailProvider = thumbnailProvider;
         _jobClient = jobClient;
         _jobResultProvider = jobResultProvider;
         _jobConfiguration = jobConfiguration;
@@ -111,6 +114,13 @@ public sealed class HangfireJobManager : IJobManager
             !string.IsNullOrWhiteSpace(parameters.PathsToSkip)
                 ? parameters.PathsToSkip.Split(',', StringSplitOptions.TrimEntries).Select(FileSystemPath.Create)
                 : new List<FileSystemPath>());
+
+        // Generate as many thumbnails as possible. Any that fail to generate will be lazy-generated
+        _ = Task.Run(async () =>
+        {
+            await Parallel.ForEachAsync(result.Result.New,
+                async (newFile, token) => { await _thumbnailProvider.GetThumbnail(newFile.Path); });
+        });
 
         var dir = Directory.CreateDirectory(_jobConfiguration.ReportPath);
         var filePath = Path.Combine(dir.FullName, startTime.ToString("yyyy-MM-dd__HH-mm-ss") + ".json");
