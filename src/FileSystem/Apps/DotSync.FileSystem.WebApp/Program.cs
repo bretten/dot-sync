@@ -242,6 +242,13 @@ app.MapGet("/thumbnail", async ([FromQuery] string path, IThumbnailProvider prov
     var thumbnail = await provider.GetThumbnail(FileSystemPath.Create(path));
     return Results.File(thumbnail.Path, contentType: thumbnail.ContentType);
 });
+// File serving
+app.MapGet("/file", async ([FromQuery] string path, IMainStorageProvider storageProvider) =>
+{
+    var filePath = await storageProvider.GetFileFullLocalPath(FileSystemPath.Create(path));
+    return Results.File(filePath.Value, fileDownloadName: Path.GetFileName(filePath.Value),
+        enableRangeProcessing: true);
+});
 
 app.Run();
 
