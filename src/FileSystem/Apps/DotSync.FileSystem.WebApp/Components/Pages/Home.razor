@@ -23,6 +23,7 @@
             {
                 <i class="bi bi-file-earmark fs-1"></i>
             }
+            <small><a href="file?path=@(context.Path.Value)" target="_blank" class="small">Download</a></small>
         </TemplateColumn>
         <TemplateColumn Class="col-8 text-left" Title="Path" Sortable="true"
                         SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
