@@ -1,6 +1,7 @@
 @page "/"
 @using System.Collections.Immutable
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
@@ -9,7 +10,12 @@
 
 <AuthorizeView Context="authContext">
     <h1>Files</h1>
-    <QuickGrid Items="_context.Files" Pagination="_pagination" Class="table table-hover">
+    <div class="input-group input-group-sm mb-3">
+        <input type="search" @bind="_searchQuery" @bind:event="oninput" class="form-control" aria-label="Search"
+               aria-describedby="input-search"/>
+    </div>
+
+    <QuickGrid TGridItem="DotFile" ItemsProvider="FilterFiles" Pagination="_pagination" Class="table table-hover">
         <TemplateColumn Title="" Sortable="false" Class="col-2 text-center">
             @if (IsImage(context.Path.Value))
             {
@@ -75,11 +81,52 @@
     private const int DefaultItemsPerPage = 50;
     private PaginationState _pagination = new PaginationState { ItemsPerPage = DefaultItemsPerPage };
     private FileSystemsDbContext _context = default!;
-    private string _currentImgUrl = "";
+    private string _currentImgUrl = string.Empty;
+    private string _searchQuery = string.Empty;
+
+    /// <summary>
+    /// The Items property in QuickGrid has an issue where multiple concurrent queries can be started:
+    /// https://github.com/dotnet/aspnetcore/issues/58669
+    ///
+    /// Avoid this by writing a custom method <see cref="FilterFiles"/>
+    /// </summary>
+    private IQueryable<DotFile> FilteredFiles => _context.FilesThatStartWith(FileSystemPath.Create(_searchQuery));
 
     protected override void OnInitialized()
     {
         _context = DbContextFactory.CreateDbContext();
+    }
+
+    /// <summary>
+    /// This is used as the data source for the QuickGrid rather than the "Items=" property which has an issue:
+    /// https://github.com/dotnet/aspnetcore/issues/58669
+    ///
+    /// Compare this to the Items property handler:
+    /// https://github.com/dotnet/aspnetcore/blob/d310440534762a0a9b765c65a6711fbf81d5cbf0/src/Components/QuickGrid/Microsoft.AspNetCore.Components.QuickGrid/src/QuickGrid.razor.cs#L403
+    ///
+    /// The code is similar except it may use both synchronous or async (see _asyncQueryExecutor)
+    /// </summary>
+    /// <param name="request"></param>
+    /// <returns></returns>
+    public async ValueTask<GridItemsProviderResult<DotFile>> FilterFiles(GridItemsProviderRequest<DotFile> request)
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+        var totalCount = await context.FilesThatStartWith(FileSystemPath.Create(_searchQuery)).CountAsync(request.CancellationToken);
+        var query = context.FilesThatStartWith(FileSystemPath.Create(_searchQuery));
+        query = request.ApplySorting(query).Skip(request.StartIndex);
+        if (request.Count.HasValue)
+        {
+            query = query.Take(request.Count.Value);
+        }
+
+        var items = await query.ToArrayAsync(request.CancellationToken);
+        var result = new GridItemsProviderResult<DotFile>
+        {
+            Items = items,
+            TotalItemCount = totalCount
+        };
+
+        return result;
     }
 
     private void OnPageCountChanged(ChangeEventArgs e)
