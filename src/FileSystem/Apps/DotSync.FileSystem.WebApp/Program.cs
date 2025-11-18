@@ -259,7 +259,7 @@ app.MapGet("/file", async ([FromQuery] string path, IMainStorageProvider storage
 {
     var filePath = await storageProvider.GetFileFullLocalPath(FileSystemPath.Create(path));
     return Results.File(filePath.Value, fileDownloadName: Path.GetFileName(filePath.Value),
-        enableRangeProcessing: true);
+        enableRangeProcessing: true, contentType: "application/octet-stream");
 });
 
 app.Run();

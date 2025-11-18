@@ -15,8 +15,10 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
         builder.HasKey(e => e.Id)
             .HasName(Constants.Files.PrimaryKey);
 
-        builder.HasIndex(e => e.Path, Constants.Files.PathIndex)
-            .IsUnique();
+        // Results in a duplicate Path error due to the ComplexProperty below. The migrations already have the index defined, just make sure not to drop it in future migrations
+        // Track progress on this issue here: https://github.com/dotnet/efcore/issues/31246
+        // builder.HasIndex("path", Constants.Files.PathIndex)
+        //     .IsUnique();
         builder.HasIndex(e => e.Sha256Checksum, Constants.Files.Sha256ChecksumIndex)
             .IsUnique();
 
@@ -28,13 +30,14 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
             .HasColumnName(Constants.Files.Id)
             .HasColumnOrder(columnOrder++);
 
-        builder.Property(e => e.Path)
-            .IsRequired()
-            .HasColumnType("text")
-            .HasColumnName(Constants.Files.Path)
-            .HasColumnOrder(columnOrder++)
-            .HasConversion(v => v.Value,
-                v => FileSystemPath.Create(v));
+        builder.ComplexProperty(e => e.Path, b =>
+        {
+            b.Property(e => e.Value)
+                .IsRequired()
+                .HasColumnType("text")
+                .HasColumnName(Constants.Files.Path)
+                .HasColumnOrder(columnOrder++);
+        });
 
         builder.Property(e => e.Sha256Checksum)
             .IsRequired()

@@ -9,7 +9,12 @@
 
 <AuthorizeView Context="authContext">
     <h1>Files</h1>
-    <QuickGrid Items="_context.Files" Pagination="_pagination" Class="table table-hover">
+    <div class="input-group input-group-sm mb-3">
+        <input type="search" @bind="_searchQuery" @bind:event="oninput" class="form-control" aria-label="Search"
+               aria-describedby="input-search"/>
+    </div>
+
+    <QuickGrid Items="FilteredFiles" Pagination="_pagination" Class="table table-hover">
         <TemplateColumn Title="" Sortable="false" Class="col-2 text-center">
             @if (IsImage(context.Path.Value))
             {
@@ -26,7 +31,7 @@
             <small><a href="file?path=@(context.Path.Value)" target="_blank" class="small">Download</a></small>
         </TemplateColumn>
         <TemplateColumn Class="col-8 text-left" Title="Path" Sortable="true"
-                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
+                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path.Value))">
             <small>@context.Path.Value</small>
         </TemplateColumn>
 
@@ -75,7 +80,11 @@
     private const int DefaultItemsPerPage = 50;
     private PaginationState _pagination = new PaginationState { ItemsPerPage = DefaultItemsPerPage };
     private FileSystemsDbContext _context = default!;
-    private string _currentImgUrl = "";
+    private string _currentImgUrl = string.Empty;
+    private string _searchQuery = string.Empty;
+
+    private IQueryable<DotFile> FilteredFiles =>
+        _context.Files.Where(m => m.Path.Value.StartsWith(_searchQuery));
 
     protected override void OnInitialized()
     {

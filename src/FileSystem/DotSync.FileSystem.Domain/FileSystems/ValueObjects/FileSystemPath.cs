@@ -24,6 +24,11 @@ public readonly record struct FileSystemPath
         _uri = uri;
     }
 
+    private FileSystemPath(string value)
+    {
+        _uri = new Uri(value, UriKind.Relative);
+    }
+
     /// <summary>
     /// Creates a <see cref="FileSystemPath"/>
     /// </summary>

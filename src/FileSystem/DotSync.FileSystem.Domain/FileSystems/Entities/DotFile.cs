@@ -10,37 +10,32 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 /// <param name="sha256Checksum">Checksum of the file</param>
 /// <param name="size">Size of the file</param>
 /// <param name="fileCreation">When the file was created (or a best estimation)</param>
-public sealed class DotFile(
-    Guid id,
-    FileSystemPath path,
-    FileSha256Checksum sha256Checksum,
-    long size,
-    DateTime fileCreation)
+public sealed class DotFile
 {
     /// <summary>
     /// ID
     /// </summary>
-    public Guid Id { get; } = id;
+    public Guid Id { get; }
 
     /// <summary>
     /// Relative path to the file
     /// </summary>
-    public FileSystemPath Path { get; private set; } = path;
+    public FileSystemPath Path { get; private set; }
 
     /// <summary>
     /// Checksum of the file
     /// </summary>
-    public FileSha256Checksum Sha256Checksum { get; } = sha256Checksum;
+    public FileSha256Checksum Sha256Checksum { get; }
 
     /// <summary>
     /// Size of the file
     /// </summary>
-    public long Size { get; } = size;
+    public long Size { get; }
 
     /// <summary>
     /// When the file itself was created
     /// </summary>
-    public DateTime FileCreation { get; } = fileCreation;
+    public DateTime FileCreation { get; }
 
     /// <summary>
     /// True if the file has been verified to have the correct path and checksum
@@ -89,11 +84,31 @@ public sealed class DotFile(
     }
 
     public DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha256Checksum, long size, DateTime fileCreation,
-        bool isVerified, DateTimeOffset lastSync, DateTimeOffset firstSync) : this(id, path, sha256Checksum, size,
-        fileCreation)
+        bool isVerified, DateTimeOffset lastSync, DateTimeOffset firstSync)
     {
+        Id = id;
+        Path = path;
+        Sha256Checksum = sha256Checksum;
+        Size = size;
+        FileCreation = fileCreation;
         IsVerified = isVerified;
         LastSync = lastSync;
         FirstSync = firstSync;
+    }
+
+    public DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha256Checksum, long size, DateTime fileCreation)
+    {
+        Id = id;
+        Path = path;
+        Sha256Checksum = sha256Checksum;
+        Size = size;
+        FileCreation = fileCreation;
+        IsVerified = false;
+        LastSync = DateTimeOffset.UtcNow;
+        FirstSync = DateTimeOffset.UtcNow;
+    }
+
+    private DotFile()
+    {
     }
 }
