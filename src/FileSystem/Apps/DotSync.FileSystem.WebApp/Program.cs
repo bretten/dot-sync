@@ -8,6 +8,7 @@ using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
@@ -24,6 +25,7 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFramewo
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Storage;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
@@ -185,6 +187,11 @@ builder.Services.Configure<ThumbnailConfiguration>(
 builder.Services.AddScoped<IThumbnailGenerator, MagickThumbnailGenerator>();
 builder.Services.AddScoped<IThumbnailProvider, ThumbnailProvider>();
 
+// Maintenance
+builder.Services.Configure<LocalCheckpointFileBackfillerConfiguration>(
+    builder.Configuration.GetSection(LocalCheckpointFileBackfillerConfiguration.Section));
+builder.Services.AddScoped<IFileBackfiller, LocalCheckpointFileBackfiller>();
+
 if (!builder.Environment.IsDevelopment())
 {
     builder.WebHost.ConfigureKestrel(async void (x) =>
@@ -201,8 +208,13 @@ if (!builder.Environment.IsDevelopment())
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
+// DB migration
 scope.ServiceProvider.GetRequiredService<FileSystemsDbContext>().Database.Migrate();
 scope.ServiceProvider.GetRequiredService<StorageLocationsDbContext>().Database.Migrate();
+// Maintenance
+var hangfire = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
+var backfiller = scope.ServiceProvider.GetRequiredService<IFileBackfiller>();
+hangfire.Enqueue(() => backfiller.BackfillThumbnails());
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
