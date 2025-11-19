@@ -10,9 +10,14 @@
 
 <AuthorizeView Context="authContext">
     <h1>Files</h1>
-    <div class="input-group input-group-sm mb-3">
-        <input type="search" @bind="_searchQuery" @bind:event="oninput" class="form-control" aria-label="Search"
-               aria-describedby="input-search"/>
+    <div class="row align-items-center">
+        <div class="col-auto">
+            <label class="col-form-label">Prefix Filter</label>
+        </div>
+        <div class="col-sm-4">
+            <input type="search" @bind="_searchQuery" @bind:event="oninput" class="form-control" aria-label="Search"
+                   aria-describedby="input-search"/>
+        </div>
     </div>
 
     <QuickGrid TGridItem="DotFile" ItemsProvider="FilterFiles" Pagination="_pagination" Class="table table-hover">
