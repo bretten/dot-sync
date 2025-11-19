@@ -88,7 +88,18 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 
         if (thumbnailData == null)
         {
-            throw new UnknownRawException($"No raw thumbnail found for {fullLocalPath}");
+            await using var fileStream = File.Open(fullLocalPath, FileMode.Open, FileAccess.Read);
+            using var thumbnailRaw = new MagickImage(fileStream);
+            // Resize
+            ResizeThumbnail(thumbnailRaw);
+            // Compress
+            Compress(thumbnailRaw);
+            // Write
+            var path = GetThumbnailPath(filePath);
+            await thumbnailRaw.WriteAsync(path);
+
+            return new Thumbnail(path, "image/jpeg");
+            //throw new UnknownRawException($"No raw thumbnail found for {fullLocalPath}");
         }
 
         // Read the thumbnail image
