@@ -1,5 +1,6 @@
 @page "/"
 @using System.Collections.Immutable
+@using System.Web
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
@@ -22,11 +23,14 @@
 
     <QuickGrid TGridItem="DotFile" ItemsProvider="FilterFiles" Pagination="_pagination" Class="table table-hover">
         <TemplateColumn Title="" Sortable="false" Class="col-2 text-center">
+            @{
+                var encodedPath = HttpUtility.UrlEncode(context.Path.Value);
+            }
             @if (IsImage(context.Path.Value))
             {
                 <a href="#" data-bs-toggle="modal" data-bs-target="#modalPreview"
-                   @onclick="@(e => OnThumbnailClicked(e, context.Path.Value))">
-                    <img src="@(GetThumbnailUrl(context.Path.Value))" class="file-thumbnail rounded"
+                   @onclick="@(e => OnThumbnailClicked(e, encodedPath))">
+                    <img src="@(GetThumbnailUrl(encodedPath))" class="file-thumbnail rounded"
                          alt="@context.Path.Value"/>
                 </a>
             }
@@ -34,7 +38,7 @@
             {
                 <i class="bi bi-file-earmark fs-1"></i>
             }
-            <small><a href="file?path=@(context.Path.Value)" target="_blank" class="small">Download</a></small>
+            <small><a href="file?path=@(encodedPath)" target="_blank" class="small">Download</a></small>
         </TemplateColumn>
         <TemplateColumn Class="col-8 text-left" Title="Path" Sortable="true"
                         SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
