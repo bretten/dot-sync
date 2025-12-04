@@ -1,8 +1,8 @@
 ﻿using System.Data.Common;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.Tests.StorageLocations.TestClasses;
+using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -65,44 +65,6 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task Update_StorageLocation_UpdatesStorageLocationInDbContextSet()
-    {
-        // Arrange
-        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/storage", fileCount: 1, size: 2);
-
-        await using var connection = await GetDbConnection();
-        await using var dbContext = GetDbContext(connection);
-        await dbContext.Database.MigrateAsync();
-
-        await dbContext.AddAsync(fakeStorageLocation);
-        await dbContext.SaveChangesAsync();
-
-        var repo = new EntityFrameworkCoreStorageLocationRepository(dbContext);
-
-        // Act
-        fakeStorageLocation.UpdateStatistics(fileCount: 10, storageSize: 20,
-            new DateTimeOffset(2024, 6, 1, 0, 0, 0, TimeSpan.Zero));
-        await repo.Update(fakeStorageLocation);
-        await dbContext.SaveChangesAsync();
-
-        // Assert
-        await using var assertConnection =
-            await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
-        await using var assertDbContext = GetDbContext(assertConnection);
-        await assertDbContext.Database.MigrateAsync();
-        var actual = assertDbContext.StorageLocationsWithHistoricalStatistics().First();
-        Assert.Equal(10, actual.StorageStatistics.FileCount);
-        Assert.Equal(20, actual.StorageStatistics.Size);
-        Assert.Single(actual.HistoricalStorageStatistics);
-        Assert.Equal(new HistoricalStorageStatistics(
-                new DateTimeOffset(2024, 6, 1, 0, 0, 0, TimeSpan.Zero),
-                new StorageStatistics(fileCount: 10, size: 20)
-            ),
-            actual.HistoricalStorageStatistics.First());
-    }
-
-    [Fact]
-    [Trait("Category", "Integration")]
     public async Task GetByTypeAndPath_TypeAndPath_ReturnsStorageLocation()
     {
         // Arrange
@@ -129,8 +91,6 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         Assert.NotNull(actual);
         Assert.Equal(fakeStorageLocation.Id, actual.Id);
         Assert.Equal(fakeStorageLocation.Path, actual.Path);
-        Assert.Equal(fakeStorageLocation.StorageStatistics.FileCount, actual.StorageStatistics.FileCount);
-        Assert.Equal(fakeStorageLocation.StorageStatistics.Size, actual.StorageStatistics.Size);
     }
 
     public async Task InitializeAsync() => await _container.StartAsync();
@@ -144,13 +104,13 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         return connection;
     }
 
-    private StorageLocationsDbContext GetDbContext(DbConnection connection)
+    private FileSystemsDbContext GetDbContext(DbConnection connection)
     {
-        var contextOptions = new DbContextOptionsBuilder<StorageLocationsDbContext>()
+        var contextOptions = new DbContextOptionsBuilder<FileSystemsDbContext>()
             .UseNpgsql(connection)
             .LogTo(Console.WriteLine)
             .Options;
-        return new StorageLocationsDbContext(contextOptions);
+        return new FileSystemsDbContext(contextOptions);
     }
 
     private sealed class DockerNotRunningException(string? message) : Exception(message);

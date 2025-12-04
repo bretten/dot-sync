@@ -1,9 +1,9 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using com.brettnamba.DotSync.Common.Converters;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
-namespace com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 
 /// <summary>
 /// The different types of <see cref="StorageLocation"/>

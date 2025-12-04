@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel;
 using com.brettnamba.DotSync.Common.Extensions;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 
 public sealed class StorageLocationEntityTypeConfiguration : IEntityTypeConfiguration<StorageLocation>
 {
@@ -43,21 +43,5 @@ public sealed class StorageLocationEntityTypeConfiguration : IEntityTypeConfigur
             .HasColumnOrder(columnOrder++)
             .HasConversion(v => v.Value,
                 v => FileSystemPath.Create(v));
-
-        builder.ComplexProperty(e => e.StorageStatistics,
-            b =>
-            {
-                b.Property(e => e.FileCount)
-                    .IsRequired()
-                    .HasColumnType("bigint")
-                    .HasColumnName(Constants.StorageLocations.FileCount)
-                    .HasColumnOrder(columnOrder++);
-
-                b.Property(e => e.Size)
-                    .IsRequired()
-                    .HasColumnType("bigint")
-                    .HasColumnName(Constants.StorageLocations.Size)
-                    .HasColumnOrder(columnOrder++);
-            });
     }
 }

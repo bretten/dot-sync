@@ -1,18 +1,18 @@
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Storage;
 
 public sealed class MainStorageProvider : IMainStorageProvider
 {
-    private readonly IDbContextFactory<StorageLocationsDbContext> _dbContextFactory;
+    private readonly IDbContextFactory<FileSystemsDbContext> _dbContextFactory;
 
     private static FileSystemPath? _mainStoragePath;
 
-    public MainStorageProvider(IDbContextFactory<StorageLocationsDbContext> dbContextFactory)
+    public MainStorageProvider(IDbContextFactory<FileSystemsDbContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;
     }

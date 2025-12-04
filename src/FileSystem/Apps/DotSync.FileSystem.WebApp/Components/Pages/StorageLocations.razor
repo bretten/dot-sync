@@ -1,14 +1,15 @@
 @page "/Storage"
 @rendermode InteractiveServer
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
-@using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities
-@using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore
 @using com.brettnamba.DotSync.FileSystem.WebApp.Startup
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @implements IAsyncDisposable
-@inject IDbContextFactory<StorageLocationsDbContext> StorageDbContextFactory
+@inject IDbContextFactory<FileSystemsDbContext> FileSystemsDbContextFactory
 @inject IJSRuntime JS
 @attribute [Authorize(AuthenticationExtensions.VerifierPolicy)]
 
@@ -75,7 +76,7 @@
 </div>
 
 @code {
-    private StorageLocationsDbContext _dbContext = null!;
+    private FileSystemsDbContext _dbContext = null!;
     private List<StorageLocation> _storageLocations = new List<StorageLocation>();
     private IJSObjectReference? _module;
 
@@ -97,7 +98,7 @@
             Type = StorageLocationType.Local,
             Path = ""
         };
-        _dbContext = await StorageDbContextFactory.CreateDbContextAsync();
+        _dbContext = await FileSystemsDbContextFactory.CreateDbContextAsync();
         _storageLocations = await _dbContext.StorageLocations.ToListAsync();
     }
 

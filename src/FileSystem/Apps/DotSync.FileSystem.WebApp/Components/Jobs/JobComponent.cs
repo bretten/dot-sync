@@ -1,7 +1,7 @@
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs;
@@ -15,7 +15,7 @@ namespace com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs;
 public class JobComponent : IDisposable // : ComponentBase, IDisposable, IAsyncDisposable
 {
     //[Inject]
-    public IDbContextFactory<StorageLocationsDbContext> StorageDbContextFactory { get; }
+    public IDbContextFactory<FileSystemsDbContext> FileSystemsDbContextFactory { get; }
 
     //[Inject]
     public IJobManager JobManager { get; }
@@ -29,17 +29,17 @@ public class JobComponent : IDisposable // : ComponentBase, IDisposable, IAsyncD
     //[Inject]
     public ILogger<JobComponent> Logger { get; }
 
-    public JobComponent(IDbContextFactory<StorageLocationsDbContext> storageDbContextFactory, IJobManager jobManager,
+    public JobComponent(IDbContextFactory<FileSystemsDbContext> fileSystemsDbContextFactory, IJobManager jobManager,
         IJobProgressReporter progressReporter, IJobResultProvider jobResultProvider, ILogger<JobComponent> logger)
     {
-        StorageDbContextFactory = storageDbContextFactory;
+        FileSystemsDbContextFactory = fileSystemsDbContextFactory;
         JobManager = jobManager;
         ProgressReporter = progressReporter;
         JobResultProvider = jobResultProvider;
         Logger = logger;
     }
 
-    protected StorageLocationsDbContext? StorageDbContext;
+    protected FileSystemsDbContext? StorageDbContext;
     protected IEnumerable<StorageLocation>? StorageLocations;
     protected IEnumerable<StorageLocation>? LocalStorageLocations;
     protected IEnumerable<StorageLocation>? S3StorageLocations;
@@ -52,7 +52,7 @@ public class JobComponent : IDisposable // : ComponentBase, IDisposable, IAsyncD
     public void OnInitialized()
     {
         //JobResultProvider.JobCompleted += HandleJobResult;
-        StorageDbContext = StorageDbContextFactory.CreateDbContext();
+        StorageDbContext = FileSystemsDbContextFactory.CreateDbContext();
         StorageLocations = StorageDbContext.StorageLocations.ToList();
         LocalStorageLocations = StorageLocations.Where(x => x.Type == StorageLocationType.Local).ToList();
         S3StorageLocations = StorageLocations.Where(x => x.Type == StorageLocationType.AmazonS3).ToList();

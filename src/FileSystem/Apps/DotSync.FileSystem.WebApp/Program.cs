@@ -17,7 +17,6 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
@@ -83,9 +82,7 @@ builder.Services.AddTransient<IClock, Clock>();
 
 
 const string migrationsTable = "__EFMigrationsHistory";
-const string fileSystemsSchema =
-    Constants.Schema;
-const string storageLocationSchema = com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore.Constants.Schema;
+const string fileSystemsSchema = Constants.Schema;
 
 var cs = builder.Configuration.GetConnectionString("FileSystems");
 if (string.IsNullOrWhiteSpace(cs))
@@ -106,16 +103,6 @@ builder.Services.AddDbContextFactory<FileSystemsDbContext>(
     ServiceLifetime.Scoped
 );
 builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
-builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
-{
-    optionsBuilder.UseNpgsql(cs,
-        b => b.MigrationsHistoryTable(migrationsTable, storageLocationSchema));
-});
-builder.Services.AddDbContextFactory<StorageLocationsDbContext>(
-    optionsBuilder => optionsBuilder.UseNpgsql(cs,
-        b => b.MigrationsHistoryTable(migrationsTable, storageLocationSchema)),
-    ServiceLifetime.Scoped
-);
 
 // EF-aware IAsyncQueryExecutor
 builder.Services.AddQuickGridEntityFrameworkAdapter();
@@ -210,7 +197,6 @@ var app = builder.Build();
 using var scope = app.Services.CreateScope();
 // DB migration
 scope.ServiceProvider.GetRequiredService<FileSystemsDbContext>().Database.Migrate();
-scope.ServiceProvider.GetRequiredService<StorageLocationsDbContext>().Database.Migrate();
 // Maintenance
 var hangfire = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
 var backfiller = scope.ServiceProvider.GetRequiredService<IFileBackfiller>();
