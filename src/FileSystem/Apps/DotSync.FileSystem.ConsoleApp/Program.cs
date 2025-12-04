@@ -9,12 +9,11 @@ using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
@@ -331,14 +330,6 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
     //             .Build();
     //     return new NpgsqlFileRepository(dataSource, sp.GetRequiredService<IClock>());
     // });
-    builder.Services.AddDbContext<StorageLocationsDbContext>(optionsBuilder =>
-    {
-        optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}"));
-    });
-    builder.Services.AddDbContextFactory<StorageLocationsDbContext>(optionsBuilder =>
-            optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString($"StorageLocations_{fileSet}")),
-        ServiceLifetime.Scoped
-    );
     builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
     builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
     builder.Services.AddTransient<IFileMetadataReader, WindowsFileMetadataReader>();

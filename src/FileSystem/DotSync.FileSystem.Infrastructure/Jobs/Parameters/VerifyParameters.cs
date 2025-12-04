@@ -1,5 +1,5 @@
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 

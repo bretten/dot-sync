@@ -1,8 +1,8 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;

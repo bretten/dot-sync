@@ -1,9 +1,9 @@
 ﻿using Amazon.S3;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;

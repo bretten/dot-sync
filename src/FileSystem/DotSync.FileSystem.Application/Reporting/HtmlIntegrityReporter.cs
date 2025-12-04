@@ -1,7 +1,7 @@
 ﻿using System.Text;
 using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Reporting;
 

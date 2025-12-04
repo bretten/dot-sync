@@ -1,12 +1,13 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Enums;
-using com.brettnamba.DotSync.FileSystem.Domain.StorageLocations.Repositories;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 
-public sealed class EntityFrameworkCoreStorageLocationRepository(StorageLocationsDbContext dbContext)
+public sealed class EntityFrameworkCoreStorageLocationRepository(FileSystemsDbContext dbContext)
     : IStorageLocationRepository
 {
     public async Task Add(StorageLocation storageLocation)
@@ -23,7 +24,7 @@ public sealed class EntityFrameworkCoreStorageLocationRepository(StorageLocation
 
     public async Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, FileSystemPath path)
     {
-        return await dbContext.StorageLocationsWithHistoricalStatistics()
+        return await dbContext.StorageLocations
             .FirstOrDefaultAsync(x => x.Type == type && x.Path == path);
     }
 

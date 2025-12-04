@@ -25,10 +25,6 @@ public class AmazonS3FileIntegrityVerifierTests
         {
             new()
             {
-                HttpStatusCode = HttpStatusCode.OK
-            },
-            new()
-            {
                 HttpStatusCode = HttpStatusCode.NotFound
             }
         };

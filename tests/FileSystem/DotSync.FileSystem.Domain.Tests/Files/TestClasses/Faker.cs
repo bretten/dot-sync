@@ -1,4 +1,5 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 
@@ -24,5 +25,11 @@ public static class Faker
             lastSync ?? new DateTimeOffset(2024, 7, 26, 1, 2, 3, TimeSpan.FromHours(0)),
             firstSync ?? new DateTimeOffset(2024, 7, 26, 4, 5, 6, TimeSpan.FromHours(0))
         );
+    }
+
+    public static StorageLocation FakeStorageLocation(StorageLocationType type = StorageLocationType.Local,
+        string? path = null, long fileCount = 0, long size = 0)
+    {
+        return new StorageLocation(type, FileSystemPath.Create(path?.AsPath() ?? string.Empty));
     }
 }

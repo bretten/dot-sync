@@ -8,6 +8,8 @@ public sealed class FileSystemsDbContext(DbContextOptions<FileSystemsDbContext> 
 {
     public DbSet<DotFile> Files { get; private init; } = null!;
 
+    public DbSet<StorageLocation> StorageLocations { get; private init; } = null!;
+
     /// <summary>
     /// Generates the following query:
     ///         SELECT f.id, f.file_creation, f.first_sync, f.is_verified, f.last_sync, f.path, f.sha256_checksum, f.size
@@ -28,5 +30,6 @@ public sealed class FileSystemsDbContext(DbContextOptions<FileSystemsDbContext> 
 
         modelBuilder.HasDefaultSchema(Constants.Schema);
         modelBuilder.ApplyConfiguration(new DotFileEntityTypeConfiguration());
+        modelBuilder.ApplyConfiguration(new StorageLocationEntityTypeConfiguration());
     }
 }
