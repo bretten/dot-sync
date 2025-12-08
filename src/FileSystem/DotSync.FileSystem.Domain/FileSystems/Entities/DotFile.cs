@@ -58,6 +58,16 @@ public sealed class DotFile(
     public DateTimeOffset FirstSync { get; init; }
 
     /// <summary>
+    /// Navigation property to <see cref="StorageLocation"/>
+    /// </summary>
+    public List<StorageLocation> StorageLocations { get; } = [];
+
+    /// <summary>
+    /// Navigation property to <see cref="SyncedFile"/>
+    /// </summary>
+    public List<SyncedFile> SyncedFiles { get; } = [];
+
+    /// <summary>
     /// Checks if a file matches another file
     /// </summary>
     /// <param name="otherFile">The other file</param>

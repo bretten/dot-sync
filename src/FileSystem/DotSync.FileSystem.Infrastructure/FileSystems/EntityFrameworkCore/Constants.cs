@@ -1,4 +1,6 @@
-﻿namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 
 public static class Constants
 {
@@ -7,12 +9,15 @@ public static class Constants
     /// </summary>
     public const string Schema = "file_systems";
 
+    /// <summary>
+    /// Constants for <see cref="DotFile"/>
+    /// </summary>
     public static class Files
     {
+        /// <summary>
+        /// Table name
+        /// </summary>
         public const string TableName = "files";
-        public const string PrimaryKey = $"{TableName}_pkey";
-        public const string PathIndex = $"{TableName}_{Path}_idx";
-        public const string Sha256ChecksumIndex = $"{TableName}_{Sha256Checksum}_idx";
 
         /// <summary>
         /// ID
@@ -53,13 +58,44 @@ public static class Constants
         /// When the file was first synced
         /// </summary>
         public const string FirstSync = "first_sync";
+
+        /// <summary>
+        /// Key names for <see cref="DotFile"/>
+        /// </summary>
+        public static class Keys
+        {
+            /// <summary>
+            /// Primary key
+            /// </summary>
+            public const string PrimaryKey = $"{TableName}_pkey";
+        }
+
+        /// <summary>
+        /// Index names for <see cref="DotFile"/>
+        /// </summary>
+        public static class Indexes
+        {
+            /// <summary>
+            /// Index on the file checksum
+            /// </summary>
+            public const string Sha256ChecksumIndex = $"{TableName}_{Sha256Checksum}_idx";
+
+            /// <summary>
+            /// Index on the file path
+            /// </summary>
+            public const string PathIndex = $"{TableName}_{Path}_idx";
+        }
     }
 
+    /// <summary>
+    /// Constants for <see cref="StorageLocation"/>
+    /// </summary>
     public static class StorageLocations
     {
+        /// <summary>
+        /// Table name
+        /// </summary>
         public const string TableName = "storage_locations";
-        public const string PrimaryKey = $"{TableName}_pkey";
-        public const string PathIndex = $"{TableName}_{Path}_idx";
 
         /// <summary>
         /// ID
@@ -77,13 +113,84 @@ public static class Constants
         public const string Type = "type";
 
         /// <summary>
-        /// The total number of files
+        /// Key names for <see cref="StorageLocation"/>
         /// </summary>
-        public const string FileCount = "file_count";
+        public static class Keys
+        {
+            /// <summary>
+            /// Primary key
+            /// </summary>
+            public const string PrimaryKey = $"{TableName}_pkey";
+        }
 
         /// <summary>
-        /// The total size of the storage location
+        /// Index names for <see cref="StorageLocation"/>
         /// </summary>
-        public const string Size = "size";
+        public static class Indexes
+        {
+            /// <summary>
+            /// Index on storage path
+            /// </summary>
+            public const string PathIndex = $"{TableName}_{Path}_idx";
+        }
+    }
+
+    /// <summary>
+    /// Constants for <see cref="SyncedFile"/>
+    /// </summary>
+    public static class SyncedFiles
+    {
+        /// <summary>
+        /// Table name
+        /// </summary>
+        public const string TableName = "synced_files";
+
+        /// <summary>
+        /// File ID
+        /// </summary>
+        public const string FileId = "file_id";
+
+        /// <summary>
+        /// Storage Location ID
+        /// </summary>
+        public const string StoreLocationId = "storage_location_id";
+
+        /// <summary>
+        /// Last sync
+        /// </summary>
+        public const string LastSync = "last_sync";
+
+        /// <summary>
+        /// Key names for <see cref="SyncedFile"/>
+        /// </summary>
+        public static class Keys
+        {
+            /// <summary>
+            /// Primary key
+            /// </summary>
+            public const string PrimaryKey = $"{TableName}_pkey";
+
+            /// <summary>
+            /// <see cref="SyncedFile"/> references <see cref="DotFile"/>
+            /// </summary>
+            public const string FileForeignKeyConstraint = $"{TableName}_{Files.TableName}_{Files.Id}_fkey";
+
+            /// <summary>
+            /// <see cref="SyncedFile"/> references <see cref="StorageLocation"/>
+            /// </summary>
+            public const string StorageLocationForeignKeyConstraint =
+                $"{TableName}_{StorageLocations.TableName}_{StorageLocations.Id}_fkey";
+        }
+
+        /// <summary>
+        /// Index names for <see cref="SyncedFile"/>
+        /// </summary>
+        public static class Indexes
+        {
+            /// <summary>
+            /// Index for the trailing column in the composite PK
+            /// </summary>
+            public const string StorageLocation = $"{TableName}_{StoreLocationId}_idx";
+        }
     }
 }

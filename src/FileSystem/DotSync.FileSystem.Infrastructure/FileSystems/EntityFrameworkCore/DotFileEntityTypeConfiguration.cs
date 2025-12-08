@@ -13,11 +13,11 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
         builder.ToTable(Constants.Files.TableName, Constants.Schema);
 
         builder.HasKey(e => e.Id)
-            .HasName(Constants.Files.PrimaryKey);
+            .HasName(Constants.Files.Keys.PrimaryKey);
 
-        builder.HasIndex(e => e.Path, Constants.Files.PathIndex)
+        builder.HasIndex(e => e.Path, Constants.Files.Indexes.PathIndex)
             .IsUnique();
-        builder.HasIndex(e => e.Sha256Checksum, Constants.Files.Sha256ChecksumIndex)
+        builder.HasIndex(e => e.Sha256Checksum, Constants.Files.Indexes.Sha256ChecksumIndex)
             .IsUnique();
 
         var columnOrder = 0;
@@ -78,5 +78,17 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
             .HasColumnOrder(columnOrder++)
             .ValueGeneratedOnAdd()
             .HasValueGenerator<DateTimeOffsetValueGenerator>();
+
+        builder.HasMany(e => e.StorageLocations)
+            .WithMany(e => e.Files)
+            .UsingEntity<SyncedFile>(
+                r => r.HasOne<StorageLocation>(e => e.StorageLocation)
+                    .WithMany(e => e.SyncedFiles)
+                    .HasForeignKey(e => e.StorageLocationId)
+                    .HasConstraintName(Constants.SyncedFiles.Keys.FileForeignKeyConstraint),
+                l => l.HasOne<DotFile>(e => e.File)
+                    .WithMany(e => e.SyncedFiles)
+                    .HasForeignKey(e => e.FileId)
+                    .HasConstraintName(Constants.SyncedFiles.Keys.StorageLocationForeignKeyConstraint));
     }
 }

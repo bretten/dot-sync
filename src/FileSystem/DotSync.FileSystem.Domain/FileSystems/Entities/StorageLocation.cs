@@ -24,6 +24,16 @@ public sealed class StorageLocation
     public FileSystemPath Path { get; private set; }
 
     /// <summary>
+    /// Navigation property to <see cref="DotFile"/>
+    /// </summary>
+    public List<DotFile> Files { get; } = [];
+
+    /// <summary>
+    /// Navigation property to <see cref="SyncedFiles"/>
+    /// </summary>
+    public List<SyncedFile> SyncedFiles { get; } = [];
+
+    /// <summary>
     /// Constructor
     /// </summary>
     public StorageLocation(StorageLocationType type, FileSystemPath path)
