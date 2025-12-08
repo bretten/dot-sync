@@ -36,6 +36,7 @@ using Hangfire.Dashboard;
 using Hangfire.MemoryStorage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Constants = com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -92,6 +93,8 @@ if (string.IsNullOrWhiteSpace(cs))
     cs = secrets.ConnectionString;
 }
 
+var dataSource = new NpgsqlDataSourceBuilder(cs).Build();
+builder.Services.AddSingleton(dataSource);
 builder.Services.AddDbContext<FileSystemsDbContext>(optionsBuilder =>
 {
     optionsBuilder.UseNpgsql(cs,
@@ -198,9 +201,14 @@ using var scope = app.Services.CreateScope();
 // DB migration
 scope.ServiceProvider.GetRequiredService<FileSystemsDbContext>().Database.Migrate();
 // Maintenance
-var hangfire = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
-var backfiller = scope.ServiceProvider.GetRequiredService<IFileBackfiller>();
-hangfire.Enqueue(() => backfiller.BackfillThumbnails());
+var runMaintenance = app.Configuration.GetValue<bool>("Maintenance:Active");
+if (runMaintenance)
+{
+    var hangfire = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
+    var backfiller = scope.ServiceProvider.GetRequiredService<IFileBackfiller>();
+    hangfire.Enqueue(() => backfiller.BackfillThumbnails());
+    hangfire.Enqueue(() => backfiller.BackfillSyncedFiles());
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
