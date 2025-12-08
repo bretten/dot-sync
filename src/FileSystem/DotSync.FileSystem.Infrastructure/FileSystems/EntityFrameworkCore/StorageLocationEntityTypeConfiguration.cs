@@ -15,9 +15,9 @@ public sealed class StorageLocationEntityTypeConfiguration : IEntityTypeConfigur
         builder.ToTable(Constants.StorageLocations.TableName, Constants.Schema);
 
         builder.HasKey(e => e.Id)
-            .HasName(Constants.StorageLocations.PrimaryKey);
+            .HasName(Constants.StorageLocations.Keys.PrimaryKey);
 
-        builder.HasIndex(e => e.Path, Constants.StorageLocations.PathIndex)
+        builder.HasIndex(e => e.Path, Constants.StorageLocations.Indexes.PathIndex)
             .IsUnique();
 
         var columnOrder = 0;

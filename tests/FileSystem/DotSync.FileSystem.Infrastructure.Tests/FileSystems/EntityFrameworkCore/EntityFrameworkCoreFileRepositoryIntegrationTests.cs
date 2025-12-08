@@ -65,6 +65,45 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
 
     [Fact]
     [Trait("Category", "Integration")]
+    public async Task Add_SyncedFile_AddsToDbContextSet()
+    {
+        // Arrange
+        var fakeFile1 = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
+        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
+        var fakeStorage1 = Faker.FakeStorageLocation(path: "a");
+        var fakeStorage2 = Faker.FakeStorageLocation(path: "b");
+
+        await using var connection = await GetDbConnection();
+        await using var dbContext = GetDbContext(connection);
+        await dbContext.Database.MigrateAsync();
+
+        dbContext.Files.Add(fakeFile1);
+        dbContext.Files.Add(fakeFile2);
+        dbContext.StorageLocations.Add(fakeStorage1);
+        dbContext.StorageLocations.Add(fakeStorage2);
+        await dbContext.SaveChangesAsync();
+
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
+
+        // Act
+        await repo.AddSyncedFile(fakeFile1.Id, fakeStorage1.Id);
+        await repo.AddSyncedFile(fakeFile2.Id, fakeStorage2.Id);
+        await repo.AddSyncedFile(fakeFile1.Id, fakeStorage1.Id);
+
+        // Assert
+        await using var assertConnection =
+            await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
+        await using var assertDbContext = GetDbContext(assertConnection);
+        await assertDbContext.Database.MigrateAsync();
+        Assert.Equal(2, assertDbContext.SyncedFiles.Count());
+        Assert.NotNull(assertDbContext.SyncedFiles.FirstOrDefault(x =>
+            x.FileId == fakeFile1.Id && x.StorageLocationId == fakeStorage1.Id));
+        Assert.NotNull(assertDbContext.SyncedFiles.FirstOrDefault(x =>
+            x.FileId == fakeFile2.Id && x.StorageLocationId == fakeStorage2.Id));
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
     public async Task Update_File_UpdatesFileInDbContextSet()
     {
         // Arrange
@@ -242,6 +281,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         var contextOptions = new DbContextOptionsBuilder<FileSystemsDbContext>()
             .UseNpgsql(connection)
             .LogTo(Console.WriteLine)
+            .EnableSensitiveDataLogging()
             .Options;
         return new FileSystemsDbContext(contextOptions);
     }
@@ -249,10 +289,11 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
     private async Task<IDbContextFactory<FileSystemsDbContext>> GetDbContextFactory()
     {
         var connection = await GetDbConnection();
-        var context = GetDbContext(connection);
         var stubDbContextFactory = new Mock<IDbContextFactory<FileSystemsDbContext>>();
         stubDbContextFactory.Setup(x => x.CreateDbContextAsync(CancellationToken.None))
-            .ReturnsAsync(context);
+            .ReturnsAsync(() =>
+                GetDbContext(
+                    connection)); // new context every time to mimic db context behavior using anonymous function
         return stubDbContextFactory.Object;
     }
 

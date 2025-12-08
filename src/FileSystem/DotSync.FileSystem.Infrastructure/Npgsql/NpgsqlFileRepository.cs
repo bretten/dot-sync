@@ -67,6 +67,12 @@ public sealed class NpgsqlFileRepository : IFileRepository
         await command.ExecuteScalarAsync();
     }
 
+    public Task AddSyncedFile(Guid fileId, Guid storageLocationId)
+    {
+        // No need to implement here yet
+        throw new NotImplementedException();
+    }
+
     public async Task Update(DotFile file)
     {
         file.LastSync = _clock.GetUtcNow();

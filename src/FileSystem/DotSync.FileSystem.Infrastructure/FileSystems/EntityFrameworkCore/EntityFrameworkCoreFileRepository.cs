@@ -26,6 +26,21 @@ public sealed class EntityFrameworkCoreFileRepository(
         await dbContext.SaveChangesAsync();
     }
 
+    public async Task AddSyncedFile(Guid fileId, Guid storageLocationId)
+    {
+        await using var deleteDbContext = await dbContextFactory.CreateDbContextAsync();
+        await deleteDbContext.SyncedFiles.Where(x => x.FileId == fileId && x.StorageLocationId == storageLocationId)
+            .ExecuteDeleteAsync();
+
+        // Need a separate db context for insert, because ExecuteDeleteAsync does not affect the EF Core change tracker
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        dbContext.SyncedFiles.Add(new SyncedFile(fileId, storageLocationId)
+        {
+            LastSync = clock.GetUtcNow()
+        });
+        await dbContext.SaveChangesAsync();
+    }
+
     public async Task<DotFile?> GetFileByChecksum(FileSha256Checksum checksum)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();

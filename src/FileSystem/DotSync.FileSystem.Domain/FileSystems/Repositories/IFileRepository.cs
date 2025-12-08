@@ -6,6 +6,7 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 public interface IFileRepository
 {
     Task Add(DotFile file);
+    Task AddSyncedFile(Guid fileId, Guid storageLocationId);
     Task Update(DotFile file);
     Task<DotFile?> GetFileByChecksum(FileSha256Checksum checksum);
     Task<DotFile?> GetFileByPath(FileSystemPath path);

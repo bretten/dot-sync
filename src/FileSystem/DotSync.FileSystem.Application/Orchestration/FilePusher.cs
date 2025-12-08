@@ -67,9 +67,10 @@ public sealed class FilePusher(
         var pushedFiles = new List<DotFile>();
         foreach (var file in files)
         {
-            //logger.LogInformation($"Uploading {file.Path}");
             var pushed = await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
-            if (pushed) pushedFiles.Add(file);
+            if (!pushed) continue;
+            pushedFiles.Add(file);
+            await fileRepository.AddSyncedFile(file.Id, destination.Id);
         }
 
 
