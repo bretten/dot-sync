@@ -202,6 +202,16 @@ public sealed class NpgsqlFileRepository : IFileRepository
         return entries;
     }
 
+    public Task<IEnumerable<DotFile>> GetUnsyncedFiles()
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId)
+    {
+        throw new NotImplementedException();
+    }
+
     /// <summary>
     /// Inserts a new <see cref="DotFile"/>
     /// </summary>
