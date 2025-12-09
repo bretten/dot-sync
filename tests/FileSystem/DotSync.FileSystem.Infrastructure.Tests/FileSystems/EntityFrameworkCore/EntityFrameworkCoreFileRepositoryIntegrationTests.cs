@@ -1,5 +1,6 @@
 ﻿using System.Data.Common;
 using com.brettnamba.DotSync.Common.DateAndTme;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
@@ -263,6 +264,104 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         Assert.Equal(2, actualList.Count);
         Assert.Single(actualList.Where(x => x.Id == fakeFile3.Id));
         Assert.Single(actualList.Where(x => x.Id == fakeFile4.Id));
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task GetUnsyncedFiles_NoStorageId_ReturnsFilesThatDoNotHaveJoinRowWithAllStorageLocations()
+    {
+        /*
+         * Arrange
+         */
+        var fakeFile1 = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
+        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
+        var fakeFile3 = Faker.FakeFile(id: Faker.Guid3, path: "path/to/file3.txt", checksum: "file3");
+        var fakeStorage1 = Faker.FakeStorageLocation(path: "a");
+        var fakeStorage2 = Faker.FakeStorageLocation(path: "b");
+        await using var connection = await GetDbConnection();
+        await using var dbContext = GetDbContext(connection);
+        await dbContext.Database.MigrateAsync();
+
+        dbContext.Files.Add(fakeFile1);
+        dbContext.Files.Add(fakeFile2);
+        dbContext.Files.Add(fakeFile3);
+        dbContext.StorageLocations.Add(fakeStorage1);
+        dbContext.StorageLocations.Add(fakeStorage2);
+        // File1 has join row with all storage locations
+        dbContext.SyncedFiles.Add(new SyncedFile(fakeFile1.Id, fakeStorage1.Id));
+        dbContext.SyncedFiles.Add(new SyncedFile(fakeFile1.Id, fakeStorage2.Id));
+        // File2 has join row with partial storage locations
+        dbContext.SyncedFiles.Add(new SyncedFile(fakeFile2.Id, fakeStorage2.Id));
+        // File3 has no join rows
+        await dbContext.SaveChangesAsync();
+
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
+
+        /*
+         * Act
+         */
+        var actual = (await repo.GetUnsyncedFiles()).ToList();
+
+        /*
+         * Assert
+         */
+        // Files2 and 3 don't have join rows with all storage locations
+        Assert.Equal(2, actual.Count);
+        Assert.True(actual.Count(x => x.Id == fakeFile2.Id) == 1);
+        Assert.True(actual.Count(x => x.Id == fakeFile3.Id) == 1);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task GetUnsyncedFiles_StorageId_ReturnsFilesThatDoNotHaveJoinRowWithSpecifiedStorageLocation()
+    {
+        /*
+         * Arrange
+         */
+        var fakeFile1 = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
+        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
+        var fakeStorage1 = Faker.FakeStorageLocation(path: "a");
+        var fakeStorage2 = Faker.FakeStorageLocation(path: "b");
+        var fakeStorage3 = Faker.FakeStorageLocation(path: "c");
+
+        await using var connection = await GetDbConnection();
+        await using var dbContext = GetDbContext(connection);
+        await dbContext.Database.MigrateAsync();
+
+        dbContext.Files.Add(fakeFile1);
+        dbContext.Files.Add(fakeFile2);
+        dbContext.StorageLocations.Add(fakeStorage1);
+        dbContext.StorageLocations.Add(fakeStorage2);
+        dbContext.StorageLocations.Add(fakeStorage3);
+        // Storage1 has join rows with all files
+        dbContext.SyncedFiles.Add(new SyncedFile(fakeFile1.Id, fakeStorage1.Id));
+        dbContext.SyncedFiles.Add(new SyncedFile(fakeFile2.Id, fakeStorage1.Id));
+        // Storage2 has join rows with only some files
+        dbContext.SyncedFiles.Add(new SyncedFile(fakeFile2.Id, fakeStorage2.Id));
+        // Storage3 has no join rows
+        await dbContext.SaveChangesAsync();
+
+        var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
+
+        /*
+         * Act
+         */
+        var actual1 = (await repo.GetUnsyncedFiles(fakeStorage1.Id)).ToList();
+        var actual2 = (await repo.GetUnsyncedFiles(fakeStorage2.Id)).ToList();
+        var actual3 = (await repo.GetUnsyncedFiles(fakeStorage3.Id)).ToList();
+
+        /*
+         * Assert
+         */
+        // Storage1 returns no results
+        Assert.Empty(actual1);
+        // Storage2 returns the join rows it is missing
+        Assert.Single(actual2);
+        Assert.True(actual2.Count(x => x.Id == fakeFile1.Id) == 1);
+        // Storage3 returns all files since it has no join rows at all
+        Assert.Equal(2, actual3.Count);
+        Assert.True(actual3.Count(x => x.Id == fakeFile1.Id) == 1);
+        Assert.True(actual3.Count(x => x.Id == fakeFile2.Id) == 1);
     }
 
     public async Task InitializeAsync() => await _container.StartAsync();
