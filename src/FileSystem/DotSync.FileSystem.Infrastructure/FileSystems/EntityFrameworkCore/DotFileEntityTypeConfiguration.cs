@@ -85,10 +85,10 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
                 r => r.HasOne<StorageLocation>(e => e.StorageLocation)
                     .WithMany(e => e.SyncedFiles)
                     .HasForeignKey(e => e.StorageLocationId)
-                    .HasConstraintName(Constants.SyncedFiles.Keys.FileForeignKeyConstraint),
+                    .HasConstraintName(Constants.SyncedFiles.Keys.StorageLocationForeignKeyConstraint),
                 l => l.HasOne<DotFile>(e => e.File)
                     .WithMany(e => e.SyncedFiles)
                     .HasForeignKey(e => e.FileId)
-                    .HasConstraintName(Constants.SyncedFiles.Keys.StorageLocationForeignKeyConstraint));
+                    .HasConstraintName(Constants.SyncedFiles.Keys.FileForeignKeyConstraint));
     }
 }

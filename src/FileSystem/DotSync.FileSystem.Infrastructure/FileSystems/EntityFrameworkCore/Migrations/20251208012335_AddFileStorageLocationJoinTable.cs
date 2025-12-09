@@ -27,16 +27,16 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFra
                     table.PrimaryKey("synced_files_pkey", x => new { x.file_id, x.storage_location_id });
                     table.ForeignKey(
                         name: "synced_files_files_id_fkey",
-                        column: x => x.storage_location_id,
+                        column: x => x.file_id,
                         principalSchema: "file_systems",
-                        principalTable: "storage_locations",
+                        principalTable: "files",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "synced_files_storage_locations_id_fkey",
-                        column: x => x.file_id,
+                        column: x => x.storage_location_id,
                         principalSchema: "file_systems",
-                        principalTable: "files",
+                        principalTable: "storage_locations",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                 });

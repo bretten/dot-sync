@@ -145,14 +145,14 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFra
                         .HasForeignKey("FileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("synced_files_storage_locations_id_fkey");
+                        .HasConstraintName("synced_files_files_id_fkey");
 
                     b.HasOne("com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities.StorageLocation", "StorageLocation")
                         .WithMany("SyncedFiles")
                         .HasForeignKey("StorageLocationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("synced_files_files_id_fkey");
+                        .HasConstraintName("synced_files_storage_locations_id_fkey");
 
                     b.Navigation("File");
 
