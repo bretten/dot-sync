@@ -2,6 +2,7 @@
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using LinqKit;
 using Microsoft.EntityFrameworkCore;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
@@ -76,5 +77,52 @@ public sealed class EntityFrameworkCoreFileRepository(
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
         return await dbContext.FilesThatStartWith(path).ToListAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<DotFile>> GetUnsyncedFiles()
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var storageLocationIds = (await dbContext.StorageLocations.ToListAsync()).Select(x => x.Id).ToList();
+
+        // Build a predicate dynamically to make sure the resulting SQL query is (storageId = 1 or storageId = 2 ...)
+        // Using LINQ .Where(x => storageIds.Contains()) will result in an ANY clause
+        // NOTE: SQL will have a parameter limit, but not feasible in this app
+        var predicate = PredicateBuilder.New<SyncedFile>(true);
+        foreach (var id in storageLocationIds)
+        {
+            predicate = predicate.Or(x => x.StorageLocationId == id);
+        }
+
+        // Checks for Files that don't have the maximum number of SyncedFiles rows
+        var files = from l in dbContext.Files
+            join r in dbContext.SyncedFiles.Where(predicate) on l.Id equals r.FileId into gj
+            from subgroup in gj.DefaultIfEmpty()
+            group l by l
+            into g
+            where g.Count() != storageLocationIds.Count
+            select g.Key;
+
+        // Checks for Files that have no SyncedFiles rows at all
+        // var files = from l in dbContext.Files
+        //     join r in dbContext.SyncedFiles.Where(predicate) on l.Id equals r.FileId into gj
+        //     from subgroup in gj.DefaultIfEmpty()
+        //     where subgroup == null
+        //     select l;
+        return await files.ToListAsync();
+    }
+
+    /// <inheritdoc/>
+    public async Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+
+        var files = from l in dbContext.Files
+            join r in dbContext.SyncedFiles.Where(x => x.StorageLocationId == storageLocationId) on l.Id equals r.FileId
+                into gj
+            from subgroup in gj.DefaultIfEmpty()
+            where subgroup == null
+            select l;
+        return await files.ToListAsync();
     }
 }
