@@ -11,13 +11,38 @@
 
 <AuthorizeView Context="authContext">
     <h1>Files</h1>
-    <div class="row align-items-center">
-        <div class="col-auto">
-            <label class="col-form-label">Prefix Filter</label>
+    <h3>Filter</h3>
+    <div class="row align-items-center mb-2">
+        <div class="col-sm-1">
+            <label class="col-form-label">Prefix</label>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-11">
             <input type="search" @bind="_searchQuery" @bind:event="oninput" class="form-control" aria-label="Search"
                    aria-describedby="input-search"/>
+        </div>
+    </div>
+    <div class="row align-items-center mb-2">
+        <div class="col-sm-1">
+            <label class="col-form-label">Unsynced Files</label>
+        </div>
+        <div class="col-sm-11">
+            @{
+                var storageCount = 0;
+            }
+            @foreach (var storage in _storageLocations)
+            {
+                <input type="radio" class="btn-check" name="storage_location" id="@($"storage_{storageCount}")"
+                       autocomplete="off" @onchange="ChangeStorageLocation" value="@(storage.Id)">
+                <label class="btn btn-sm btn-outline-dark mb-2"
+                       for="@($"storage_{storageCount}")">@($"{storage.Type} - {storage.Path.Value}")</label>
+                storageCount++;
+            }
+            @if (IsPageFilteredByStorageLocation())
+            {
+                <input type="radio" class="btn-check" name="storage_location" id="@($"storage_{storageCount}")"
+                       autocomplete="off" @onchange="ChangeStorageLocation" value="@(Guid.Empty)">
+                <label class="btn btn-sm btn-outline-dark mb-2 me-1" for="@($"storage_{storageCount}")">x</label>
+            }
         </div>
     </div>
 
@@ -90,8 +115,11 @@
     private const int DefaultItemsPerPage = 50;
     private PaginationState _pagination = new PaginationState { ItemsPerPage = DefaultItemsPerPage };
     private FileSystemsDbContext _context = default!;
+    private IReadOnlyList<StorageLocation> _storageLocations = null!;
     private string _currentImgUrl = string.Empty;
     private string _searchQuery = string.Empty;
+    private Guid _selectedStorageLocationId = Guid.Empty;
+    private bool _shouldRender = true;
 
     /// <summary>
     /// The Items property in QuickGrid has an issue where multiple concurrent queries can be started:
@@ -104,6 +132,18 @@
     protected override void OnInitialized()
     {
         _context = DbContextFactory.CreateDbContext();
+        _storageLocations = _context.StorageLocations.ToList();
+    }
+
+    protected override bool ShouldRender()
+    {
+        if (!_shouldRender)
+        {
+            _shouldRender = true;
+            return false;
+        }
+
+        return base.ShouldRender();
     }
 
     /// <summary>
@@ -122,6 +162,11 @@
         await using var context = await DbContextFactory.CreateDbContextAsync();
         var totalCount = await context.FilesThatStartWith(FileSystemPath.Create(_searchQuery)).CountAsync(request.CancellationToken);
         var query = context.FilesThatStartWith(FileSystemPath.Create(_searchQuery));
+        if (IsPageFilteredByStorageLocation())
+        {
+            query = context.UnsyncedFiles(query, _selectedStorageLocationId);
+        }
+
         query = request.ApplySorting(query).Skip(request.StartIndex);
         if (request.Count.HasValue)
         {
@@ -156,6 +201,16 @@
     private string GetThumbnailUrl(string imagePath)
     {
         return $"thumbnail?path={imagePath}";
+    }
+
+    private void ChangeStorageLocation(ChangeEventArgs e)
+    {
+        _selectedStorageLocationId = new Guid(e.Value!.ToString()!);
+    }
+
+    private bool IsPageFilteredByStorageLocation()
+    {
+        return _selectedStorageLocationId != Guid.Empty;
     }
 
     // TODO: Move to DotFile
