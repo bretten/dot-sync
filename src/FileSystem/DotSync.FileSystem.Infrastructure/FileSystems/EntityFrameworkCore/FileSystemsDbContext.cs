@@ -29,6 +29,23 @@ public sealed class FileSystemsDbContext(DbContextOptions<FileSystemsDbContext> 
         return query.Where(x => ((string)(object)x.Path).StartsWith(path.Value));
     }
 
+    /// <summary>
+    /// Returns <see cref="DotFile"/>s that don't have a corresponding <see cref="SyncedFile"/> for the specified
+    /// <see cref="StorageLocation"/>
+    /// </summary>
+    /// <param name="query">The current query</param>
+    /// <param name="storageLocationId"><see cref="StorageLocation"/> ID to filter on</param>
+    /// <returns><see cref="IQueryable"/> <see cref="DotFile"/></returns>
+    public IQueryable<DotFile> UnsyncedFiles(IQueryable<DotFile> query, Guid storageLocationId)
+    {
+        return from l in query
+            join r in SyncedFiles.Where(x => x.StorageLocationId == storageLocationId) on l.Id equals r.FileId
+                into gj
+            from subgroup in gj.DefaultIfEmpty()
+            where subgroup == null
+            select l;
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
