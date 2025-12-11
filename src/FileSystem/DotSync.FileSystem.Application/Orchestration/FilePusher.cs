@@ -1,5 +1,6 @@
 ﻿using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration.Exceptions;
+using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
@@ -14,6 +15,7 @@ public sealed class FilePusher(
     IFileRepository fileRepository,
     ITenantContext tenantContext,
     IFileCopier fileCopier,
+    IMainStorageProvider mainStorageProvider,
     ILogger<FilePusher> logger) : TenantAware(tenantContext), IFilePusher
 {
     public async Task<IEnumerable<DotFile>> PushUnverifiedFiles(StorageLocationType sourceType,
@@ -73,6 +75,40 @@ public sealed class FilePusher(
             await fileRepository.AddSyncedFile(file.Id, destination.Id);
         }
 
+        return pushedFiles;
+    }
+
+    public async Task<IEnumerable<DotFile>> PushFilesInStorage(Guid storageLocationId, string prefixFilter,
+        int uploadLimitMb)
+    {
+        var storageLocations = await storageLocationRepository.GetAll();
+        var destination = storageLocations.FirstOrDefault(x => x.Id == storageLocationId);
+        if (destination == null)
+        {
+            throw new DirectoryNotStorageLocationException($"No storage location for {storageLocationId:D}");
+        }
+
+        var files = (await fileRepository.GetUnsyncedFiles(destination.Id, prefixFilter)).ToList();
+
+        var mainStoragePath = await mainStorageProvider.GetMainStoragePath();
+        var pushedFiles = new List<DotFile>();
+        var uploadedBytes = 0L;
+        var uploadLimitBytes = uploadLimitMb * 1000000; // Use MB, not MiB since that is the user-facing value
+        foreach (var file in files)
+        {
+            // Loose limit for now, just iterate until the rough limit is reached
+            var projectedTotalUploadAmount = uploadedBytes + file.Size;
+            if (uploadLimitMb != 0 && projectedTotalUploadAmount > uploadLimitBytes)
+            {
+                continue;
+            }
+
+            var pushed = await fileCopier.CopyFile(mainStoragePath, file.Path, destination.Path);
+            if (!pushed) continue;
+            pushedFiles.Add(file);
+            await fileRepository.AddSyncedFile(file.Id, destination.Id);
+            uploadedBytes += file.Size;
+        }
 
         return pushedFiles;
     }

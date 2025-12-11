@@ -26,4 +26,12 @@ public interface IFileRepository
     /// <param name="storageLocationId">The storage location to check</param>
     /// <returns><see cref="DotFile"/>s that have not been synced with the storage location</returns>
     Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId);
+
+    /// <summary>
+    /// Returns files that have no corresponding row in the synced files join table and filters on file path prefix
+    /// </summary>
+    /// <param name="storageLocationId">The storage location to check</param>
+    /// <param name="path">File path prefix filter</param>
+    /// <returns><see cref="DotFile"/>s that have not been synced with the storage location</returns>
+    Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string path);
 }

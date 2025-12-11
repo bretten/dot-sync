@@ -1,13 +1,19 @@
 @page "/"
 @using System.Collections.Immutable
 @using System.Web
+@using com.brettnamba.DotSync.FileSystem.Application.Storage
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
 @inject IDbContextFactory<FileSystemsDbContext> DbContextFactory
+@inject JobComponent JobComponent
+@inject IJSRuntime JS
+@inject IMainStorageProvider MainStorageProvider
 
 <AuthorizeView Context="authContext">
     <h1>Files</h1>
@@ -31,6 +37,7 @@
             }
             @foreach (var storage in _storageLocations)
             {
+                if (_mainStoragePath == storage.Path) continue;
                 <input type="radio" class="btn-check" name="storage_location" id="@($"storage_{storageCount}")"
                        autocomplete="off" @onchange="ChangeStorageLocation" value="@(storage.Id)">
                 <label class="btn btn-sm btn-outline-dark mb-2"
@@ -43,6 +50,23 @@
                        autocomplete="off" @onchange="ChangeStorageLocation" value="@(Guid.Empty)">
                 <label class="btn btn-sm btn-outline-dark mb-2 me-1" for="@($"storage_{storageCount}")">x</label>
             }
+        </div>
+    </div>
+    @{
+        var classAppend = !IsPageFilteredByStorageLocation() ? " d-none" : "";
+    }
+    <div class="row align-items-center mb-2 @(classAppend)">
+        <div class="col-sm-1">
+            <label class="col-form-label">Upload limit</label>
+        </div>
+        <div class="col-sm-1">
+            <input type="number" min="0" @bind="_uploadLimit" class="form-control" aria-label="Upload limit"/>
+        </div>
+        <div class="col-sm-3">
+            <span class="form-text me-2">
+                MB
+            </span>
+            <button type="button" class="btn btn-primary" id="upload-btn" @onclick="OnClickUpload">Upload</button>
         </div>
     </div>
 
@@ -109,15 +133,29 @@
             </div>
         </div>
     </div>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="upload-alert" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Info</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                Upload has started. View progress <a href="/push">here</a>
+            </div>
+        </div>
+    </div>
 </AuthorizeView>
 
 @code {
     private const int DefaultItemsPerPage = 50;
     private PaginationState _pagination = new PaginationState { ItemsPerPage = DefaultItemsPerPage };
     private FileSystemsDbContext _context = default!;
+    private IJSObjectReference? _module;
+    private FileSystemPath _mainStoragePath;
     private IReadOnlyList<StorageLocation> _storageLocations = null!;
     private string _currentImgUrl = string.Empty;
     private string _searchQuery = string.Empty;
+    private int _uploadLimit = 0;
     private Guid _selectedStorageLocationId = Guid.Empty;
     private bool _shouldRender = true;
 
@@ -129,10 +167,11 @@
     /// </summary>
     private IQueryable<DotFile> FilteredFiles => _context.FilesThatStartWith(FileSystemPath.Create(_searchQuery));
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _context = DbContextFactory.CreateDbContext();
+        _context = await DbContextFactory.CreateDbContextAsync();
         _storageLocations = _context.StorageLocations.ToList();
+        _mainStoragePath = await MainStorageProvider.GetMainStoragePath();
     }
 
     protected override bool ShouldRender()
@@ -144,6 +183,14 @@
         }
 
         return base.ShouldRender();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _module = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/Pages/Home.razor.js");
+        }
     }
 
     /// <summary>
@@ -160,12 +207,14 @@
     public async ValueTask<GridItemsProviderResult<DotFile>> FilterFiles(GridItemsProviderRequest<DotFile> request)
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
-        var totalCount = await context.FilesThatStartWith(FileSystemPath.Create(_searchQuery)).CountAsync(request.CancellationToken);
+
         var query = context.FilesThatStartWith(FileSystemPath.Create(_searchQuery));
         if (IsPageFilteredByStorageLocation())
         {
             query = context.UnsyncedFiles(query, _selectedStorageLocationId);
         }
+
+        var totalCount = await query.CountAsync(request.CancellationToken);
 
         query = request.ApplySorting(query).Skip(request.StartIndex);
         if (request.Count.HasValue)
@@ -211,6 +260,16 @@
     private bool IsPageFilteredByStorageLocation()
     {
         return _selectedStorageLocationId != Guid.Empty;
+    }
+
+    private async Task OnClickUpload(MouseEventArgs e)
+    {
+        if (!IsPageFilteredByStorageLocation())
+        {
+            return;
+        }
+
+        await JobComponent.JobManager.RunJob(new PushByStorageParameters(_selectedStorageLocationId, _searchQuery, _uploadLimit));
     }
 
     // TODO: Move to DotFile
