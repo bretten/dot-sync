@@ -79,7 +79,7 @@ public sealed class FilePusher(
     }
 
     public async Task<IEnumerable<DotFile>> PushFilesInStorage(Guid storageLocationId, string prefixFilter,
-        int uploadLimitMb)
+        long uploadLimitMb)
     {
         var storageLocations = await storageLocationRepository.GetAll();
         var destination = storageLocations.FirstOrDefault(x => x.Id == storageLocationId);
@@ -100,6 +100,8 @@ public sealed class FilePusher(
             var projectedTotalUploadAmount = uploadedBytes + file.Size;
             if (uploadLimitMb != 0 && projectedTotalUploadAmount > uploadLimitBytes)
             {
+                logger.LogInformation(
+                    $"Skipping {file.Path.Value} ({file.Size}) because it would put it over the limit of {uploadLimitBytes} bytes. Current upload size: {uploadedBytes}");
                 continue;
             }
 
