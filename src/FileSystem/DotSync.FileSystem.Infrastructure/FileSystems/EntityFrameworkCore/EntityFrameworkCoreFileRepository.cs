@@ -125,4 +125,12 @@ public sealed class EntityFrameworkCoreFileRepository(
             select l;
         return await files.ToListAsync();
     }
+
+    public async Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string path)
+    {
+        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
+        var query = dbContext.FilesThatStartWith(FileSystemPath.Create(path));
+        query = dbContext.UnsyncedFiles(query, storageLocationId);
+        return await query.ToListAsync();
+    }
 }

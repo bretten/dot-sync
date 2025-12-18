@@ -11,4 +11,6 @@ public interface IFilePusher
 
     Task<IEnumerable<DotFile>> PushFilesInDir(StorageLocationType sourceType, FileSystemPath sourceRootPath,
         FileSystemPath sourcePushPath, StorageLocationType destinationType, FileSystemPath destinationPath);
+
+    Task<IEnumerable<DotFile>> PushFilesInStorage(Guid storageLocationId, string prefixFilter, long uploadLimitMb);
 }

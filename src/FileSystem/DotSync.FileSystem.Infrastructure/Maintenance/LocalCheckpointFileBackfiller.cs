@@ -1,5 +1,6 @@
 using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
+using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -22,17 +23,20 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
 
     private readonly NpgsqlDataSource _npgsqlDataSource;
 
+    private readonly IMainStorageProvider _mainStorageProvider;
+
     private const string JobThumbnails = "thumbnails";
     private const string JobSyncedFiles = "synced_files";
 
     public LocalCheckpointFileBackfiller(IDbContextFactory<FileSystemsDbContext> dbContextFactory,
         IOptions<LocalCheckpointFileBackfillerConfiguration> config, IThumbnailProvider thumbnailProvider,
-        NpgsqlDataSource npgsqlDataSource)
+        NpgsqlDataSource npgsqlDataSource, IMainStorageProvider mainStorageProvider)
     {
         _dbContextFactory = dbContextFactory;
         _configuration = config.Value;
         _thumbnailProvider = thumbnailProvider;
         _npgsqlDataSource = npgsqlDataSource;
+        _mainStorageProvider = mainStorageProvider;
     }
 
     public async Task BackfillThumbnails()
@@ -60,7 +64,9 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
 
     public async Task BackfillSyncedFiles()
     {
+        var mainStorage = await _mainStorageProvider.GetMainStoragePath();
         var storageLocations = await GetStorageLocations();
+        storageLocations = storageLocations.Where(x => x.Path != mainStorage).ToList();
 
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
 

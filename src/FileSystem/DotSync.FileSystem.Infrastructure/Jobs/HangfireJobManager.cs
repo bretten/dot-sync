@@ -82,6 +82,15 @@ public sealed class HangfireJobManager : IJobManager
 
                 _jobClient.Enqueue(() => Push(push));
                 break;
+            case PushByStorageParameters pushByStorage:
+                if (IsJobRunning(nameof(Push)))
+                {
+                    _logger.LogInformation("Job is already running");
+                    break;
+                }
+
+                _jobClient.Enqueue(() => Push(pushByStorage));
+                break;
             case SortParameters sort:
                 if (IsJobRunning(nameof(Sort)))
                 {
@@ -138,6 +147,13 @@ public sealed class HangfireJobManager : IJobManager
             FileSystemPath.Create(parameters.SourcePushPath ?? ""),
             parameters.DestinationType,
             FileSystemPath.Create(parameters.DestinationPath ?? ""));
+        _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
+    }
+
+    public async Task Push(PushByStorageParameters parameters)
+    {
+        var result = await _filePusher.PushFilesInStorage(parameters.StorageLocationId, parameters.PathPrefixFilter,
+            parameters.UploadLimitMb);
         _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
     }
 
