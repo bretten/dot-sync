@@ -18,10 +18,9 @@ public sealed class FileDirectoryIndexer : IFileDirectoryIndexer
 
     /// <summary>
     /// Dir separator
+    /// Using 'Alt' separator will always be '/' on Windows or Linux: https://learn.microsoft.com/en-us/dotnet/api/system.io.path.directoryseparatorchar
     /// </summary>
-    private static readonly char Ds = OperatingSystem.IsWindows()
-        ? Path.DirectorySeparatorChar
-        : Path.AltDirectorySeparatorChar;
+    private static readonly char Ds = Path.AltDirectorySeparatorChar;
 
     public FileDirectoryIndexer(IDbContextFactory<FileSystemsDbContext> dbContextFactory)
     {
