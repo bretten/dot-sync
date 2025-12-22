@@ -11,6 +11,7 @@ using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
+using com.brettnamba.DotSync.FileSystem.Application.State;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
@@ -25,6 +26,7 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Storage;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
@@ -40,6 +42,8 @@ using Npgsql;
 using Constants = com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddMemoryCache();
 
 builder.Services.AddOidc(builder.Configuration);
 
@@ -177,6 +181,12 @@ builder.Services.Configure<ThumbnailConfiguration>(
 builder.Services.AddScoped<IThumbnailGenerator, MagickThumbnailGenerator>();
 builder.Services.AddScoped<IThumbnailProvider, ThumbnailProvider>();
 
+// State
+builder.Services.AddScoped<IEphemeralState, MemoryCacheEphemeralState>();
+
+// File paths
+builder.Services.AddScoped<IFileDirectoryIndexer, FileDirectoryIndexer>();
+
 // Maintenance
 builder.Services.Configure<LocalCheckpointFileBackfillerConfiguration>(
     builder.Configuration.GetSection(LocalCheckpointFileBackfillerConfiguration.Section));
@@ -198,13 +208,16 @@ if (!builder.Environment.IsDevelopment())
 var app = builder.Build();
 
 using var scope = app.Services.CreateScope();
+var hangfire = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
 // DB migration
 scope.ServiceProvider.GetRequiredService<FileSystemsDbContext>().Database.Migrate();
+// Load state
+var state = scope.ServiceProvider.GetRequiredService<IEphemeralState>();
+hangfire.Enqueue(() => state.GetAllFileDirectories());
 // Maintenance
 var runMaintenance = app.Configuration.GetValue<bool>("Maintenance:Active");
 if (runMaintenance)
 {
-    var hangfire = scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
     var backfiller = scope.ServiceProvider.GetRequiredService<IFileBackfiller>();
     hangfire.Enqueue(() => backfiller.BackfillThumbnails());
     hangfire.Enqueue(() => backfiller.BackfillSyncedFiles());
