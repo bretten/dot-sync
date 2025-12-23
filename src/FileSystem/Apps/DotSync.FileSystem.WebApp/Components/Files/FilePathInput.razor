@@ -29,13 +29,13 @@
         _directories = new SuffixTrie<string>(3);
         foreach (var dir in directories)
         {
-            _directories.Add(dir, dir);
+            _directories.Add(dir.ToLowerInvariant(), dir);
         }
     }
 
     private Task<IEnumerable<string>> Search(string value, CancellationToken token)
     {
-        return Task.FromResult(string.IsNullOrEmpty(value) ? new List<string>() : _directories.Retrieve(value));
+        return Task.FromResult(string.IsNullOrEmpty(value) ? new List<string>() : _directories.Retrieve(value.ToLowerInvariant()));
     }
 
 }
