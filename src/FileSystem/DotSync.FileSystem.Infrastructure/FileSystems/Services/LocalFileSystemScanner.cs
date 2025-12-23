@@ -85,7 +85,6 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             switch (entry)
             {
                 case FileInfo info:
-                    _logger.LogInformation($"Scanning {info.FullName}");
                     tasks.Add(ScanFile(info, rootDirectoryPath));
                     break;
                 case DirectoryInfo info:
@@ -117,6 +116,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             // The file exists, no further work needed
             return null;
         }
+        _logger.LogInformation($"Scanning {fileInfo.FullName}");
 
         // File creation time (or best estimation)
         var fileCreation = _fileMetadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
