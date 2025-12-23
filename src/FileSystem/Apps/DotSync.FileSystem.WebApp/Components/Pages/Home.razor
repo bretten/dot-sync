@@ -6,9 +6,11 @@
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
+@using SortDirection = Microsoft.AspNetCore.Components.QuickGrid.SortDirection
 @rendermode InteractiveServer
 @inject IDbContextFactory<FileSystemsDbContext> DbContextFactory
 @inject JobComponent JobComponent
@@ -23,8 +25,7 @@
             <label class="col-form-label">Prefix</label>
         </div>
         <div class="col-sm-11">
-            <input type="search" @bind="_searchQuery" @bind:event="oninput" class="form-control" aria-label="Search"
-                   aria-describedby="input-search"/>
+            <FilePathInput TextChanged="@(s => _searchQuery = s)"/>
         </div>
     </div>
     <div class="row align-items-center mb-2">
@@ -71,7 +72,7 @@
     </div>
 
     <QuickGrid TGridItem="DotFile" ItemsProvider="FilterFiles" Pagination="_pagination" Class="table table-hover">
-        <TemplateColumn Title="" Sortable="false" Class="col-2 text-center">
+        <Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn Title="" Sortable="false" Class="col-2 text-center">
             @{
                 var encodedPath = HttpUtility.UrlEncode(context.Path.Value);
             }
@@ -88,21 +89,22 @@
                 <i class="bi bi-file-earmark fs-1"></i>
             }
             <small><a href="file?path=@(encodedPath)" target="_blank" class="small">Download</a></small>
-        </TemplateColumn>
-        <TemplateColumn Class="col-8 text-left" Title="Path" Sortable="true"
-                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
+        </Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn>
+        <Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn Class="col-8 text-left" Title="Path" Sortable="true"
+                                                                  SortBy="@(GridSort<DotFile>.ByAscending(item => item.Path))">
             <small>@context.Path.Value</small>
-        </TemplateColumn>
+        </Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn>
 
-        <TemplateColumn Class="col-1" Title="Created" Sortable="true"
-                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.FileCreation))"
-                        IsDefaultSortColumn="true" InitialSortDirection="SortDirection.Descending">
+        <Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn Class="col-1" Title="Created" Sortable="true"
+                                                                  SortBy="@(GridSort<DotFile>.ByAscending(item => item.FileCreation))"
+                                                                  IsDefaultSortColumn="true"
+                                                                  InitialSortDirection="SortDirection.Descending">
             <small>@context.FileCreation.ToString("g")</small>
-        </TemplateColumn>
-        <TemplateColumn Class="col-1" Title="First Sync" Sortable="true"
-                        SortBy="@(GridSort<DotFile>.ByAscending(item => item.FirstSync))">
+        </Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn>
+        <Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn Class="col-1" Title="First Sync" Sortable="true"
+                                                                  SortBy="@(GridSort<DotFile>.ByAscending(item => item.FirstSync))">
             <small>@context.FirstSync.ToString("g")</small>
-        </TemplateColumn>
+        </Microsoft.AspNetCore.Components.QuickGrid.TemplateColumn>
     </QuickGrid>
 
     <Paginator State="_pagination"/>

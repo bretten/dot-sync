@@ -1,0 +1,41 @@
+@using com.brettnamba.DotSync.FileSystem.Application.State
+@using Gma.DataStructures.StringSearch
+@rendermode InteractiveServer
+@inject IEphemeralState EphemeralState
+
+<MudThemeProvider/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudItem xs="12" sm="6" md="4">
+    <MudAutocomplete T="string" @bind-Value="Text" SearchFunc="@Search"
+                     TextChanged="@TextChanged"
+                     MaxItems="30"
+                     ResetValueOnEmptyText="true"
+                     CoerceText="false" CoerceValue="true" SelectValueOnTab="true"
+                     AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary"/>
+</MudItem>
+
+@code {
+    private SuffixTrie<string> _directories = null!;
+
+    [Parameter] public EventCallback<string> TextChanged { get; set; }
+    [Parameter] public string? Text { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var directories = (await EphemeralState.GetAllFileDirectories()).ToList();
+        _directories = new SuffixTrie<string>(3);
+        foreach (var dir in directories)
+        {
+            _directories.Add(dir.ToLowerInvariant(), dir);
+        }
+    }
+
+    private Task<IEnumerable<string>> Search(string value, CancellationToken token)
+    {
+        return Task.FromResult(string.IsNullOrEmpty(value) ? new List<string>() : _directories.Retrieve(value.ToLowerInvariant()));
+    }
+
+}
