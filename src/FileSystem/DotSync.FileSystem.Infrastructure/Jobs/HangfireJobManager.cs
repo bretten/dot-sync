@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Text.Json;
 using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
@@ -109,13 +110,17 @@ public sealed class HangfireJobManager : IJobManager
 
     public async Task Scan(ScanParameters parameters)
     {
-        var result = await _fileSystemScanner.Scan(FileSystemPath.Create(parameters.Path ?? ""));
+        var startTime = DateTime.UtcNow;
+        var scanPath = FileSystemPath.Create(parameters.Path ?? "");
+        var result = await _fileSystemScanner.Scan(scanPath);
+
+        await WriteReport("scan", startTime, GenerateReport(scanPath.Value, result, startTime));
         _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
     }
 
     public async Task Verify(VerifyParameters parameters)
     {
-        var startTime = DateTime.Now;
+        var startTime = DateTime.UtcNow;
 
         var result = await _verifier.Execute(parameters.StorageType,
             FileSystemPath.Create(parameters.StoragePath ?? ""),
@@ -131,11 +136,9 @@ public sealed class HangfireJobManager : IJobManager
                 async (newFile, token) => { await _thumbnailProvider.GetThumbnail(newFile.Path); });
         });
 
-        var dir = Directory.CreateDirectory(_jobConfiguration.ReportPath);
-        var filePath = Path.Combine(dir.FullName, startTime.ToString("yyyy-MM-dd__HH-mm-ss") + ".json");
-        await using var fileStream = File.CreateText(filePath);
-        await fileStream.WriteAsync(JsonSerializer.Serialize(result.GenerateReport(parameters.StorageType.ToString(),
-            parameters.StoragePath!, parameters.VerifyPath!, parameters.PathsToSkip!)));
+        var report = result.GenerateReport(parameters.StorageType.ToString(), parameters.StoragePath!,
+            parameters.VerifyPath!, parameters.PathsToSkip!, startTime);
+        await WriteReport("verify", startTime, report);
 
         _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
     }
@@ -185,5 +188,26 @@ public sealed class HangfireJobManager : IJobManager
         var processingJobs = monitoringApi.ProcessingJobs(0, int.MaxValue);
 
         return processingJobs.Any(job => job.Value.Job.Method.Name == jobName);
+    }
+
+    private IReadOnlyList<FileResultList> GenerateReport(string path, FileSystemScannerResult result, DateTime startTime)
+    {
+        var newFiles = result.NewFiles.Select(x => (string[])[x.Item1.Value]).ToImmutableList();
+        var duration = DateTime.UtcNow.Subtract(startTime);
+
+        return new List<FileResultList>()
+        {
+            new("Scan Path", new List<string[]>() { new[] { path } }.ToImmutableList(), false),
+            new("Duration", new List<string[]>() { new[] { $"{duration.TotalMinutes} mins" } }.ToImmutableList(), false),
+            new("New", newFiles, true)
+        }.AsReadOnly();
+    }
+
+    private async Task WriteReport(string reportName, DateTime startTime, IReadOnlyList<FileResultList> report)
+    {
+        var dir = Directory.CreateDirectory(_jobConfiguration.ReportPath);
+        var filePath = Path.Combine(dir.FullName, $"{startTime:yyyy-MM-dd__HH-mm-ss}_{reportName}.json");
+        await using var fileStream = File.CreateText(filePath);
+        await fileStream.WriteAsync(JsonSerializer.Serialize(report));
     }
 }

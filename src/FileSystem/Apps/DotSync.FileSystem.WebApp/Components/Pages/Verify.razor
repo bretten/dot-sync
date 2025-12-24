@@ -64,6 +64,7 @@
 
     private readonly List<string> _progressMessages = new List<string>();
     private IReadOnlyList<FileResultList>? _result;
+    private DateTime _startTime;
 
     protected override void OnInitialized()
     {
@@ -81,6 +82,7 @@
     private async Task ExecuteVerify()
     {
         JobComponent.Logger.LogInformation($"Verifying {VerifyModel!.StoragePath} {VerifyModel.VerifyPath}");
+        _startTime = DateTime.UtcNow;
         await JobComponent.JobManager.RunJob(new VerifyParameters(VerifyModel.Type, VerifyModel.StoragePath, VerifyModel.VerifyPath, VerifyModel.PathsToSkip));
     }
 
@@ -95,7 +97,7 @@
         var jobParams = data.JobParameters as VerifyParameters;
 
         var files = data.Result is StorageLocationIntegrityVerificationResult ? (StorageLocationIntegrityVerificationResult)data.Result : default;
-        _result = files.GenerateReport(jobParams!.StorageType.ToString(), jobParams.StoragePath!, jobParams.VerifyPath!, jobParams.PathsToSkip!);
+        _result = files.GenerateReport(jobParams!.StorageType.ToString(), jobParams.StoragePath!, jobParams.VerifyPath!, jobParams.PathsToSkip!, _startTime);
 
         InvokeAsync(StateHasChanged);
         _progressMessages.Clear();

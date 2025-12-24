@@ -46,6 +46,7 @@
 
     private readonly List<string> _progressMessages = new List<string>();
     private IReadOnlyList<FileResultList>? _result;
+    private DateTime _startTime;
 
     protected override void OnInitialized()
     {
@@ -62,6 +63,7 @@
     private async Task ExecuteScan()
     {
         JobComponent.Logger.LogInformation($"Scanning {ScanModel!.Path}");
+        _startTime = DateTime.UtcNow;
         await JobComponent.JobManager.RunJob(new ScanParameters(ScanModel!.Path!));
     }
 
@@ -72,11 +74,13 @@
         {
             throw new ArgumentException("Invalid parameters");
         }
+        var duration = DateTime.UtcNow.Subtract(_startTime);
 
         var files = data.Result is FileSystemScannerResult ? (FileSystemScannerResult)data.Result : default;
         _result = new List<FileResultList>()
         {
-            new("Files", files.NewFiles.Select(x => (string[])[x.Item1.Value]).ToList(), true)
+            new("Files", files.NewFiles.Select(x => (string[])[x.Item1.Value]).ToList(), true),
+            new("Duration", new List<string[]>() { new[] { $"{duration.TotalMinutes} mins" } }.ToList(), false),
         }.AsReadOnly();
 
         InvokeAsync(StateHasChanged);
