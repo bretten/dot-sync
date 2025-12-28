@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
@@ -35,19 +36,27 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     private readonly ILogger<IFileSystemScanner> _logger;
 
     /// <summary>
+    /// Job execution context
+    /// </summary>
+    private readonly JobExecutionContext _jobContext;
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
     /// <param name="fileMetadataReader">Metadata reader used to get the date of the file</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
     /// <param name="logger">Logger</param>
+    /// <param name="jobContext">Job execution context</param>
     public LocalFileSystemScanner(IFileRepository fileRepository, IFileMetadataReader fileMetadataReader,
-        IFileChecksumGenerator fileChecksumGenerator, ILogger<IFileSystemScanner> logger)
+        IFileChecksumGenerator fileChecksumGenerator, ILogger<IFileSystemScanner> logger,
+        JobExecutionContext jobContext)
     {
         _fileRepository = fileRepository;
         _fileMetadataReader = fileMetadataReader;
         _fileChecksumGenerator = fileChecksumGenerator;
         _logger = logger;
+        _jobContext = jobContext;
     }
 
     /// <inheritdoc />
@@ -116,6 +125,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             // The file exists, no further work needed
             return null;
         }
+
         _logger.LogInformation($"Scanning {fileInfo.FullName}");
 
         // File creation time (or best estimation)

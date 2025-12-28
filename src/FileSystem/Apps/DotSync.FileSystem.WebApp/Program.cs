@@ -72,7 +72,9 @@ if (builder.Environment.IsDevelopment())
 
 builder.Configuration.AddEnvironmentVariables();
 
+// Jobs
 builder.Services.AddSingleton<JobProgressLoggerConfiguration>();
+builder.Services.AddScoped<JobExecutionContext>();
 builder.Logging.AddJobProgressLogger(config =>
 {
     config.AddService(
@@ -83,6 +85,7 @@ builder.Logging.AddJobProgressLogger(config =>
     );
 });
 
+// Multitenancy
 builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant("")));
 builder.Services.AddTransient<ITenantAware, TenantAware>();
 builder.Services.AddTransient<IClock, Clock>();
@@ -129,7 +132,7 @@ else
 }
 
 builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
-builder.Services.AddTransient<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
+builder.Services.AddScoped<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
 
 builder.Services.AddScoped<IAmazonS3>(sp =>
 {
@@ -154,8 +157,8 @@ builder.Services.AddScoped<IAmazonS3>(sp =>
     }
 });
 
-builder.Services.AddTransient<IFileSystemScanner, LocalFileSystemScanner>();
-builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>(sp =>
+builder.Services.AddScoped<IFileSystemScanner, LocalFileSystemScanner>();
+builder.Services.AddScoped<IFileCopier, AmazonS3FileCopier>(sp =>
 {
     var storageClass = S3StorageClass.FindValue(builder.Configuration["Aws:S3:StorageClass"]) ??
                        throw new ArgumentException($"Storage class not defined");
@@ -164,10 +167,9 @@ builder.Services.AddTransient<IFileCopier, AmazonS3FileCopier>(sp =>
         sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
 });
 
-builder.Services
-    .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
+builder.Services.AddScoped<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
 builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
-builder.Services.AddTransient<IFilePusher, FilePusher>();
+builder.Services.AddScoped<IFilePusher, FilePusher>();
 builder.Services.AddSingleton<IJobResultProvider, JobResultProvider>();
 builder.Services.AddTransient<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();

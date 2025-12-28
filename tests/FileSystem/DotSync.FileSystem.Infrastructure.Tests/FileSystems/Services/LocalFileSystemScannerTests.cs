@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+﻿using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
@@ -37,7 +38,7 @@ public class LocalFileSystemScannerTests
             .Returns(newFile.Sha256Checksum.Value);
 
         var scanner = new LocalFileSystemScanner(stubFileRepository.Object, stubFileMetadataReader.Object,
-            stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>());
+            stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>(), Mock.Of<JobExecutionContext>());
 
         // Act
         var actual = await scanner.Scan(FileSystemPath.Create(LocalFileSystemFilesPath));
