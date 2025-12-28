@@ -12,6 +12,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 using Hangfire;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
@@ -31,13 +32,14 @@ public sealed class HangfireJobManager : IJobManager
     private readonly IJobResultProvider _jobResultProvider;
     private readonly JobConfiguration _jobConfiguration;
     private readonly ILogger<HangfireJobManager> _logger;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
 
     public const string DefaultSortDir = "ToUpload";
 
     public HangfireJobManager(IFileSystemScanner fileSystemScanner, IStorageLocationRepository storageLocationRepo,
         IStorageLocationIntegrityVerificationService verifier, IFilePusher filePusher, IFileSorter fileSorter,
         IThumbnailProvider thumbnailProvider, IBackgroundJobClient jobClient, IJobResultProvider jobResultProvider,
-        JobConfiguration jobConfiguration, ILogger<HangfireJobManager> logger)
+        JobConfiguration jobConfiguration, ILogger<HangfireJobManager> logger, IServiceScopeFactory serviceScopeFactory)
     {
         _fileSystemScanner = fileSystemScanner;
         _storageLocationRepo = storageLocationRepo;
@@ -49,6 +51,7 @@ public sealed class HangfireJobManager : IJobManager
         _jobResultProvider = jobResultProvider;
         _jobConfiguration = jobConfiguration;
         _logger = logger;
+        _serviceScopeFactory = serviceScopeFactory;
     }
 
     /// <inheritdoc />
@@ -110,9 +113,11 @@ public sealed class HangfireJobManager : IJobManager
 
     public async Task Scan(ScanParameters parameters)
     {
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var fileSystemScanner = scope.ServiceProvider.GetRequiredService<IFileSystemScanner>();
         var startTime = DateTime.UtcNow;
         var scanPath = FileSystemPath.Create(parameters.Path ?? "");
-        var result = await _fileSystemScanner.Scan(scanPath);
+        var result = await fileSystemScanner.Scan(scanPath);
 
         await WriteReport("scan", startTime, GenerateReport(scanPath.Value, result, startTime));
         _jobResultProvider.OnJobCompleted(new JobResult(parameters, result));
@@ -120,9 +125,11 @@ public sealed class HangfireJobManager : IJobManager
 
     public async Task Verify(VerifyParameters parameters)
     {
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var verifier = scope.ServiceProvider.GetRequiredService<IStorageLocationIntegrityVerificationService>();
         var startTime = DateTime.UtcNow;
 
-        var result = await _verifier.Execute(parameters.StorageType,
+        var result = await verifier.Execute(parameters.StorageType,
             FileSystemPath.Create(parameters.StoragePath ?? ""),
             FileSystemPath.Create(parameters.VerifyPath ?? ""),
             !string.IsNullOrWhiteSpace(parameters.PathsToSkip)
@@ -145,7 +152,9 @@ public sealed class HangfireJobManager : IJobManager
 
     public async Task Push(PushParameters parameters)
     {
-        var result = await _filePusher.PushFilesInDir(StorageLocationType.Local,
+        await using var scope = _serviceScopeFactory.CreateAsyncScope();
+        var filePusher = scope.ServiceProvider.GetRequiredService<IFilePusher>();
+        var result = await filePusher.PushFilesInDir(StorageLocationType.Local,
             FileSystemPath.Create(parameters.SourceRootPath ?? ""),
             FileSystemPath.Create(parameters.SourcePushPath ?? ""),
             parameters.DestinationType,
@@ -190,7 +199,8 @@ public sealed class HangfireJobManager : IJobManager
         return processingJobs.Any(job => job.Value.Job.Method.Name == jobName);
     }
 
-    private IReadOnlyList<FileResultList> GenerateReport(string path, FileSystemScannerResult result, DateTime startTime)
+    private IReadOnlyList<FileResultList> GenerateReport(string path, FileSystemScannerResult result,
+        DateTime startTime)
     {
         var newFiles = result.NewFiles.Select(x => (string[])[x.Item1.Value]).ToImmutableList();
         var duration = DateTime.UtcNow.Subtract(startTime);
@@ -198,7 +208,8 @@ public sealed class HangfireJobManager : IJobManager
         return new List<FileResultList>()
         {
             new("Scan Path", new List<string[]>() { new[] { path } }.ToImmutableList(), false),
-            new("Duration", new List<string[]>() { new[] { $"{duration.TotalMinutes} mins" } }.ToImmutableList(), false),
+            new("Duration", new List<string[]>() { new[] { $"{duration.TotalMinutes} mins" } }.ToImmutableList(),
+                false),
             new("New", newFiles, true)
         }.AsReadOnly();
     }

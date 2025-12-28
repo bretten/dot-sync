@@ -1,4 +1,5 @@
 ﻿using com.brettnamba.DotSync.Common.Domain.Tenants;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -16,7 +17,8 @@ public sealed class FilePusher(
     ITenantContext tenantContext,
     IFileCopier fileCopier,
     IMainStorageProvider mainStorageProvider,
-    ILogger<FilePusher> logger) : TenantAware(tenantContext), IFilePusher
+    ILogger<FilePusher> logger,
+    JobExecutionContext jobContext) : TenantAware(tenantContext), IFilePusher
 {
     public async Task<IEnumerable<DotFile>> PushUnverifiedFiles(StorageLocationType sourceType,
         FileSystemPath sourceRootPath, StorageLocationType destinationType, FileSystemPath destinationRootPath)

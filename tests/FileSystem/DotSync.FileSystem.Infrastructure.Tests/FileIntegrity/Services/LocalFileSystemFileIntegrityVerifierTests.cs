@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+﻿using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
@@ -60,7 +61,7 @@ public class LocalFileSystemFileIntegrityVerifierTests
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubMetadataReader.Object,
-            FileSystemPath.Create(LocalFileSystemFilesPath));
+            FileSystemPath.Create(LocalFileSystemFilesPath), Mock.Of<JobExecutionContext>());
 
         /*
          * Act

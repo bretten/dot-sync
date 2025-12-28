@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -17,7 +18,8 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     IFileChecksumGenerator checksumGenerator,
     ILogger<IFileIntegrityVerifier> logger,
     IFileMetadataReader metadataReader,
-    FileSystemPath rootPath)
+    FileSystemPath rootPath,
+    JobExecutionContext jobContext)
     : BaseFileIntegrityVerifier(fileRepository, checksumGenerator, logger)
 {
     /// <summary>
