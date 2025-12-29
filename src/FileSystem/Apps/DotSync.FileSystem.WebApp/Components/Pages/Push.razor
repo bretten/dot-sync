@@ -9,6 +9,7 @@
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
 @using com.brettnamba.DotSync.FileSystem.WebApp.Startup
 @using Microsoft.AspNetCore.Authorization
 @implements IDisposable
@@ -49,6 +50,9 @@
 <hr/>
 
 <div class="container">
+    <ProgressBar Value="@_progressPercent"/>
+</div>
+<div class="container">
     <JobProgress Messages="@_progressMessages"/>
 </div>
 
@@ -64,6 +68,7 @@
     [SupplyParameterFromForm(FormName = "Push")]
     private PushForm? PushModel { get; set; }
 
+    private double _progressPercent = 0;
     private readonly List<string> _progressMessages = new List<string>();
     private IReadOnlyList<FileResultList>? _result;
 
@@ -72,7 +77,8 @@
         JobComponent.OnInitialized();
 
         JobComponent.JobResultProvider.JobCompleted += ParseResult;
-        JobComponent.ProgressReporter.ProgressReported += ReportProgress;
+        JobComponent.ProgressReporter.LogReported += ReportProgressLog;
+        JobComponent.ProgressReporter.PercentReported += ReportProgressPercent;
         PushModel ??= new PushForm()
         {
             SourceRootPath = JobComponent.DefaultLocalStorage,
@@ -83,6 +89,7 @@
 
     private async Task ExecutePush()
     {
+        _progressPercent = 0;
         JobComponent.Logger.LogInformation($"Pushing {PushModel!.SourceRootPath} {PushModel.SourcePushPath} to {PushModel.DestinationType} {PushModel.DestinationPath}");
         await JobComponent.JobManager.RunJob(new PushParameters(PushModel.SourceRootPath, PushModel.SourcePushPath, PushModel.DestinationType, PushModel.DestinationPath));
     }
@@ -104,17 +111,24 @@
         _progressMessages.Clear();
     }
 
-    private void ReportProgress(string jobId, string progress)
+    private void ReportProgressLog(object? sender, ProgressLog log)
     {
-        if (!string.Equals(JobId, jobId)) return;
-        _progressMessages.Add(progress);
+        if (!string.Equals(JobId, log.JobId)) return;
+        _progressMessages.Add(log.Message);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ReportProgressPercent(object? sender, ProgressPercent percent)
+    {
+        _progressPercent = percent.AsPercent();
         InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
         JobComponent.JobResultProvider.JobCompleted -= ParseResult;
-        JobComponent.ProgressReporter.ProgressReported -= ReportProgress;
+        JobComponent.ProgressReporter.LogReported -= ReportProgressLog;
+        JobComponent.ProgressReporter.PercentReported -= ReportProgressPercent;
         JobComponent.Dispose();
     }
 

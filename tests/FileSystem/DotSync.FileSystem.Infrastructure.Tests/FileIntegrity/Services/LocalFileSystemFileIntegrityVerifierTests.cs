@@ -61,7 +61,8 @@ public class LocalFileSystemFileIntegrityVerifierTests
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubMetadataReader.Object,
-            FileSystemPath.Create(LocalFileSystemFilesPath), Mock.Of<JobExecutionContext>());
+            FileSystemPath.Create(LocalFileSystemFilesPath), Mock.Of<JobExecutionContext>(),
+            Mock.Of<IJobProgressReporter>());
 
         /*
          * Act

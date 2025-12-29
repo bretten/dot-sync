@@ -56,7 +56,7 @@
 
         JobComponent.JobResultProvider.JobCompleted += ParseResult;
         JobComponent.JobResultProvider.JobFailed += SetError;
-        JobComponent.ProgressReporter.ProgressReported += ReportProgress;
+        JobComponent.ProgressReporter.LogReported += ReportProgressLog;
         SortModel ??= new SortForm()
         {
             DestinationPath = JobComponent.DefaultLocalStorage
@@ -95,10 +95,10 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private void ReportProgress(string jobId, string progress)
+    private void ReportProgressLog(object? sender, ProgressLog log)
     {
-        if (!string.Equals(JobId, jobId)) return;
-        _progressMessages.Add(progress);
+        if (!string.Equals(JobId, log.JobId)) return;
+        _progressMessages.Add(log.Message);
         InvokeAsync(StateHasChanged);
     }
 
@@ -106,7 +106,7 @@
     {
         JobComponent.JobResultProvider.JobCompleted -= ParseResult;
         JobComponent.JobResultProvider.JobFailed -= SetError;
-        JobComponent.ProgressReporter.ProgressReported -= ReportProgress;
+        JobComponent.ProgressReporter.LogReported -= ReportProgressLog;
         JobComponent.Dispose();
     }
 

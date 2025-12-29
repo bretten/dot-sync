@@ -18,7 +18,8 @@ public sealed class FilePusher(
     IFileCopier fileCopier,
     IMainStorageProvider mainStorageProvider,
     ILogger<FilePusher> logger,
-    JobExecutionContext jobContext) : TenantAware(tenantContext), IFilePusher
+    JobExecutionContext jobContext,
+    IJobProgressReporter jobProgressReporter) : TenantAware(tenantContext), IFilePusher
 {
     public async Task<IEnumerable<DotFile>> PushUnverifiedFiles(StorageLocationType sourceType,
         FileSystemPath sourceRootPath, StorageLocationType destinationType, FileSystemPath destinationRootPath)
@@ -67,14 +68,19 @@ public sealed class FilePusher(
         }
 
         var files = (await fileRepository.GetFilesByPath(sourcePushPath)).ToList();
+        var totalBytes = files.Sum(f => f.Size);
 
         var pushedFiles = new List<DotFile>();
+        var bytesPushed = 0L;
         foreach (var file in files)
         {
             var pushed = await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
             if (!pushed) continue;
             pushedFiles.Add(file);
             await fileRepository.AddSyncedFile(file.Id, destination.Id);
+
+            bytesPushed += file.Size;
+            jobProgressReporter.ReportPercent(this, jobContext.Id, bytesPushed, totalBytes);
         }
 
         return pushedFiles;

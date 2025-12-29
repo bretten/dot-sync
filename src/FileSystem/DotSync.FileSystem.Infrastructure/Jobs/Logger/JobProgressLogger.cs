@@ -23,7 +23,7 @@ public sealed class JobProgressLogger(
             return;
         }
 
-        progressReporter.ReportProgress(jobService.JobId, $"{formatter(state, exception)}");
+        progressReporter.ReportLog(jobService.JobId, $"{formatter(state, exception)}");
     }
 
     public bool IsEnabled(LogLevel logLevel)

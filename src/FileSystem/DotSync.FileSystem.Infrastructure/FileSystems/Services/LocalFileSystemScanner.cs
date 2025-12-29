@@ -41,6 +41,11 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     private readonly JobExecutionContext _jobContext;
 
     /// <summary>
+    /// Reports the progress of the job
+    /// </summary>
+    private readonly IJobProgressReporter _jobProgressReporter;
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
@@ -48,25 +53,30 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
     /// <param name="logger">Logger</param>
     /// <param name="jobContext">Job execution context</param>
+    /// <param name="jobProgressReporter">Reports the progress of the job</param>
     public LocalFileSystemScanner(IFileRepository fileRepository, IFileMetadataReader fileMetadataReader,
         IFileChecksumGenerator fileChecksumGenerator, ILogger<IFileSystemScanner> logger,
-        JobExecutionContext jobContext)
+        JobExecutionContext jobContext, IJobProgressReporter jobProgressReporter)
     {
         _fileRepository = fileRepository;
         _fileMetadataReader = fileMetadataReader;
         _fileChecksumGenerator = fileChecksumGenerator;
         _logger = logger;
         _jobContext = jobContext;
+        _jobProgressReporter = jobProgressReporter;
     }
 
     /// <inheritdoc />
     public async Task<FileSystemScannerResult> Scan(FileSystemPath path)
     {
-        var tasks = ScanDirectory(new DirectoryInfo(path.Value), path);
+        var tasks = ScanDirectory(new DirectoryInfo(path.Value), path).ToList();
         var newFiles = new ConcurrentBag<Tuple<FileSystemPath, FileSha256Checksum>>();
+        var completedTasks = 0;
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
             var result = await task;
+            Interlocked.Increment(ref completedTasks);
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, completedTasks, tasks.Count);
             if (result != null) newFiles.Add(result);
         });
         return new FileSystemScannerResult(newFiles.ToImmutableList());

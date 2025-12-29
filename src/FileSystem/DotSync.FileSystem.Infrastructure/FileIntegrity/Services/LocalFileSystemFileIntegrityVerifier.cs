@@ -19,7 +19,8 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     ILogger<IFileIntegrityVerifier> logger,
     IFileMetadataReader metadataReader,
     FileSystemPath rootPath,
-    JobExecutionContext jobContext)
+    JobExecutionContext jobContext,
+    IJobProgressReporter jobProgressReporter)
     : BaseFileIntegrityVerifier(fileRepository, checksumGenerator, logger)
 {
     /// <summary>
@@ -36,11 +37,14 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         var skips = pathsToSkip.ToList();
 
         var dirPath = Path.Combine(rootPath.Value, directoryPath.Value);
-        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), skips, trackedFiles);
+        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), skips, trackedFiles).ToList();
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
+        var completedTasks = 0;
         await Parallel.ForEachAsync(tasks, async (task, token) =>
         {
             var result = await task;
+            Interlocked.Increment(ref completedTasks);
+            jobProgressReporter.ReportPercent(this, jobContext.Id, completedTasks, tasks.Count);
             results.Add(result);
         });
 

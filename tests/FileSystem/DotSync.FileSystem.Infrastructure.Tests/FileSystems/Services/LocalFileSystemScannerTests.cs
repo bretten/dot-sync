@@ -38,7 +38,8 @@ public class LocalFileSystemScannerTests
             .Returns(newFile.Sha256Checksum.Value);
 
         var scanner = new LocalFileSystemScanner(stubFileRepository.Object, stubFileMetadataReader.Object,
-            stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>(), Mock.Of<JobExecutionContext>());
+            stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>(), Mock.Of<JobExecutionContext>(),
+            Mock.Of<IJobProgressReporter>());
 
         // Act
         var actual = await scanner.Scan(FileSystemPath.Create(LocalFileSystemFilesPath));
