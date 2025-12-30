@@ -72,13 +72,17 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         var tasks = ScanDirectory(new DirectoryInfo(path.Value), path).ToList();
         var newFiles = new ConcurrentBag<Tuple<FileSystemPath, FileSha256Checksum>>();
         var completedTasks = 0;
-        await Parallel.ForEachAsync(tasks, async (task, token) =>
+        var taskExecutions = tasks.Select(async task =>
         {
-            var result = await task;
+            var result = await task();
+
             Interlocked.Increment(ref completedTasks);
             _jobProgressReporter.ReportPercent(this, _jobContext.Id, completedTasks, tasks.Count);
+
             if (result != null) newFiles.Add(result);
         });
+        await Task.WhenAll(taskExecutions);
+
         return new FileSystemScannerResult(newFiles.ToImmutableList());
     }
 
@@ -88,11 +92,12 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="directoryInfo">The directory to scan</param>
     /// <param name="rootDirectoryPath">The original root directory that is being scanned</param>
     /// <returns>New files found in the directory</returns>
-    private IEnumerable<Task<Tuple<FileSystemPath, FileSha256Checksum>?>> ScanDirectory(DirectoryInfo directoryInfo,
+    private IEnumerable<Func<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>> ScanDirectory(
+        DirectoryInfo directoryInfo,
         FileSystemPath rootDirectoryPath)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
-        var tasks = new List<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>();
+        var tasks = new List<Func<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>>();
         foreach (var entry in entries)
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden))
@@ -104,7 +109,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             switch (entry)
             {
                 case FileInfo info:
-                    tasks.Add(ScanFile(info, rootDirectoryPath));
+                    tasks.Add(() => ScanFile(info, rootDirectoryPath));
                     break;
                 case DirectoryInfo info:
                     tasks.AddRange(ScanDirectory(info, rootDirectoryPath));

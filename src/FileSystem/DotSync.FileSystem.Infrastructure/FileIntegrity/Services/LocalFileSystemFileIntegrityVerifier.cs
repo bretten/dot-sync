@@ -37,16 +37,19 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         var skips = pathsToSkip.ToList();
 
         var dirPath = Path.Combine(rootPath.Value, directoryPath.Value);
-        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), skips, trackedFiles).ToList();
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
         var completedTasks = 0;
-        await Parallel.ForEachAsync(tasks, async (task, token) =>
+        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), skips, trackedFiles).ToList();
+        var taskExecutions = tasks.Select(async task =>
         {
-            var result = await task;
+            var result = await task();
+
             Interlocked.Increment(ref completedTasks);
             jobProgressReporter.ReportPercent(this, jobContext.Id, completedTasks, tasks.Count);
+
             results.Add(result);
         });
+        await Task.WhenAll(taskExecutions);
 
         // Any leftover tracked files that could not be verified are considered missing
         foreach (var trackedFile in trackedFiles.AllFiles)
@@ -66,7 +69,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <param name="trackedFiles">Currently tracked files</param>
     /// <returns>Verification results for each file within the directory</returns>
-    private IEnumerable<Task<FileIntegrityVerificationResult>> VerifyDirectory(DirectoryInfo directoryInfo,
+    private IEnumerable<Func<Task<FileIntegrityVerificationResult>>> VerifyDirectory(DirectoryInfo directoryInfo,
         List<FileSystemPath> pathsToSkip, TrackedFiles trackedFiles)
     {
         // Determine this directory's relative path compared to the root directory to see if it should be skipped
@@ -74,11 +77,11 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             replaceBackslashes: OperatingSystem.IsWindows());
         if (pathsToSkip.Contains(relativePath))
         {
-            return Array.Empty<Task<FileIntegrityVerificationResult>>();
+            return Array.Empty<Func<Task<FileIntegrityVerificationResult>>>();
         }
 
         var entries = directoryInfo.EnumerateFileSystemInfos();
-        var tasks = new List<Task<FileIntegrityVerificationResult>>();
+        var tasks = new List<Func<Task<FileIntegrityVerificationResult>>>();
         foreach (var entry in entries)
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden) && !entry.Name.Contains(".medresframes"))
@@ -90,8 +93,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             switch (entry)
             {
                 case FileInfo info:
-                    Logger.LogInformation($"Verifying {info.FullName}");
-                    tasks.Add(VerifyFile(info, trackedFiles));
+                    tasks.Add(() => VerifyFile(info, trackedFiles));
                     break;
                 case DirectoryInfo info:
                     tasks.AddRange(VerifyDirectory(info, pathsToSkip, trackedFiles));
@@ -110,6 +112,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// <returns>Verification result of the file</returns>
     private async Task<FileIntegrityVerificationResult> VerifyFile(FileInfo fileInfo, TrackedFiles trackedFiles)
     {
+        Logger.LogInformation($"Verifying {fileInfo.FullName}");
         // Generate the checksum of the file on the filesystem
         var checksum = FileSha256Checksum.Create(ChecksumGenerator.GenerateChecksum(fileInfo));
         // Determine its relative path compared to the root directory

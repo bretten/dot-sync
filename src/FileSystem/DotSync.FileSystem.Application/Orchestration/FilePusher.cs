@@ -75,12 +75,12 @@ public sealed class FilePusher(
         foreach (var file in files)
         {
             var pushed = await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
+            bytesPushed += file.Size;
+            jobProgressReporter.ReportPercent(this, jobContext.Id, bytesPushed, totalBytes);
+
             if (!pushed) continue;
             pushedFiles.Add(file);
             await fileRepository.AddSyncedFile(file.Id, destination.Id);
-
-            bytesPushed += file.Size;
-            jobProgressReporter.ReportPercent(this, jobContext.Id, bytesPushed, totalBytes);
         }
 
         return pushedFiles;
