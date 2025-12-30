@@ -41,6 +41,11 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     private readonly JobExecutionContext _jobContext;
 
     /// <summary>
+    /// Reports the progress of the job
+    /// </summary>
+    private readonly IJobProgressReporter _jobProgressReporter;
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
@@ -48,27 +53,36 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
     /// <param name="logger">Logger</param>
     /// <param name="jobContext">Job execution context</param>
+    /// <param name="jobProgressReporter">Reports the progress of the job</param>
     public LocalFileSystemScanner(IFileRepository fileRepository, IFileMetadataReader fileMetadataReader,
         IFileChecksumGenerator fileChecksumGenerator, ILogger<IFileSystemScanner> logger,
-        JobExecutionContext jobContext)
+        JobExecutionContext jobContext, IJobProgressReporter jobProgressReporter)
     {
         _fileRepository = fileRepository;
         _fileMetadataReader = fileMetadataReader;
         _fileChecksumGenerator = fileChecksumGenerator;
         _logger = logger;
         _jobContext = jobContext;
+        _jobProgressReporter = jobProgressReporter;
     }
 
     /// <inheritdoc />
     public async Task<FileSystemScannerResult> Scan(FileSystemPath path)
     {
-        var tasks = ScanDirectory(new DirectoryInfo(path.Value), path);
+        var tasks = ScanDirectory(new DirectoryInfo(path.Value), path).ToList();
         var newFiles = new ConcurrentBag<Tuple<FileSystemPath, FileSha256Checksum>>();
-        await Parallel.ForEachAsync(tasks, async (task, token) =>
+        var completedTasks = 0;
+        var taskExecutions = tasks.Select(async task =>
         {
-            var result = await task;
+            var result = await task();
+
+            Interlocked.Increment(ref completedTasks);
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, completedTasks, tasks.Count);
+
             if (result != null) newFiles.Add(result);
         });
+        await Task.WhenAll(taskExecutions);
+
         return new FileSystemScannerResult(newFiles.ToImmutableList());
     }
 
@@ -78,11 +92,12 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="directoryInfo">The directory to scan</param>
     /// <param name="rootDirectoryPath">The original root directory that is being scanned</param>
     /// <returns>New files found in the directory</returns>
-    private IEnumerable<Task<Tuple<FileSystemPath, FileSha256Checksum>?>> ScanDirectory(DirectoryInfo directoryInfo,
+    private IEnumerable<Func<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>> ScanDirectory(
+        DirectoryInfo directoryInfo,
         FileSystemPath rootDirectoryPath)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
-        var tasks = new List<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>();
+        var tasks = new List<Func<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>>();
         foreach (var entry in entries)
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden))
@@ -94,7 +109,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             switch (entry)
             {
                 case FileInfo info:
-                    tasks.Add(ScanFile(info, rootDirectoryPath));
+                    tasks.Add(() => ScanFile(info, rootDirectoryPath));
                     break;
                 case DirectoryInfo info:
                     tasks.AddRange(ScanDirectory(info, rootDirectoryPath));

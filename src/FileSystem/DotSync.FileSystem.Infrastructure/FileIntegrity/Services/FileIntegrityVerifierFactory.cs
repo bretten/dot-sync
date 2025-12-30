@@ -17,10 +17,11 @@ public sealed class FileIntegrityVerifierFactory : IFileIntegrityVerifierFactory
     private readonly IAmazonS3 _s3;
     private readonly ILogger<IFileIntegrityVerifier> _logger;
     private readonly JobExecutionContext _jobContext;
+    private readonly IJobProgressReporter _jobProgressReporter;
 
     public FileIntegrityVerifierFactory(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
         IFileMetadataReader metadataReader, IAmazonS3 s3, ILogger<IFileIntegrityVerifier> logger,
-        JobExecutionContext jobContext)
+        JobExecutionContext jobContext, IJobProgressReporter jobProgressReporter)
     {
         _fileRepository = fileRepository;
         _fileChecksumGenerator = fileChecksumGenerator;
@@ -28,6 +29,7 @@ public sealed class FileIntegrityVerifierFactory : IFileIntegrityVerifierFactory
         _s3 = s3;
         _logger = logger;
         _jobContext = jobContext;
+        _jobProgressReporter = jobProgressReporter;
     }
 
     public IFileIntegrityVerifier GetBy(StorageLocation storageLocation)
@@ -36,7 +38,7 @@ public sealed class FileIntegrityVerifierFactory : IFileIntegrityVerifierFactory
         {
             case StorageLocationType.Local:
                 return new LocalFileSystemFileIntegrityVerifier(_fileRepository, _fileChecksumGenerator, _logger,
-                    _metadataReader, storageLocation.Path, _jobContext);
+                    _metadataReader, storageLocation.Path, _jobContext, _jobProgressReporter);
             case StorageLocationType.AmazonS3:
                 return new AmazonS3FileIntegrityVerifier(_fileRepository, _fileChecksumGenerator, _logger, _s3,
                     storageLocation.Path.Value);
