@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using Amazon;
 using Amazon.Runtime;
@@ -8,6 +9,7 @@ using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Handlers;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
@@ -24,6 +26,7 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
@@ -84,6 +87,24 @@ builder.Logging.AddJobProgressLogger(config =>
         new JobProgressLoggerConfiguration.JobService(typeof(AmazonS3FileCopier).FullName!, "Push")
     );
 });
+// Register all job runners
+new List<Assembly>()
+    {
+        typeof(BaseJobRunner<>).Assembly
+    }.SelectMany(x => x.GetTypes())
+    .Where(x =>
+    {
+        var implementsJobRunner = x.GetInterfaces()
+            .Any(y => y.IsGenericType && y.GetGenericTypeDefinition() == typeof(IJobRunner<>));
+        return implementsJobRunner && !x.IsAbstract && !x.IsInterface;
+    })
+    .ToList()
+    .ForEach(x =>
+    {
+        var jobType = x.BaseType!.GetGenericArguments()[0];
+        var jobRunnerType = typeof(IJobRunner<>).MakeGenericType(jobType);
+        builder.Services.AddScoped(jobRunnerType, x);
+    });
 
 // Multitenancy
 builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant("")));
