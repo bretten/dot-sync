@@ -40,6 +40,7 @@ public abstract class BaseJobRunner<T> : IJobRunner<T> where T : IJobParameters
         {
             job.SetInProgress();
             var result = await RunJob(job);
+            _jobResultProvider.OnJobCompleted(result);
             //await WriteReport(job.Parameters.JobId, startTime, GenerateReport(scanPath.Value, result, startTime));
         }
         catch (Exception e)
