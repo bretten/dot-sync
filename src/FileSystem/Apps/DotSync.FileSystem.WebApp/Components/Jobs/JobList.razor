@@ -1,7 +1,5 @@
-@using com.brettnamba.DotSync.Common.DateAndTme
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @inject IJobManager JobManager
-@inject IClock Clock
 
 <MudThemeProvider/>
 <MudPopoverProvider/>
@@ -11,13 +9,14 @@
 <MudDataGrid Items="@_jobs">
     <Columns>
         <PropertyColumn Property="x => x.Id" Sortable="false"/>
-        <PropertyColumn Property="x => x.StartTime.ToLocalTime()"/>
+        <PropertyColumn Property="x => x.StartTime.ToLocalTime()" InitialDirection="SortDirection.Descending"/>
         <PropertyColumn Property="x => x.State"/>
         <PropertyColumn Property="x => x.Type"/>
         <PropertyColumn Property="x => x.Duration" Sortable="false">
             <CellTemplate Context="cell">
                 @{
-                    var duration = cell.Item.StartTime == DateTimeOffset.MinValue ? new TimeSpan(0) : Clock.GetUtcNow() - cell.Item.StartTime;
+                    var endTime = cell.Item.State != JobState.Done ? cell.Item.StartTime : cell.Item.EndTime;
+                    var duration = cell.Item.StartTime == DateTimeOffset.MinValue ? new TimeSpan(0) : endTime - cell.Item.StartTime;
                 }
                 @if (duration.TotalMinutes < 1)
                 {
