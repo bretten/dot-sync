@@ -9,6 +9,7 @@ public interface IJobManager
     /// Runs the specified job
     /// </summary>
     /// <param name="jobParameters">The job parameters</param>
+    /// <typeparam name="T">The type of job</typeparam>
     /// <returns>Completed task</returns>
-    Task RunJob(IJobParameters jobParameters);
+    Task RunJob<T>(T jobParameters) where T : IJobParameters;
 }
