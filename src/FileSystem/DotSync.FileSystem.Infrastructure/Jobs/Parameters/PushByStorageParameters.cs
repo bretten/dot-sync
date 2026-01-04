@@ -6,4 +6,14 @@ public sealed record PushByStorageParameters(Guid StorageLocationId, string Path
     : IJobParameters
 {
     public string JobId => "PushByStorage";
+
+    public IReadOnlyDictionary<string, string> AsKeyValuePairs()
+    {
+        return new Dictionary<string, string>()
+        {
+            { "StorageLocationId", StorageLocationId.ToString("D") },
+            { "PathPrefixFilter", PathPrefixFilter },
+            { "UploadLimitMb", UploadLimitMb.ToString() },
+        }.AsReadOnly();
+    }
 }

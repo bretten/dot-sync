@@ -15,15 +15,14 @@ public sealed class VerifyJobRunner : BaseJobRunner<VerifyParameters>
     private readonly IThumbnailProvider _thumbnailProvider;
 
     public VerifyJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        IJobResultProvider jobResultProvider, ILogger<BaseJobRunner<VerifyParameters>> logger,
-        IStorageLocationIntegrityVerificationService verifier, IThumbnailProvider thumbnailProvider) : base(context,
-        clock, jobConfiguration, jobResultProvider, logger)
+        ILogger<BaseJobRunner<VerifyParameters>> logger, IStorageLocationIntegrityVerificationService verifier,
+        IThumbnailProvider thumbnailProvider) : base(context, clock, jobConfiguration, logger)
     {
         _verifier = verifier;
         _thumbnailProvider = thumbnailProvider;
     }
 
-    protected override async Task<JobResult> RunJob(Job<VerifyParameters> job)
+    protected override async Task<JobResult> RunJob(IJob<VerifyParameters> job)
     {
         var result = await _verifier.Execute(job.Parameters.StorageType,
             FileSystemPath.Create(job.Parameters.StoragePath ?? ""),

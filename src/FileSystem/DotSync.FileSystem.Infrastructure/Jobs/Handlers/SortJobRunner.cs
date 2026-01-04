@@ -19,15 +19,14 @@ public sealed class SortJobRunner : BaseJobRunner<SortParameters>
     public const string DefaultSortDir = "ToUpload";
 
     public SortJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        IJobResultProvider jobResultProvider, ILogger<BaseJobRunner<SortParameters>> logger,
-        IStorageLocationRepository storageLocationRepo, IFileSorter fileSorter) : base(context, clock, jobConfiguration,
-        jobResultProvider, logger)
+        ILogger<BaseJobRunner<SortParameters>> logger, IStorageLocationRepository storageLocationRepo,
+        IFileSorter fileSorter) : base(context, clock, jobConfiguration, logger)
     {
         _storageLocationRepo = storageLocationRepo;
         _fileSorter = fileSorter;
     }
 
-    protected override async Task<JobResult> RunJob(Job<SortParameters> job)
+    protected override async Task<JobResult> RunJob(IJob<SortParameters> job)
     {
         var location = (await _storageLocationRepo.GetAll()).FirstOrDefault(x => x.Type == StorageLocationType.Local);
         if (location == null) throw new NoLocalStorageException("No Local storage for sorting");

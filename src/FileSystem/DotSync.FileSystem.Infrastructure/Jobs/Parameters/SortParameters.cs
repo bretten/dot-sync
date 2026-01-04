@@ -6,4 +6,13 @@ public sealed record SortParameters(string? SourcePath, string? DestinationPath)
     : IJobParameters
 {
     public string JobId => "Sort";
+
+    public IReadOnlyDictionary<string, string> AsKeyValuePairs()
+    {
+        return new Dictionary<string, string>()
+        {
+            { "SourcePath", SourcePath! },
+            { "DestinationPath", DestinationPath! }
+        }.AsReadOnly();
+    }
 }

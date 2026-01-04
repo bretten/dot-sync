@@ -1,0 +1,14 @@
+@page "/Jobs"
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
+@using com.brettnamba.DotSync.FileSystem.WebApp.Startup
+@using Microsoft.AspNetCore.Authorization
+@rendermode InteractiveServer
+@attribute [Authorize(AuthenticationExtensions.VerifierPolicy)]
+
+<h3>Jobs</h3>
+
+<JobList />
+
+@code {
+    
+}

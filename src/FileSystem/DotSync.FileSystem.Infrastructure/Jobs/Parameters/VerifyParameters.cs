@@ -10,4 +10,15 @@ public sealed record VerifyParameters(
     string? PathsToSkip) : IJobParameters
 {
     public string JobId => "Verify";
+
+    public IReadOnlyDictionary<string, string> AsKeyValuePairs()
+    {
+        return new Dictionary<string, string>()
+        {
+            { "StorageType", StorageType.ToString() },
+            { "StoragePath", StoragePath! },
+            { "VerifyPath", VerifyPath! },
+            { "PathsToSkip", PathsToSkip! }
+        }.AsReadOnly();
+    }
 }

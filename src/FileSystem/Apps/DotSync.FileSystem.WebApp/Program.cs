@@ -192,7 +192,7 @@ builder.Services.AddScoped<IStorageLocationIntegrityVerificationService, Storage
 builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
 builder.Services.AddScoped<IFilePusher, FilePusher>();
 builder.Services.AddSingleton<IJobResultProvider, JobResultProvider>();
-builder.Services.AddTransient<IJobManager, HangfireJobManager>();
+builder.Services.AddSingleton<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();
 builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();
 builder.Services.AddSingleton(new JobConfiguration(builder.Configuration["JobConfiguration:ReportPath"]!));

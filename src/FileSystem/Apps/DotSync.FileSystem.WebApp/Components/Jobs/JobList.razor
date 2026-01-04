@@ -1,0 +1,65 @@
+@using com.brettnamba.DotSync.Common.DateAndTme
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@inject IJobManager JobManager
+@inject IClock Clock
+
+<MudThemeProvider/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudDataGrid Items="@_jobs">
+    <Columns>
+        <PropertyColumn Property="x => x.Id" Sortable="false"/>
+        <PropertyColumn Property="x => x.StartTime.ToLocalTime()"/>
+        <PropertyColumn Property="x => x.State"/>
+        <PropertyColumn Property="x => x.Type"/>
+        <PropertyColumn Property="x => x.Duration" Sortable="false">
+            <CellTemplate Context="cell">
+                @{
+                    var duration = cell.Item.StartTime == DateTimeOffset.MinValue ? new TimeSpan(0) : Clock.GetUtcNow() - cell.Item.StartTime;
+                }
+                @if (duration.TotalMinutes < 1)
+                {
+                    <span>@(Math.Round(duration.TotalSeconds, 2)) seconds</span>
+                }
+                else
+                {
+                    <span>@(Math.Round(duration.TotalMinutes, 2)) minutes</span>
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="x => x.Parameters" Sortable="false">
+            <CellTemplate Context="cell">
+                @foreach (var pair in cell.Item.Parameters.AsKeyValuePairs())
+                {
+                    <span>
+                        <b>@pair.Key</b>: @pair.Value
+                    </span>
+                    @:&nbsp;
+                }
+            </CellTemplate>
+        </PropertyColumn>
+
+    </Columns>
+</MudDataGrid>
+
+@code {
+    private IReadOnlyList<IJob> _jobs = null!;
+
+    protected override Task OnInitializedAsync()
+    {
+        _jobs = JobManager.Jobs;
+        JobManager.JobCreated += HandleJobUpdate;
+        JobManager.JobCompleted += HandleJobUpdate;
+        JobManager.JobFailed += HandleJobUpdate;
+
+        return base.OnInitializedAsync();
+    }
+
+    private void HandleJobUpdate(object? sender, IJob job)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+}
