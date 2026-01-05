@@ -1,6 +1,8 @@
-<MudProgressCircular Style="height: 60px; width: 60px" Color="Color.Success" Value="@Value">
-    <ChildContent>@Value.ToString("N2")</ChildContent>
-</MudProgressCircular>
+<MudProgressLinear Color="Color.Primary" Value="@Value" Size="Size.Large" Rounded="true" Class="my-7">
+    <MudText Typo="Typo.caption" Color="Color.Warning">
+        <b>@(Value)%</b>
+    </MudText>
+</MudProgressLinear>
 
 @code {
     [Parameter] public double Value { get; set; }

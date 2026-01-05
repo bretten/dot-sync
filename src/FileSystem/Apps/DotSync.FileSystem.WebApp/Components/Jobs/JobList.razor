@@ -1,16 +1,25 @@
+@using System.Collections.Concurrent
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
 @inject IJobManager JobManager
+@inject IJobProgressReporter ProgressReporter
 
 <MudThemeProvider/>
 <MudPopoverProvider/>
 <MudDialogProvider/>
 <MudSnackbarProvider/>
 
-<MudDataGrid Items="@_jobs">
+<MudDataGrid Items="@_jobs" ExpandSingleRow="true">
     <Columns>
+        <HierarchyColumn/>
         <PropertyColumn Property="x => x.Id" Sortable="false"/>
         <PropertyColumn Property="x => x.StartTime.ToLocalTime()" InitialDirection="SortDirection.Descending"/>
         <PropertyColumn Property="x => x.State"/>
+        <TemplateColumn Title="Progress" Sortable="false">
+            <CellTemplate Context="cell">
+                @(JobIdsToPercents[cell.Item!.Id])%
+            </CellTemplate>
+        </TemplateColumn>
         <PropertyColumn Property="x => x.Type"/>
         <PropertyColumn Property="x => x.Duration" Sortable="false">
             <CellTemplate Context="cell">
@@ -39,21 +48,57 @@
                 }
             </CellTemplate>
         </PropertyColumn>
-
     </Columns>
+
+    <ChildRowContent>
+        <MudCard>
+            <MudCardHeader Class="align-content-center">
+                <CardHeaderContent>
+                    <MudGrid>
+                        <MudItem xs="3"></MudItem>
+                        <MudItem xs="6">
+                            <ProgressBar Value="@JobIdsToPercents[context.Item.Id]"/>
+                        </MudItem>
+                        <MudItem xs="3"></MudItem>
+                    </MudGrid>
+                </CardHeaderContent>
+            </MudCardHeader>
+            <MudCardContent Class="overflow-scroll" Style="height: 5em">
+
+            </MudCardContent>
+            <MudCardContent Class="overflow-scroll" Style="height: 5em">
+
+            </MudCardContent>
+        </MudCard>
+    </ChildRowContent>
 </MudDataGrid>
 
 @code {
     private IReadOnlyList<IJob> _jobs = null!;
+    private static readonly ConcurrentDictionary<Guid, double> JobIdsToPercents = new ConcurrentDictionary<Guid, double>();
 
     protected override Task OnInitializedAsync()
     {
         _jobs = JobManager.Jobs;
-        JobManager.JobCreated += HandleJobUpdate;
+        JobManager.JobCreated += HandleNewJob;
         JobManager.JobCompleted += HandleJobUpdate;
         JobManager.JobFailed += HandleJobUpdate;
 
+        ProgressReporter.PercentReported += ProgressReporterOnPercentReported;
+
         return base.OnInitializedAsync();
+    }
+
+    private void ProgressReporterOnPercentReported(object? sender, ProgressPercent e)
+    {
+        JobIdsToPercents.TryUpdate(e.JobId, e.AsPercent(), JobIdsToPercents[e.JobId]);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleNewJob(object? sender, IJob job)
+    {
+        JobIdsToPercents.TryAdd(job.Id, 0);
+        InvokeAsync(StateHasChanged);
     }
 
     private void HandleJobUpdate(object? sender, IJob job)
