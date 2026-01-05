@@ -12,18 +12,16 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;
 public sealed class JobProgressLogger(
     string name,
     JobProgressLoggerConfiguration config,
-    IJobProgressReporter progressReporter) : ILogger
+    IJobProgressReporter progressReporter,
+    IExternalScopeProvider scopeProvider) : ILogger
 {
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
         Func<TState, Exception?, string> formatter)
     {
-        var jobService = config.GetJobService(name);
-        if (!IsEnabled(logLevel) || jobService == null)
-        {
-            return;
-        }
+        var jobId = ExtractJobId(state);
+        if (jobId == null) return;
 
-        progressReporter.ReportLog(jobService.JobId, $"{formatter(state, exception)}");
+        progressReporter.ReportLog(this, jobId.Value, $"{jobId:D} {formatter(state, exception)}");
     }
 
     public bool IsEnabled(LogLevel logLevel)
@@ -32,4 +30,20 @@ public sealed class JobProgressLogger(
     }
 
     public IDisposable? BeginScope<TState>(TState state) where TState : notnull => default!;
+
+    private Guid? ExtractJobId<TState>(TState state)
+    {
+        Guid? jobId = null;
+
+        scopeProvider.ForEachScope((scope, _) =>
+        {
+            if (scope is not IEnumerable<KeyValuePair<string, object>> pairs) return;
+            foreach (var pair in pairs)
+            {
+                if (pair.Key != config.JobExecutionContextKey) continue;
+                jobId = (Guid)pair.Value;
+            }
+        }, state);
+        return jobId;
+    }
 }

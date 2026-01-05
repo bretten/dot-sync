@@ -13,7 +13,7 @@ public interface IJobProgressReporter
     /// <summary>
     /// Reports a log message from the job to subscribers
     /// </summary>
-    void ReportLog(string jobId, string message);
+    void ReportLog(object sender, Guid jobId, string message);
 
     /// <summary>
     /// Invoked when the progress (as a percentage) of a job is updated
