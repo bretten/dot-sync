@@ -78,15 +78,7 @@ builder.Configuration.AddEnvironmentVariables();
 // Jobs
 builder.Services.AddSingleton<JobProgressLoggerConfiguration>();
 builder.Services.AddScoped<JobExecutionContext>();
-builder.Logging.AddJobProgressLogger(config =>
-{
-    config.AddService(
-        new JobProgressLoggerConfiguration.JobService(typeof(IFileSystemScanner).FullName!, "Scan"),
-        new JobProgressLoggerConfiguration.JobService(typeof(IFileIntegrityVerifier).FullName!, "Verify"),
-        new JobProgressLoggerConfiguration.JobService(typeof(IFileSorter).FullName!, "Sort"),
-        new JobProgressLoggerConfiguration.JobService(typeof(AmazonS3FileCopier).FullName!, "Push")
-    );
-});
+builder.Logging.AddJobProgressLogger(config => { config.SetJobExecutionContextKey(nameof(JobExecutionContext)); });
 // Register all job runners
 new List<Assembly>()
     {
@@ -192,7 +184,7 @@ builder.Services.AddScoped<IStorageLocationIntegrityVerificationService, Storage
 builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
 builder.Services.AddScoped<IFilePusher, FilePusher>();
 builder.Services.AddSingleton<IJobResultProvider, JobResultProvider>();
-builder.Services.AddTransient<IJobManager, HangfireJobManager>();
+builder.Services.AddSingleton<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();
 builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();
 builder.Services.AddSingleton(new JobConfiguration(builder.Configuration["JobConfiguration:ReportPath"]!));

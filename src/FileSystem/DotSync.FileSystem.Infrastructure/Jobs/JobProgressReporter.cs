@@ -12,9 +12,9 @@ public sealed class JobProgressReporter : IJobProgressReporter
     public event EventHandler<ProgressPercent>? PercentReported;
 
     /// <inheritdoc />
-    public void ReportLog(string jobId, string message)
+    public void ReportLog(object sender, Guid jobId, string message)
     {
-        LogReported?.Invoke(jobId, new ProgressLog(jobId, message));
+        LogReported?.Invoke(sender, new ProgressLog(jobId, message));
     }
 
     /// <inheritdoc />
