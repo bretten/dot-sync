@@ -79,6 +79,14 @@ public sealed class FilePusher(
             jobProgressReporter.ReportPercent(this, jobContext.Id, bytesPushed, totalBytes);
 
             if (!pushed) continue;
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>()
+                   {
+                       new(nameof(JobExecutionContext), jobContext.Id)
+                   }))
+            {
+                logger.LogInformation($"Uploaded {file.Path.Value}");
+            }
+
             pushedFiles.Add(file);
             await fileRepository.AddSyncedFile(file.Id, destination.Id);
         }
@@ -115,6 +123,15 @@ public sealed class FilePusher(
 
             var pushed = await fileCopier.CopyFile(mainStoragePath, file.Path, destination.Path);
             if (!pushed) continue;
+            using (logger.BeginScope(new List<KeyValuePair<string, object>>()
+                   {
+                       new(nameof(JobExecutionContext), jobContext.Id)
+                   }))
+            {
+                logger.LogInformation($"Uploaded {file.Path.Value}");
+            }
+
+
             pushedFiles.Add(file);
             await fileRepository.AddSyncedFile(file.Id, destination.Id);
             uploadedBytes += file.Size;

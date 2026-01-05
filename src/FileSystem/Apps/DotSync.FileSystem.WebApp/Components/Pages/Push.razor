@@ -113,7 +113,6 @@
 
     private void ReportProgressLog(object? sender, ProgressLog log)
     {
-        if (!string.Equals(JobId, log.JobId)) return;
         _progressMessages.Add(log.Message);
         InvokeAsync(StateHasChanged);
     }

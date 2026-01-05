@@ -141,7 +141,13 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             return null;
         }
 
-        _logger.LogInformation($"Scanning {fileInfo.FullName}");
+        using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
+               {
+                   new(nameof(JobExecutionContext), _jobContext.Id)
+               }))
+        {
+            _logger.LogInformation($"Scanning {fileInfo.FullName}");
+        }
 
         // File creation time (or best estimation)
         var fileCreation = _fileMetadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));

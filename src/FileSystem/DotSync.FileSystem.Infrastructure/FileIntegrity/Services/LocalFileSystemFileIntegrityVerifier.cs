@@ -112,7 +112,14 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// <returns>Verification result of the file</returns>
     private async Task<FileIntegrityVerificationResult> VerifyFile(FileInfo fileInfo, TrackedFiles trackedFiles)
     {
-        Logger.LogInformation($"Verifying {fileInfo.FullName}");
+        using (Logger.BeginScope(new List<KeyValuePair<string, object>>()
+               {
+                   new(nameof(JobExecutionContext), jobContext.Id)
+               }))
+        {
+            Logger.LogInformation($"Verifying {fileInfo.FullName}");
+        }
+
         // Generate the checksum of the file on the filesystem
         var checksum = FileSha256Checksum.Create(ChecksumGenerator.GenerateChecksum(fileInfo));
         // Determine its relative path compared to the root directory
