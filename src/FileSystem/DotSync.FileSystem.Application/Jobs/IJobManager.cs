@@ -1,3 +1,5 @@
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events;
+
 namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
 
 /// <summary>
@@ -20,7 +22,7 @@ public interface IJobManager
     /// <summary>
     /// Invoked when a job fails
     /// </summary>
-    event EventHandler<IJob>? JobFailed;
+    event EventHandler<JobFailedArgs>? JobFailed;
 
     /// <summary>
     /// Runs the specified job

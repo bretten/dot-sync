@@ -1,4 +1,5 @@
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Handlers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,7 @@ public sealed class HangfireJobManager : IJobManager
 
     public event EventHandler<IJob>? JobCreated;
     public event EventHandler<IJob>? JobCompleted;
-    public event EventHandler<IJob>? JobFailed;
+    public event EventHandler<JobFailedArgs>? JobFailed;
 
     /// <inheritdoc />
     public async Task RunJob<T>(T jobParameters) where T : IJobParameters
@@ -43,9 +44,9 @@ public sealed class HangfireJobManager : IJobManager
             _logger.LogInformation($"Executing job {jobParameters.JobId} of type {job.Type}");
             await handler.Execute(job);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            JobFailed?.Invoke(this, job);
+            JobFailed?.Invoke(this, new JobFailedArgs() { Job = job, Exception = e });
             throw;
         }
 
