@@ -9,7 +9,7 @@ public sealed record VerifyParameters(
     string? VerifyPath,
     string? PathsToSkip) : IJobParameters
 {
-    public string JobId => "Verify";
+    public JobType Type => JobType.Verify;
 
     public IReadOnlyDictionary<string, string> AsKeyValuePairs()
     {

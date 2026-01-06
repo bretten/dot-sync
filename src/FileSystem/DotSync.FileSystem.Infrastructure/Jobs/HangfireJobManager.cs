@@ -36,12 +36,12 @@ public sealed class HangfireJobManager : IJobManager
 
         var handler = (IJobRunner<T>)scope.ServiceProvider.GetRequiredService(handlerType);
 
-        var job = new Job<T>(context.Id, jobParameters.JobId, JobState.Queued, jobParameters);
+        var job = new Job<T>(context.Id, jobParameters.Type, JobState.Queued, jobParameters);
         _jobs.Add(job);
         JobCreated?.Invoke(this, job);
         try
         {
-            _logger.LogInformation($"Executing job {jobParameters.JobId} of type {job.Type}");
+            _logger.LogInformation($"Executing job {jobParameters.Type} of type {job.Type}");
             await handler.Execute(job);
         }
         catch (Exception e)

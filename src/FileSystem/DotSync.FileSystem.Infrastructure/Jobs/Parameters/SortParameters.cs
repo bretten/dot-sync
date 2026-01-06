@@ -5,7 +5,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 public sealed record SortParameters(string? SourcePath, string? DestinationPath)
     : IJobParameters
 {
-    public string JobId => "Sort";
+    public JobType Type => JobType.Sort;
 
     public IReadOnlyDictionary<string, string> AsKeyValuePairs()
     {

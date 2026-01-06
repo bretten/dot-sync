@@ -3,7 +3,7 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
 public interface IJob
 {
     Guid Id { get; }
-    string Type { get; }
+    JobType Type { get; }
     JobState State { get; }
     DateTimeOffset StartTime { get; }
     DateTimeOffset EndTime { get; }

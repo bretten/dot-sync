@@ -5,7 +5,7 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
 /// </summary>
 public interface IJobParameters
 {
-    string JobId { get; }
+    JobType Type { get; }
 
     IReadOnlyDictionary<string, string> AsKeyValuePairs();
 }

@@ -9,7 +9,7 @@ public sealed record PushParameters(
     StorageLocationType DestinationType,
     string? DestinationPath) : IJobParameters
 {
-    public string JobId => "Push";
+    public JobType Type => JobType.Push;
 
     public IReadOnlyDictionary<string, string> AsKeyValuePairs()
     {

@@ -7,7 +7,7 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
 public class Job<T> : IJob<T> where T : IJobParameters
 {
     public Guid Id { get; }
-    public string Type { get; }
+    public JobType Type { get; }
     public JobState State { get; private set; }
     public DateTimeOffset StartTime { get; private set; }
     public DateTimeOffset EndTime { get; private set; }
@@ -19,7 +19,7 @@ public class Job<T> : IJob<T> where T : IJobParameters
 
     private readonly T _parameters;
 
-    public Job(Guid id, string type, JobState state, T parameters)
+    public Job(Guid id, JobType type, JobState state, T parameters)
     {
         Id = id;
         Type = type;

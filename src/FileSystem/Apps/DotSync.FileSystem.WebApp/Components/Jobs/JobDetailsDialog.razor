@@ -4,47 +4,57 @@
 @inject IClock Clock
 
 <MudDialog>
+    <TitleContent>
+        @{
+            var icon = Job.GetStateIcon();
+        }
+        <MudIcon Icon="@(icon.Item1)" Color="icon.Item2" Class="d-inline"/>
+        <MudText Typo="Typo.h6" Class="d-inline">Verify</MudText>
+    </TitleContent>
     <DialogContent>
         <ProgressBar Value="@Progress"></ProgressBar>
-        <MudText Typo="Typo.h6">
-            Job ID
-            <MudText Typo="Typo.subtitle1" Class="ml-6">@(Job.Id.ToString("D"))</MudText>
-        </MudText>
-        <MudText Typo="Typo.h6">
-            Type
-            <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.Type</MudText>
-        </MudText>
-        <MudText Typo="Typo.h6">
-            State
-            @{
-                var icon = Job.GetStateIcon();
-            }
-            <MudIcon Icon="@(icon.Item1)" Color="icon.Item2"/>
-        </MudText>
-        <MudText Typo="Typo.h6">
-            Start Time
-            <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.StartTime</MudText>
-        </MudText>
-        <MudText Typo="Typo.h6">
-            End Time
-            <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.EndTime</MudText>
-        </MudText>
-        <MudText Typo="Typo.h6">
-            Duration
-            <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.GetDurationString(Clock.GetUtcNow())</MudText>
-        </MudText>
-        <MudText Typo="Typo.h6">
-            Parameters
-            <MudText Typo="Typo.subtitle1" Class="ml-6">
-                @foreach (var pair in Job.Parameters.AsKeyValuePairs())
-                {
-                    <div>
-                        <b>@pair.Key</b>: @pair.Value
-                    </div>
-                }
-            </MudText>
-        </MudText>
-
+        <MudGrid>
+            <MudItem xs="6">
+                <MudText Typo="Typo.h6">
+                    Job ID
+                    <MudText Typo="Typo.subtitle1" Class="ml-6">@(Job.Id.ToString("D"))</MudText>
+                </MudText>
+            </MudItem>
+            <MudItem xs="6">
+                <MudText Typo="Typo.h6">
+                    Start Time
+                    <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.StartTime</MudText>
+                </MudText>
+            </MudItem>
+            <MudItem xs="6">
+                <MudText Typo="Typo.h6">
+                    Duration
+                    <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.GetDurationString(Clock.GetUtcNow())</MudText>
+                </MudText>
+            </MudItem>
+            <MudItem xs="6">
+                <MudText Typo="Typo.h6">
+                    End Time
+                    <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.EndTime</MudText>
+                </MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <MudText Typo="Typo.h6">
+                    Parameters
+                    <MudText Typo="Typo.subtitle1" Class="ml-6">
+                        @foreach (var pair in Job.Parameters.AsKeyValuePairs())
+                        {
+                            <div>
+                                <b>@pair.Key</b>: @pair.Value
+                            </div>
+                        }
+                    </MudText>
+                </MudText>
+            </MudItem>
+            <MudItem xs="12">
+                <JobProgress Messages="@LogMessages"/>
+            </MudItem>
+        </MudGrid>
     </DialogContent>
 </MudDialog>
 
@@ -55,14 +65,23 @@
 
     [Parameter] public double Progress { get; set; }
 
+    [Parameter] public List<string> LogMessages { get; set; } = new List<string>();
+
     public void UpdateProgress(double progress)
     {
         Progress = progress;
         InvokeAsync(StateHasChanged);
     }
 
-    public void Finalize()
+    public void UpdateLog(List<string> messages)
     {
+        LogMessages = messages;
         InvokeAsync(StateHasChanged);
+    }
+
+    public void FinishJob()
+    {
+        InvokeAsync(StateHasChanged); // This updates the Job related data
+        InvokeAsync(MudDialog.StateHasChanged); // This updates the title
     }
 }

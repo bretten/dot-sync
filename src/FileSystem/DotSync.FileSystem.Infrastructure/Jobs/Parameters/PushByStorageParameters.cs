@@ -5,7 +5,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 public sealed record PushByStorageParameters(Guid StorageLocationId, string PathPrefixFilter, long UploadLimitMb)
     : IJobParameters
 {
-    public string JobId => "PushByStorage";
+    public JobType Type => JobType.PushByStorage;
 
     public IReadOnlyDictionary<string, string> AsKeyValuePairs()
     {
