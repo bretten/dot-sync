@@ -52,7 +52,10 @@
                 </MudText>
             </MudItem>
             <MudItem xs="12">
-                <JobProgress Messages="@LogMessages"/>
+                <MudText Typo="Typo.h6">Logs</MudText>
+                <MudPaper Class="pa-3">
+                    <JobProgress Messages="@LogMessages"/>
+                </MudPaper>
             </MudItem>
         </MudGrid>
     </DialogContent>
@@ -84,4 +87,5 @@
         InvokeAsync(StateHasChanged); // This updates the Job related data
         InvokeAsync(MudDialog.StateHasChanged); // This updates the title
     }
+
 }

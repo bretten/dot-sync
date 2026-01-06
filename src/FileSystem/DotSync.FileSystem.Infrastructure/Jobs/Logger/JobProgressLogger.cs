@@ -21,7 +21,7 @@ public sealed class JobProgressLogger(
         var jobId = ExtractJobId(state);
         if (jobId == null) return;
 
-        progressReporter.ReportLog(this, jobId.Value, $"{jobId:D} {formatter(state, exception)}");
+        progressReporter.ReportLog(this, jobId.Value, $"[{jobId:D}]: {formatter(state, exception)}");
     }
 
     public bool IsEnabled(LogLevel logLevel)
