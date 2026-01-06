@@ -1,0 +1,145 @@
+@using System.Collections.Concurrent
+@using com.brettnamba.DotSync.Common.DateAndTme
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events
+@inject IJobManager JobManager
+@inject IJobProgressReporter ProgressReporter
+@inject IDialogService DialogService
+@inject IClock Clock
+
+<MudThemeProvider/>
+<MudPopoverProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudDataGrid Items="@_jobs" ExpandSingleRow="true">
+    <Columns>
+        <PropertyColumn Property="x => x.Id" Sortable="false"/>
+        <PropertyColumn Property="x => x.Type"/>
+        <PropertyColumn Property="x => x.State">
+            <CellTemplate Context="cell">
+                @{
+                    var icon = cell.Item.GetStateIcon();
+                }
+                <MudIcon Icon="@(icon.Item1)" Color="icon.Item2"/>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="x => x.StartTime.ToLocalTime()" InitialDirection="SortDirection.Descending"/>
+        <TemplateColumn Title="Progress" Sortable="false">
+            <CellTemplate Context="cell">
+                @(Math.Round(JobIdsToPercents[cell.Item!.Id], 2))%
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.Duration" Sortable="false">
+            <CellTemplate Context="cell">
+                @(cell.Item.GetDurationString(Clock.GetUtcNow()))
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="x => x.Parameters" Sortable="false">
+            <CellTemplate Context="cell">
+                @foreach (var pair in cell.Item.Parameters.AsKeyValuePairs())
+                {
+                    <span>
+                        <b>@pair.Key</b>: @pair.Value
+                    </span>
+                    @:&nbsp;
+                }
+            </CellTemplate>
+        </PropertyColumn>
+        <TemplateColumn Title="Details">
+            <CellTemplate Context="cell">
+                <MudButton @onclick="@(e => HandleDialogOpen(e, cell.Item))" Variant="Variant.Filled"
+                           Color="Color.Primary">
+                    Details
+                </MudButton>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
+
+@code {
+    private IReadOnlyList<IJob> _jobs = null!;
+    private static readonly ConcurrentDictionary<Guid, double> JobIdsToPercents = new ConcurrentDictionary<Guid, double>();
+    private static readonly ConcurrentDictionary<Guid, List<string>> JobIdsToLogs = new ConcurrentDictionary<Guid, List<string>>();
+    private JobDetailsDialog? _activeDialog;
+
+    protected override Task OnInitializedAsync()
+    {
+        _jobs = JobManager.Jobs;
+        foreach (var job in _jobs)
+        {
+            if (JobIdsToPercents.ContainsKey(job.Id)) continue;
+            JobIdsToPercents.TryAdd(job.Id, 0);
+            JobIdsToLogs.TryAdd(job.Id, new List<string>());
+        }
+
+        JobManager.JobCreated += HandleNewJob;
+        JobManager.JobCompleted += HandleJobComplete;
+        JobManager.JobFailed += HandleJobFailed;
+
+        ProgressReporter.LogReported += HandleLogReported;
+        ProgressReporter.PercentReported += HandlePercentReported;
+
+        return base.OnInitializedAsync();
+    }
+
+    private void HandlePercentReported(object? sender, ProgressPercent e)
+    {
+        JobIdsToPercents.TryUpdate(e.JobId, e.AsPercent(), JobIdsToPercents[e.JobId]);
+        if (e.JobId == _activeDialog?.Job.Id) _activeDialog?.UpdateProgress(e.AsPercent());
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleLogReported(object? sender, ProgressLog e)
+    {
+        JobIdsToLogs.TryGetValue(e.JobId, out var logs);
+        if (logs == null) return;
+        logs.Add(e.Message);
+
+        if (e.JobId == _activeDialog?.Job.Id) _activeDialog?.UpdateLog(logs);
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleNewJob(object? sender, IJob job)
+    {
+        JobIdsToPercents.TryAdd(job.Id, 0);
+        JobIdsToLogs.TryAdd(job.Id, new List<string>());
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleJobComplete(object? sender, IJob job)
+    {
+        if (job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleJobFailed(object? sender, JobFailedArgs args)
+    {
+        if (args.Job.Id == _activeDialog?.Job.Id)_activeDialog?.FinishJob();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleDialogOpen(MouseEventArgs obj, IJob job)
+    {
+        var parameters = new DialogParameters<JobDetailsDialog>
+        {
+            { x => x.Job, job },
+            { x => x.Progress, JobIdsToPercents[job.Id] },
+            { x => x.LogMessages, JobIdsToLogs[job.Id] }
+        };
+        var dialog = await DialogService.ShowAsync<JobDetailsDialog>(job.Type.ToString(), parameters, new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true
+        });
+        _activeDialog = (JobDetailsDialog)dialog.Dialog!;
+
+        var result = await dialog.Result;
+        _activeDialog = null;
+    }
+
+}

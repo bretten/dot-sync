@@ -1,3 +1,5 @@
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events;
+
 namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
 
 /// <summary>
@@ -5,6 +7,23 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
 /// </summary>
 public interface IJobManager
 {
+    IReadOnlyList<IJob> Jobs { get; }
+
+    /// <summary>
+    /// Invoked when a job is created
+    /// </summary>
+    event EventHandler<IJob> JobCreated;
+
+    /// <summary>
+    /// Invoked when a job is finished
+    /// </summary>
+    event EventHandler<IJob>? JobCompleted;
+
+    /// <summary>
+    /// Invoked when a job fails
+    /// </summary>
+    event EventHandler<JobFailedArgs>? JobFailed;
+
     /// <summary>
     /// Runs the specified job
     /// </summary>

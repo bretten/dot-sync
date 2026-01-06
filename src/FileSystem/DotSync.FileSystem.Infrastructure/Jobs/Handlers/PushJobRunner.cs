@@ -14,13 +14,13 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
     private readonly IFilePusher _filePusher;
 
     public PushJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        IJobResultProvider jobResultProvider, ILogger<BaseJobRunner<PushParameters>> logger,
-        IFilePusher filePusher) : base(context, clock, jobConfiguration, jobResultProvider, logger)
+        ILogger<BaseJobRunner<PushParameters>> logger, IFilePusher filePusher) : base(context, clock, jobConfiguration,
+        logger)
     {
         _filePusher = filePusher;
     }
 
-    protected override async Task<JobResult> RunJob(Job<PushParameters> job)
+    protected override async Task<JobResult> RunJob(IJob<PushParameters> job)
     {
         var result = await _filePusher.PushFilesInDir(StorageLocationType.Local,
             FileSystemPath.Create(job.Parameters.SourceRootPath ?? ""),

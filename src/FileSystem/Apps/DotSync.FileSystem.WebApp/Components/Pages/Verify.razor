@@ -61,7 +61,7 @@
 </div>
 
 @code {
-    private const string JobId = "Verify";
+    private const JobType JobId = JobType.Verify;
 
     [SupplyParameterFromForm(FormName = "Verify")]
     private VerifyForm? VerifyModel { get; set; }
@@ -96,7 +96,7 @@
 
     private void ParseResult(object? sender, JobResult data)
     {
-        if (!string.Equals(JobId, data.JobParameters.JobId)) return;
+        if (JobId != data.JobParameters.Type) return;
         if (data.JobParameters is not VerifyParameters)
         {
             throw new ArgumentException("Invalid parameters");

@@ -41,7 +41,7 @@
 </div>
 
 @code {
-    private const string JobId = "Sort";
+    private const JobType JobId = JobType.Sort;
 
     [SupplyParameterFromForm(FormName = "Sort")]
     private SortForm? SortModel { get; set; }
@@ -73,7 +73,7 @@
 
     private void ParseResult(object? sender, JobResult data)
     {
-        if (!string.Equals(JobId, data.JobParameters.JobId)) return;
+        if (JobId != data.JobParameters.Type) return;
         if (data.JobParameters is not SortParameters)
         {
             throw new ArgumentException("Invalid parameters");

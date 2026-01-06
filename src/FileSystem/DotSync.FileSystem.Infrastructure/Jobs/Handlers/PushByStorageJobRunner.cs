@@ -12,13 +12,13 @@ public sealed class PushByStorageJobRunner : BaseJobRunner<PushByStorageParamete
     private readonly IFilePusher _filePusher;
 
     public PushByStorageJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        IJobResultProvider jobResultProvider, ILogger<BaseJobRunner<PushByStorageParameters>> logger,
-        IFilePusher filePusher) : base(context, clock, jobConfiguration, jobResultProvider, logger)
+        ILogger<BaseJobRunner<PushByStorageParameters>> logger, IFilePusher filePusher) : base(context, clock,
+        jobConfiguration, logger)
     {
         _filePusher = filePusher;
     }
 
-    protected override async Task<JobResult> RunJob(Job<PushByStorageParameters> job)
+    protected override async Task<JobResult> RunJob(IJob<PushByStorageParameters> job)
     {
         var result = await _filePusher.PushFilesInStorage(job.Parameters.StorageLocationId,
             job.Parameters.PathPrefixFilter, job.Parameters.UploadLimitMb);

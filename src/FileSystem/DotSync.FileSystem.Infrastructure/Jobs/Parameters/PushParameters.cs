@@ -9,5 +9,16 @@ public sealed record PushParameters(
     StorageLocationType DestinationType,
     string? DestinationPath) : IJobParameters
 {
-    public string JobId => "Push";
+    public JobType Type => JobType.Push;
+
+    public IReadOnlyDictionary<string, string> AsKeyValuePairs()
+    {
+        return new Dictionary<string, string>()
+        {
+            { "SourceRootPath", SourceRootPath! },
+            { "SourcePushPath", SourcePushPath! },
+            { "StorageLocationType", DestinationType.ToString() },
+            { "DestinationPath", DestinationPath! },
+        }.AsReadOnly();
+    }
 }

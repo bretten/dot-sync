@@ -13,13 +13,13 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
     private readonly IFileSystemScanner _scanner;
 
     public ScanJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        IJobResultProvider jobResultProvider, ILogger<BaseJobRunner<ScanParameters>> logger,
-        IFileSystemScanner scanner) : base(context, clock, jobConfiguration, jobResultProvider, logger)
+        ILogger<BaseJobRunner<ScanParameters>> logger, IFileSystemScanner scanner) : base(context, clock,
+        jobConfiguration, logger)
     {
         _scanner = scanner;
     }
 
-    protected override async Task<JobResult> RunJob(Job<ScanParameters> job)
+    protected override async Task<JobResult> RunJob(IJob<ScanParameters> job)
     {
         var result = await _scanner.Scan(FileSystemPath.Create(job.Parameters.Path!));
         return new JobResult(job.Parameters, result);

@@ -43,7 +43,7 @@
 </div>
 
 @code {
-    private const string JobId = "Scan";
+    private const JobType JobId = JobType.Scan;
 
     [SupplyParameterFromForm(FormName = "Scan")]
     private ScanForm? ScanModel { get; set; }
@@ -76,7 +76,7 @@
 
     private void ParseResult(object? sender, JobResult data)
     {
-        if (!string.Equals(JobId, data.JobParameters.JobId)) return;
+        if (JobId != data.JobParameters.Type) return;
         if (data.JobParameters is not ScanParameters)
         {
             throw new ArgumentException("Invalid parameters");

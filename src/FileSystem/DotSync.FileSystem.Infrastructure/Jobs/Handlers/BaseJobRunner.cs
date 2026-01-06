@@ -17,47 +17,43 @@ public abstract class BaseJobRunner<T> : IJobRunner<T> where T : IJobParameters
 
     private readonly IClock _clock;
     private readonly JobConfiguration _jobConfiguration;
-    private readonly IJobResultProvider _jobResultProvider;
     private readonly ILogger<BaseJobRunner<T>> _logger;
 
     protected BaseJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        IJobResultProvider jobResultProvider, ILogger<BaseJobRunner<T>> logger)
+        ILogger<BaseJobRunner<T>> logger)
     {
         Context = context;
         _clock = clock;
         _jobConfiguration = jobConfiguration;
-        _jobResultProvider = jobResultProvider;
         _logger = logger;
     }
 
     /// <inheritdoc />
-    public async Task Execute(Job<T> job)
+    public async Task Execute(IJob<T> job)
     {
         _logger.LogInformation($"Executing job {job.Id:D} (Context: {Context.Id:D})");
-        var startTime = _clock.GetUtcNow();
 
         try
         {
-            job.SetInProgress();
+            job.SetInProgress(_clock.GetUtcNow());
             var result = await RunJob(job);
-            _jobResultProvider.OnJobCompleted(result);
             //await WriteReport(job.Parameters.JobId, startTime, GenerateReport(scanPath.Value, result, startTime));
         }
         catch (Exception e)
         {
             _logger.LogError(e.Message);
-            _jobResultProvider.OnJobFailed(e.Message);
-            job.SetError();
+            job.SetError(_clock.GetUtcNow());
+            throw;
         }
 
-        job.SetDone();
+        job.SetDone(_clock.GetUtcNow());
     }
 
     /// <summary>
     /// Derived classes should implement the job logic here
     /// </summary>
     /// <param name="job">The job to run</param>
-    protected abstract Task<JobResult> RunJob(Job<T> job);
+    protected abstract Task<JobResult> RunJob(IJob<T> job);
 
     private async Task WriteReport(string reportName, DateTimeOffset startTime, IReadOnlyList<FileResultList> report)
     {
