@@ -1,6 +1,7 @@
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
@@ -20,7 +21,7 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
         _filePusher = filePusher;
     }
 
-    protected override async Task<JobResult> RunJob(IJob<PushParameters> job)
+    protected override async Task<IJobOutput> RunJob(IJob<PushParameters> job)
     {
         var result = await _filePusher.PushFilesInDir(StorageLocationType.Local,
             FileSystemPath.Create(job.Parameters.SourceRootPath ?? ""),
@@ -28,6 +29,15 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
             job.Parameters.DestinationType,
             FileSystemPath.Create(job.Parameters.DestinationPath ?? ""));
 
-        return new JobResult(job.Parameters, result);
+        return new JobOutput(job, ToResults(result));
+    }
+
+    private static FileResults ToResults(IEnumerable<DotFile> files)
+    {
+        var uploadedFiles = files.Select(x => new[] { x.Path.Value });
+        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        {
+            { "Uploaded Files", uploadedFiles }
+        });
     }
 }

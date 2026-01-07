@@ -1,6 +1,7 @@
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 using Microsoft.Extensions.Logging;
@@ -18,11 +19,20 @@ public sealed class PushByStorageJobRunner : BaseJobRunner<PushByStorageParamete
         _filePusher = filePusher;
     }
 
-    protected override async Task<JobResult> RunJob(IJob<PushByStorageParameters> job)
+    protected override async Task<IJobOutput> RunJob(IJob<PushByStorageParameters> job)
     {
         var result = await _filePusher.PushFilesInStorage(job.Parameters.StorageLocationId,
             job.Parameters.PathPrefixFilter, job.Parameters.UploadLimitMb);
 
-        return new JobResult(job.Parameters, result);
+        return new JobOutput(job, ToResults(result));
+    }
+
+    private static FileResults ToResults(IEnumerable<DotFile> files)
+    {
+        var uploadedFiles = files.Select(x => new[] { x.Path.Value });
+        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        {
+            { "Uploaded Files", uploadedFiles }
+        });
     }
 }

@@ -1,7 +1,7 @@
 namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Events;
 
-public sealed class JobFailedArgs : EventArgs
+public sealed class JobCompletedArgs : EventArgs
 {
     public required IJob Job { get; init; }
-    public required Exception Exception { get; init; }
+    public required IJobOutput Result { get; init; }
 }

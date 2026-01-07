@@ -17,7 +17,7 @@ public interface IJobManager
     /// <summary>
     /// Invoked when a job is finished
     /// </summary>
-    event EventHandler<IJob>? JobCompleted;
+    event EventHandler<JobCompletedArgs>? JobCompleted;
 
     /// <summary>
     /// Invoked when a job fails

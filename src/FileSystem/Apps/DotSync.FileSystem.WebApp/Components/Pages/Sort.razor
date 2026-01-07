@@ -1,10 +1,8 @@
 @page "/Sort"
 @inject JobComponent JobComponent
-@using System.Collections.Immutable
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Application.Orchestration
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
-@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using com.brettnamba.DotSync.FileSystem.WebApp.Startup
 @using Microsoft.AspNetCore.Authorization
@@ -36,10 +34,6 @@
 
 <hr/>
 
-<div class="container">
-    <FileList FileResults="@_result"/>
-</div>
-
 @code {
     private const JobType JobId = JobType.Sort;
 
@@ -54,8 +48,8 @@
     {
         JobComponent.OnInitialized();
 
-        JobComponent.JobResultProvider.JobCompleted += ParseResult;
-        JobComponent.JobResultProvider.JobFailed += SetError;
+        // JobComponent.JobResultProvider.JobCompleted += ParseResult;
+        // JobComponent.JobResultProvider.JobFailed += SetError;
         JobComponent.ProgressReporter.LogReported += ReportProgressLog;
         SortModel ??= new SortForm()
         {
@@ -71,23 +65,23 @@
         await JobComponent.JobManager.RunJob(new SortParameters(SortModel.SourcePath, SortModel.DestinationPath));
     }
 
-    private void ParseResult(object? sender, JobResult data)
-    {
-        if (JobId != data.JobParameters.Type) return;
-        if (data.JobParameters is not SortParameters)
-        {
-            throw new ArgumentException("Invalid parameters");
-        }
-
-        _result = new List<FileResultList>()
-        {
-            new("Files", ((List<string>)data.Result).Select(x => (string[])[x]).ToImmutableList(), true)
-        }.AsReadOnly();
-
-        InvokeAsync(StateHasChanged);
-        _progressMessages.Clear();
-        _error = null;
-    }
+    // private void ParseResult(object? sender, JobResult data)
+    // {
+    //     if (JobId != data.JobParameters.Type) return;
+    //     if (data.JobParameters is not SortParameters)
+    //     {
+    //         throw new ArgumentException("Invalid parameters");
+    //     }
+    //
+    //     _result = new List<FileResultList>()
+    //     {
+    //         new("Files", ((List<string>)data.Result).Select(x => (string[])[x]).ToImmutableList(), true)
+    //     }.AsReadOnly();
+    //
+    //     InvokeAsync(StateHasChanged);
+    //     _progressMessages.Clear();
+    //     _error = null;
+    // }
 
     private void SetError(object? sender, string error)
     {
@@ -103,8 +97,8 @@
 
     public void Dispose()
     {
-        JobComponent.JobResultProvider.JobCompleted -= ParseResult;
-        JobComponent.JobResultProvider.JobFailed -= SetError;
+        // JobComponent.JobResultProvider.JobCompleted -= ParseResult;
+        // JobComponent.JobResultProvider.JobFailed -= SetError;
         JobComponent.ProgressReporter.LogReported -= ReportProgressLog;
         JobComponent.Dispose();
     }

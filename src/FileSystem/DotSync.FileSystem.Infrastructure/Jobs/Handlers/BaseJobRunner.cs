@@ -29,7 +29,7 @@ public abstract class BaseJobRunner<T> : IJobRunner<T> where T : IJobParameters
     }
 
     /// <inheritdoc />
-    public async Task Execute(IJob<T> job)
+    public async Task<IJobOutput> Execute(IJob<T> job)
     {
         _logger.LogInformation($"Executing job {job.Id:D} (Context: {Context.Id:D})");
 
@@ -38,6 +38,8 @@ public abstract class BaseJobRunner<T> : IJobRunner<T> where T : IJobParameters
             job.SetInProgress(_clock.GetUtcNow());
             var result = await RunJob(job);
             //await WriteReport(job.Parameters.JobId, startTime, GenerateReport(scanPath.Value, result, startTime));
+            job.SetDone(_clock.GetUtcNow());
+            return result;
         }
         catch (Exception e)
         {
@@ -45,15 +47,13 @@ public abstract class BaseJobRunner<T> : IJobRunner<T> where T : IJobParameters
             job.SetError(_clock.GetUtcNow());
             throw;
         }
-
-        job.SetDone(_clock.GetUtcNow());
     }
 
     /// <summary>
     /// Derived classes should implement the job logic here
     /// </summary>
     /// <param name="job">The job to run</param>
-    protected abstract Task<JobResult> RunJob(IJob<T> job);
+    protected abstract Task<IJobOutput> RunJob(IJob<T> job);
 
     private async Task WriteReport(string reportName, DateTimeOffset startTime, IReadOnlyList<FileResultList> report)
     {

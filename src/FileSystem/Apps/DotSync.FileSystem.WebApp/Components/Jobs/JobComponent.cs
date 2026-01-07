@@ -24,18 +24,14 @@ public class JobComponent : IDisposable // : ComponentBase, IDisposable, IAsyncD
     public IJobProgressReporter ProgressReporter { get; }
 
     //[Inject]
-    public IJobResultProvider JobResultProvider { get; }
-
-    //[Inject]
     public ILogger<JobComponent> Logger { get; }
 
     public JobComponent(IDbContextFactory<FileSystemsDbContext> fileSystemsDbContextFactory, IJobManager jobManager,
-        IJobProgressReporter progressReporter, IJobResultProvider jobResultProvider, ILogger<JobComponent> logger)
+        IJobProgressReporter progressReporter, ILogger<JobComponent> logger)
     {
         FileSystemsDbContextFactory = fileSystemsDbContextFactory;
         JobManager = jobManager;
         ProgressReporter = progressReporter;
-        JobResultProvider = jobResultProvider;
         Logger = logger;
     }
 

@@ -2,17 +2,11 @@
 @using System.Text.Json
 @using com.brettnamba.DotSync.FileSystem.Application.Orchestration
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration
-@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using Microsoft.AspNetCore.Authorization
 @inject JobConfiguration JobConfiguration
 @attribute [Authorize]
 
 <h3>Report</h3>
-
-<div class="container">
-    <FileList FileResults="@_result" ShowClear="@false"/>
-</div>
-
 
 @code {
     [SupplyParameterFromQuery] private string? File { get; set; }

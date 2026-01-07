@@ -2,9 +2,7 @@
 @inject JobComponent JobComponent
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Application.Orchestration
-@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
-@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
 @using com.brettnamba.DotSync.FileSystem.WebApp.Startup
@@ -38,10 +36,6 @@
 
 <hr/>
 
-<div class="container">
-    <FileList FileResults="@_result"/>
-</div>
-
 @code {
     private const JobType JobId = JobType.Scan;
 
@@ -57,7 +51,7 @@
     {
         JobComponent.OnInitialized();
 
-        JobComponent.JobResultProvider.JobCompleted += ParseResult;
+        //JobComponent.JobResultProvider.JobCompleted += ParseResult;
         JobComponent.ProgressReporter.LogReported += ReportProgressLog;
         JobComponent.ProgressReporter.PercentReported += ReportProgressPercent;
         ScanModel ??= new ScanForm()
@@ -74,25 +68,25 @@
         await JobComponent.JobManager.RunJob(new ScanParameters(ScanModel!.Path!));
     }
 
-    private void ParseResult(object? sender, JobResult data)
-    {
-        if (JobId != data.JobParameters.Type) return;
-        if (data.JobParameters is not ScanParameters)
-        {
-            throw new ArgumentException("Invalid parameters");
-        }
-        var duration = DateTime.UtcNow.Subtract(_startTime);
-
-        var files = data.Result is FileSystemScannerResult ? (FileSystemScannerResult)data.Result : default;
-        _result = new List<FileResultList>()
-        {
-            new("Files", files.NewFiles.Select(x => (string[])[x.Item1.Value]).ToList(), true),
-            new("Duration", new List<string[]>() { new[] { $"{duration.TotalMinutes} mins" } }.ToList(), false),
-        }.AsReadOnly();
-
-        InvokeAsync(StateHasChanged);
-        _progressMessages.Clear();
-    }
+    // private void ParseResult(object? sender, JobResult data)
+    // {
+    //     if (JobId != data.JobParameters.Type) return;
+    //     if (data.JobParameters is not ScanParameters)
+    //     {
+    //         throw new ArgumentException("Invalid parameters");
+    //     }
+    //     var duration = DateTime.UtcNow.Subtract(_startTime);
+    //
+    //     var files = data.Result is FileSystemScannerResult ? (FileSystemScannerResult)data.Result : default;
+    //     _result = new List<FileResultList>()
+    //     {
+    //         new("Files", files.NewFiles.Select(x => (string[])[x.Item1.Value]).ToList(), true),
+    //         new("Duration", new List<string[]>() { new[] { $"{duration.TotalMinutes} mins" } }.ToList(), false),
+    //     }.AsReadOnly();
+    //
+    //     InvokeAsync(StateHasChanged);
+    //     _progressMessages.Clear();
+    // }
 
     private void ReportProgressLog(object? sender, ProgressLog log)
     {
@@ -108,7 +102,7 @@
 
     public void Dispose()
     {
-        JobComponent.JobResultProvider.JobCompleted -= ParseResult;
+        //JobComponent.JobResultProvider.JobCompleted -= ParseResult;
         JobComponent.ProgressReporter.LogReported -= ReportProgressLog;
         JobComponent.ProgressReporter.PercentReported -= ReportProgressPercent;
         JobComponent.Dispose();
