@@ -183,7 +183,6 @@ builder.Services.AddScoped<IFileCopier, AmazonS3FileCopier>(sp =>
 builder.Services.AddScoped<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
 builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
 builder.Services.AddScoped<IFilePusher, FilePusher>();
-builder.Services.AddSingleton<IJobResultProvider, JobResultProvider>();
 builder.Services.AddSingleton<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();
 builder.Services.AddSingleton<IJobProgressReporter, JobProgressReporter>();

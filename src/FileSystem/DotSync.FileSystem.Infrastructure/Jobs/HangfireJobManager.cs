@@ -24,7 +24,7 @@ public sealed class HangfireJobManager : IJobManager
     public IReadOnlyList<IJob> Jobs => _jobs;
 
     public event EventHandler<IJob>? JobCreated;
-    public event EventHandler<IJob>? JobCompleted;
+    public event EventHandler<JobCompletedArgs>? JobCompleted;
     public event EventHandler<JobFailedArgs>? JobFailed;
 
     /// <inheritdoc />
@@ -42,14 +42,14 @@ public sealed class HangfireJobManager : IJobManager
         try
         {
             _logger.LogInformation($"Executing job {jobParameters.Type} of type {job.Type}");
-            await handler.Execute(job);
+            var result = await handler.Execute(job);
+
+            JobCompleted?.Invoke(this, new JobCompletedArgs() { Job = job, Result = result });
         }
         catch (Exception e)
         {
             JobFailed?.Invoke(this, new JobFailedArgs() { Job = job, Exception = e });
             throw;
         }
-
-        JobCompleted?.Invoke(this, job);
     }
 }

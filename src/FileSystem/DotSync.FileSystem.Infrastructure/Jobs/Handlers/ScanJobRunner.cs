@@ -19,9 +19,18 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
         _scanner = scanner;
     }
 
-    protected override async Task<JobResult> RunJob(IJob<ScanParameters> job)
+    protected override async Task<IJobOutput> RunJob(IJob<ScanParameters> job)
     {
         var result = await _scanner.Scan(FileSystemPath.Create(job.Parameters.Path!));
-        return new JobResult(job.Parameters, result);
+        return new JobOutput(job, ToResult(result));
+    }
+
+    private static FileResults ToResult(FileSystemScannerResult result)
+    {
+        var newFiles = result.NewFiles.Select(x => new[] { x.Item1.Value });
+        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        {
+            { "New Files", newFiles }
+        });
     }
 }

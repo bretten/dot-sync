@@ -1,11 +1,12 @@
-@using System.Collections.Concurrent
-@using com.brettnamba.DotSync.Common.DateAndTme
-@using com.brettnamba.DotSync.FileSystem.Application.Jobs
-@using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events
 @inject IJobManager JobManager
 @inject IJobProgressReporter ProgressReporter
 @inject IDialogService DialogService
 @inject IClock Clock
+@using System.Collections.Concurrent
+@using com.brettnamba.DotSync.Common.DateAndTme
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events
+@implements IDisposable
 
 <MudThemeProvider/>
 <MudPopoverProvider/>
@@ -59,8 +60,9 @@
 
 @code {
     private IReadOnlyList<IJob> _jobs = null!;
-    private static readonly ConcurrentDictionary<Guid, double> JobIdsToPercents = new ConcurrentDictionary<Guid, double>();
-    private static readonly ConcurrentDictionary<Guid, List<string>> JobIdsToLogs = new ConcurrentDictionary<Guid, List<string>>();
+    private static readonly ConcurrentDictionary<Guid, double> JobIdsToPercents = new();
+    private static readonly ConcurrentDictionary<Guid, List<string>> JobIdsToLogs = new();
+    private static readonly ConcurrentDictionary<Guid, FileResults?> JobIdsToResults = new();
     private JobDetailsDialog? _activeDialog;
 
     protected override Task OnInitializedAsync()
@@ -68,9 +70,10 @@
         _jobs = JobManager.Jobs;
         foreach (var job in _jobs)
         {
-            if (JobIdsToPercents.ContainsKey(job.Id)) continue;
+            if (JobIdsToPercents.ContainsKey(job.Id) && JobIdsToLogs.ContainsKey(job.Id) && JobIdsToResults.ContainsKey(job.Id)) continue;
             JobIdsToPercents.TryAdd(job.Id, 0);
             JobIdsToLogs.TryAdd(job.Id, new List<string>());
+            JobIdsToResults.TryAdd(job.Id, null);
         }
 
         JobManager.JobCreated += HandleNewJob;
@@ -106,12 +109,14 @@
     {
         JobIdsToPercents.TryAdd(job.Id, 0);
         JobIdsToLogs.TryAdd(job.Id, new List<string>());
+        JobIdsToResults.TryAdd(job.Id, null);
         InvokeAsync(StateHasChanged);
     }
 
-    private void HandleJobComplete(object? sender, IJob job)
+    private void HandleJobComplete(object? sender, JobCompletedArgs args)
     {
-        if (job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob();
+        if (args.Job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob(args.Result.FileResults);
+        JobIdsToResults.TryUpdate(args.Job.Id, args.Result.FileResults, null);
         InvokeAsync(StateHasChanged);
     }
 
@@ -127,7 +132,8 @@
         {
             { x => x.Job, job },
             { x => x.Progress, JobIdsToPercents[job.Id] },
-            { x => x.LogMessages, JobIdsToLogs[job.Id] }
+            { x => x.LogMessages, JobIdsToLogs[job.Id] },
+            { x => x.Results, JobIdsToResults[job.Id] }
         };
         var dialog = await DialogService.ShowAsync<JobDetailsDialog>(job.Type.ToString(), parameters, new DialogOptions()
         {
@@ -142,4 +148,13 @@
         _activeDialog = null;
     }
 
+    public void Dispose()
+    {
+        JobManager.JobCreated -= HandleNewJob;
+        JobManager.JobCompleted -= HandleJobComplete;
+        JobManager.JobFailed -= HandleJobFailed;
+
+        ProgressReporter.LogReported -= HandleLogReported;
+        ProgressReporter.PercentReported -= HandlePercentReported;
+    }
 }

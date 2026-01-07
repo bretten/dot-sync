@@ -11,5 +11,5 @@ public interface IJobRunner<in T> where T : IJobParameters
     /// </summary>
     /// <param name="job">The job to run</param>
     /// <returns>Completed Task</returns>
-    public Task Execute(IJob<T> job);
+    public Task<IJobOutput> Execute(IJob<T> job);
 }

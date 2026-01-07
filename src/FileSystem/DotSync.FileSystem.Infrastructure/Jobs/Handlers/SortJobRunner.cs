@@ -26,7 +26,7 @@ public sealed class SortJobRunner : BaseJobRunner<SortParameters>
         _fileSorter = fileSorter;
     }
 
-    protected override async Task<JobResult> RunJob(IJob<SortParameters> job)
+    protected override async Task<IJobOutput> RunJob(IJob<SortParameters> job)
     {
         var location = (await _storageLocationRepo.GetAll()).FirstOrDefault(x => x.Type == StorageLocationType.Local);
         if (location == null) throw new NoLocalStorageException("No Local storage for sorting");
@@ -36,6 +36,14 @@ public sealed class SortJobRunner : BaseJobRunner<SortParameters>
                 OperatingSystem.IsWindows());
 
         var result = await _fileSorter.Sort(sortSourcePath, location.Path);
-        return new JobResult(job.Parameters, result);
+        return new JobOutput(job, ToResults(result));
+    }
+
+    private static FileResults ToResults(IEnumerable<string> files)
+    {
+        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        {
+            { "Sorted Files", files.Select(x => new[] { x }) }
+        });
     }
 }
