@@ -12,8 +12,8 @@
 }
 
 @code {
-    [Parameter] public List<string>? Messages { get; set; }
+    [Parameter] public IReadOnlyList<string>? Messages { get; set; }
     [Parameter] public bool AllowClear { get; set; }
 
-    private void Clear() => Messages?.Clear();
+    private void Clear() => Messages = new List<string>();
 }
