@@ -1,0 +1,48 @@
+@using com.brettnamba.DotSync.Common.DateAndTme
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@inject IClock Clock
+
+<MudGrid>
+    <MudItem xs="6">
+        <MudText Typo="Typo.h6">
+            Job ID
+            <MudText Typo="Typo.subtitle1" Class="ml-6">@(Job.Id.ToString("D"))</MudText>
+        </MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudText Typo="Typo.h6">
+            Start Time
+            <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.StartTime.ToLocalTime()</MudText>
+        </MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudText Typo="Typo.h6">
+            Duration
+            <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.GetDurationString(Clock.GetUtcNow())</MudText>
+        </MudText>
+    </MudItem>
+    <MudItem xs="6">
+        <MudText Typo="Typo.h6">
+            End Time
+            <MudText Typo="Typo.subtitle1"
+                     Class="ml-6">@(Job.EndTime == DateTimeOffset.MinValue ? "--" : Job.EndTime.ToLocalTime())</MudText>
+        </MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h6">
+            Parameters
+            <MudText Typo="Typo.subtitle1" Class="ml-6">
+                @foreach (var pair in Job.Parameters.AsKeyValuePairs())
+                {
+                    <div>
+                        <b>@pair.Key</b>: @pair.Value
+                    </div>
+                }
+            </MudText>
+        </MudText>
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public IJob Job { get; set; } = null!;
+}
