@@ -12,45 +12,9 @@
         <MudText Typo="Typo.h6" Class="d-inline">Verify</MudText>
     </TitleContent>
     <DialogContent>
-        <ProgressBar Value="@Progress"></ProgressBar>
+        <ProgressBar Value="@Progress"/>
+        <JobDetails Job="@Job"/>
         <MudGrid>
-            <MudItem xs="6">
-                <MudText Typo="Typo.h6">
-                    Job ID
-                    <MudText Typo="Typo.subtitle1" Class="ml-6">@(Job.Id.ToString("D"))</MudText>
-                </MudText>
-            </MudItem>
-            <MudItem xs="6">
-                <MudText Typo="Typo.h6">
-                    Start Time
-                    <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.StartTime</MudText>
-                </MudText>
-            </MudItem>
-            <MudItem xs="6">
-                <MudText Typo="Typo.h6">
-                    Duration
-                    <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.GetDurationString(Clock.GetUtcNow())</MudText>
-                </MudText>
-            </MudItem>
-            <MudItem xs="6">
-                <MudText Typo="Typo.h6">
-                    End Time
-                    <MudText Typo="Typo.subtitle1" Class="ml-6">@Job.EndTime</MudText>
-                </MudText>
-            </MudItem>
-            <MudItem xs="12">
-                <MudText Typo="Typo.h6">
-                    Parameters
-                    <MudText Typo="Typo.subtitle1" Class="ml-6">
-                        @foreach (var pair in Job.Parameters.AsKeyValuePairs())
-                        {
-                            <div>
-                                <b>@pair.Key</b>: @pair.Value
-                            </div>
-                        }
-                    </MudText>
-                </MudText>
-            </MudItem>
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">Logs</MudText>
                 <MudPaper Class="pa-3">
