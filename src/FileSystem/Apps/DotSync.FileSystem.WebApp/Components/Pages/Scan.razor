@@ -60,12 +60,12 @@
         };
     }
 
-    private async Task ExecuteScan()
+    private void ExecuteScan()
     {
         _progressPercent = 0;
         JobComponent.Logger.LogInformation($"Scanning {ScanModel!.Path}");
         _startTime = DateTime.UtcNow;
-        await JobComponent.JobManager.RunJob(new ScanParameters(ScanModel!.Path!));
+        _ = Task.Run(() => JobComponent.JobManager.RunJob(new ScanParameters(ScanModel!.Path!)));
     }
 
     // private void ParseResult(object? sender, JobResult data)

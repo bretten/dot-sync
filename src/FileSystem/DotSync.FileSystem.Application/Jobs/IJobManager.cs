@@ -7,7 +7,31 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
 /// </summary>
 public interface IJobManager
 {
+    /// <summary>
+    /// All jobs
+    /// </summary>
     IReadOnlyList<IJob> Jobs { get; }
+
+    /// <summary>
+    /// Returns the progress of the job
+    /// </summary>
+    /// <param name="jobId">ID of the job</param>
+    /// <returns>Progress as a percentage or null if the job could not be found</returns>
+    ProgressPercent? CheckJobProgress(Guid jobId);
+
+    /// <summary>
+    /// Returns the logs for the job
+    /// </summary>
+    /// <param name="jobId">ID of the job</param>
+    /// <returns>The logs for the job</returns>
+    IReadOnlyList<string> GetJobLogs(Guid jobId);
+
+    /// <summary>
+    /// Returns the job output
+    /// </summary>
+    /// <param name="jobId">ID of the job</param>
+    /// <returns>The job output or null if the job did/has not finished</returns>
+    IJobOutput? GetJobOutput(Guid jobId);
 
     /// <summary>
     /// Invoked when a job is created

@@ -82,12 +82,12 @@
         };
     }
 
-    private async Task ExecuteVerify()
+    private void ExecuteVerify()
     {
         _progressPercent = 0;
         JobComponent.Logger.LogInformation($"Verifying {VerifyModel!.StoragePath} {VerifyModel.VerifyPath}");
         _startTime = DateTime.UtcNow;
-        await JobComponent.JobManager.RunJob(new VerifyParameters(VerifyModel.Type, VerifyModel.StoragePath, VerifyModel.VerifyPath, VerifyModel.PathsToSkip));
+        _ = Task.Run(() => JobComponent.JobManager.RunJob(new VerifyParameters(VerifyModel.Type, VerifyModel.StoragePath, VerifyModel.VerifyPath, VerifyModel.PathsToSkip)));
     }
 
     // private void ParseResult(object? sender, JobResult data)

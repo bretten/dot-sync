@@ -57,12 +57,11 @@
         };
     }
 
-    private async Task ExecuteSort()
+    private void ExecuteSort()
     {
         _error = null;
         JobComponent.Logger.LogInformation($"Sorting {SortModel!.SourcePath} to {SortModel.DestinationPath}");
-        await InvokeAsync(StateHasChanged);
-        await JobComponent.JobManager.RunJob(new SortParameters(SortModel.SourcePath, SortModel.DestinationPath));
+        _ = Task.Run(() => JobComponent.JobManager.RunJob(new SortParameters(SortModel.SourcePath, SortModel.DestinationPath)));
     }
 
     // private void ParseResult(object? sender, JobResult data)

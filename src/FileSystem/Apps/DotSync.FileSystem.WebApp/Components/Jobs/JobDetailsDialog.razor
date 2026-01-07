@@ -25,9 +25,9 @@
             <MudItem xs="12">
                 <MudText Typo="Typo.h6">Result</MudText>
                 <MudPaper Class="pa-3">
-                    @if (Results != null)
+                    @if (JobOutput != null)
                     {
-                        <FileList FileResults="@Results"/>
+                        <FileList FileResults="@JobOutput.FileResults"/>
                     }
                 </MudPaper>
             </MudItem>
@@ -42,9 +42,9 @@
 
     [Parameter] public double Progress { get; set; }
 
-    [Parameter] public List<string> LogMessages { get; set; } = new List<string>();
+    [Parameter] public IReadOnlyList<string> LogMessages { get; set; } = new List<string>();
 
-    [Parameter] public FileResults? Results { get; set; }
+    [Parameter] public IJobOutput? JobOutput { get; set; }
 
     public void UpdateProgress(double progress)
     {
@@ -52,15 +52,15 @@
         InvokeAsync(StateHasChanged);
     }
 
-    public void UpdateLog(List<string> messages)
+    public void UpdateLogs(IReadOnlyList<string> messages)
     {
         LogMessages = messages;
         InvokeAsync(StateHasChanged);
     }
 
-    public void FinishJob(FileResults results)
+    public void FinishJob(IJobOutput jobOutput)
     {
-        Results = results;
+        JobOutput = jobOutput;
         FinishJob();
     }
 
@@ -69,4 +69,5 @@
         InvokeAsync(StateHasChanged); // This updates the Job related data
         InvokeAsync(MudDialog.StateHasChanged); // This updates the title
     }
+
 }

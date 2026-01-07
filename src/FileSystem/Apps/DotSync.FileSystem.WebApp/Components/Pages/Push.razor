@@ -81,11 +81,11 @@
         };
     }
 
-    private async Task ExecutePush()
+    private void ExecutePush()
     {
         _progressPercent = 0;
         JobComponent.Logger.LogInformation($"Pushing {PushModel!.SourceRootPath} {PushModel.SourcePushPath} to {PushModel.DestinationType} {PushModel.DestinationPath}");
-        await JobComponent.JobManager.RunJob(new PushParameters(PushModel.SourceRootPath, PushModel.SourcePushPath, PushModel.DestinationType, PushModel.DestinationPath));
+        _ = Task.Run(() => JobComponent.JobManager.RunJob(new PushParameters(PushModel.SourceRootPath, PushModel.SourcePushPath, PushModel.DestinationType, PushModel.DestinationPath)));
     }
 
     // private void ParseResult(object? sender, IJobOutput data)

@@ -2,7 +2,6 @@
 @inject IJobProgressReporter ProgressReporter
 @inject IDialogService DialogService
 @inject IClock Clock
-@using System.Collections.Concurrent
 @using com.brettnamba.DotSync.Common.DateAndTme
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events
@@ -28,7 +27,7 @@
         <PropertyColumn Property="x => x.StartTime.ToLocalTime()" InitialDirection="SortDirection.Descending"/>
         <TemplateColumn Title="Progress" Sortable="false">
             <CellTemplate Context="cell">
-                @(Math.Round(JobIdsToPercents[cell.Item!.Id], 2))%
+                @(Math.Round(JobManager.CheckJobProgress(cell.Item!.Id)?.AsPercent() ?? 0, 2))%
             </CellTemplate>
         </TemplateColumn>
         <PropertyColumn Property="x => x.Duration" Sortable="false">
@@ -60,22 +59,11 @@
 
 @code {
     private IReadOnlyList<IJob> _jobs = null!;
-    private static readonly ConcurrentDictionary<Guid, double> JobIdsToPercents = new();
-    private static readonly ConcurrentDictionary<Guid, List<string>> JobIdsToLogs = new();
-    private static readonly ConcurrentDictionary<Guid, FileResults?> JobIdsToResults = new();
     private JobDetailsDialog? _activeDialog;
 
     protected override Task OnInitializedAsync()
     {
         _jobs = JobManager.Jobs;
-        foreach (var job in _jobs)
-        {
-            if (JobIdsToPercents.ContainsKey(job.Id) && JobIdsToLogs.ContainsKey(job.Id) && JobIdsToResults.ContainsKey(job.Id)) continue;
-            JobIdsToPercents.TryAdd(job.Id, 0);
-            JobIdsToLogs.TryAdd(job.Id, new List<string>());
-            JobIdsToResults.TryAdd(job.Id, null);
-        }
-
         JobManager.JobCreated += HandleNewJob;
         JobManager.JobCompleted += HandleJobComplete;
         JobManager.JobFailed += HandleJobFailed;
@@ -88,7 +76,6 @@
 
     private void HandlePercentReported(object? sender, ProgressPercent e)
     {
-        JobIdsToPercents.TryUpdate(e.JobId, e.AsPercent(), JobIdsToPercents[e.JobId]);
         if (e.JobId == _activeDialog?.Job.Id) _activeDialog?.UpdateProgress(e.AsPercent());
 
         InvokeAsync(StateHasChanged);
@@ -96,33 +83,25 @@
 
     private void HandleLogReported(object? sender, ProgressLog e)
     {
-        JobIdsToLogs.TryGetValue(e.JobId, out var logs);
-        if (logs == null) return;
-        logs.Add(e.Message);
-
-        if (e.JobId == _activeDialog?.Job.Id) _activeDialog?.UpdateLog(logs);
+        if (e.JobId == _activeDialog?.Job.Id) _activeDialog?.UpdateLogs(JobManager.GetJobLogs(e.JobId));
 
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleNewJob(object? sender, IJob job)
     {
-        JobIdsToPercents.TryAdd(job.Id, 0);
-        JobIdsToLogs.TryAdd(job.Id, new List<string>());
-        JobIdsToResults.TryAdd(job.Id, null);
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleJobComplete(object? sender, JobCompletedArgs args)
     {
-        if (args.Job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob(args.Result.FileResults);
-        JobIdsToResults.TryUpdate(args.Job.Id, args.Result.FileResults, null);
+        if (args.Job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob(args.Result);
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleJobFailed(object? sender, JobFailedArgs args)
     {
-        if (args.Job.Id == _activeDialog?.Job.Id)_activeDialog?.FinishJob();
+        if (args.Job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob();
         InvokeAsync(StateHasChanged);
     }
 
@@ -131,9 +110,9 @@
         var parameters = new DialogParameters<JobDetailsDialog>
         {
             { x => x.Job, job },
-            { x => x.Progress, JobIdsToPercents[job.Id] },
-            { x => x.LogMessages, JobIdsToLogs[job.Id] },
-            { x => x.Results, JobIdsToResults[job.Id] }
+            { x => x.Progress, JobManager.CheckJobProgress(job.Id)?.AsPercent() ?? 0 },
+            { x => x.LogMessages, JobManager.GetJobLogs(job.Id) },
+            { x => x.JobOutput, JobManager.GetJobOutput(job.Id) }
         };
         var dialog = await DialogService.ShowAsync<JobDetailsDialog>(job.Type.ToString(), parameters, new DialogOptions()
         {
@@ -157,4 +136,5 @@
         ProgressReporter.LogReported -= HandleLogReported;
         ProgressReporter.PercentReported -= HandlePercentReported;
     }
+
 }
