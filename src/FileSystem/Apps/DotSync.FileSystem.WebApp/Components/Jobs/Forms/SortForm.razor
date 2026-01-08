@@ -1,0 +1,56 @@
+@inject IJobManager JobManager
+@inject IMainStorageProvider MainStorageProvider
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Application.Storage
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@inherits BaseForm
+
+<MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
+    <MudGrid>
+        <MudItem xs="12">
+            <div class="d-flex align-center justify-space-between">
+                @if (MudDialog != null)
+                {
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
+                               Class="ml-auto" Disabled="@(!IsValid)" OnClick="@(() => Submit())">
+                        Submit
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                               Class="ml-auto" Disabled="@(!IsValid)">
+                        Submit
+                    </MudButton>
+                }
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudForm>
+<MudGrid Class="mt-3 mb-3">
+    <MudItem xs="3"></MudItem>
+    <MudItem xs="6">
+        @if (Errors.Any())
+        {
+            <MudAlert Severity="Severity.Error">
+                @foreach (var error in Errors)
+                {
+                    <MudText Typo="Typo.subtitle1">@error</MudText>
+                }
+            </MudAlert>
+        }
+    </MudItem>
+    <MudItem xs="3"></MudItem>
+</MudGrid>
+
+@code {
+
+    protected override async Task Submit()
+    {
+        const string sourcePath = "";
+        var destinationPath = (await MainStorageProvider.GetMainStoragePath()).Value;
+        _ = Task.Run(() => JobManager.RunJob(new SortParameters(sourcePath, destinationPath)));
+        await base.Submit();
+    }
+
+}

@@ -1,0 +1,97 @@
+@inject IJobManager JobManager
+@inject IMainStorageProvider MainStorageProvider
+@using System.ComponentModel.DataAnnotations
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Application.Storage
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
+@inherits BaseForm
+
+<MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudSelect @bind-Value="VerifyModel!.Type" Label="Type">
+                @foreach (var t in Enum.GetValues<StorageLocationType>())
+                {
+                    <MudSelectItem Value="t">@t</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField T="string" Label="Storage Path" Required="true" RequiredError="Storage Path is required"
+                          @bind-Value="VerifyModel!.StoragePath" OnBlur="@(() => Form.Validate())"/>
+        </MudItem>
+        <MudItem xs="12">
+            <FilePathInput @bind-Text="VerifyModel!.VerifyPath"/>
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField T="string" Label="Paths to Skip CSV:" @bind-Value="VerifyModel!.PathsToSkip"/>
+        </MudItem>
+        <MudItem xs="12">
+            <div class="d-flex align-center justify-space-between">
+                @if (MudDialog != null)
+                {
+                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
+                               Class="ml-auto" Disabled="@(!IsValid)" OnClick="@(() => Submit())">
+                        Submit
+                    </MudButton>
+                }
+                else
+                {
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                               Class="ml-auto" Disabled="@(!IsValid)">
+                        Submit
+                    </MudButton>
+                }
+            </div>
+        </MudItem>
+    </MudGrid>
+</MudForm>
+<MudGrid Class="mt-3 mb-3">
+    <MudItem xs="3"></MudItem>
+    <MudItem xs="6">
+        @if (Errors.Any())
+        {
+            <MudAlert Severity="Severity.Error">
+                @foreach (var error in Errors)
+                {
+                    <MudText Typo="Typo.subtitle1">@error</MudText>
+                }
+            </MudAlert>
+        }
+    </MudItem>
+    <MudItem xs="3"></MudItem>
+</MudGrid>
+
+@code {
+
+    [SupplyParameterFromForm(FormName = "Verify")]
+    private VerifyFormModel? VerifyModel { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        VerifyModel ??= new VerifyFormModel()
+        {
+            Type = StorageLocationType.Local,
+            StoragePath = (await MainStorageProvider.GetMainStoragePath()).Value
+        };
+    }
+
+    protected override Task Submit()
+    {
+        _ = Task.Run(() => JobManager.RunJob(new VerifyParameters(VerifyModel!.Type, VerifyModel.StoragePath, VerifyModel.VerifyPath, VerifyModel.PathsToSkip)));
+        return base.Submit();
+    }
+
+    public class VerifyFormModel
+    {
+        [Required, EnumDataType(typeof(StorageLocationType))]
+        public StorageLocationType Type { get; set; }
+
+        public string StoragePath { get; set; } = null!;
+        public string VerifyPath { get; set; } = null!;
+        public string PathsToSkip { get; set; } = null!;
+    }
+
+}

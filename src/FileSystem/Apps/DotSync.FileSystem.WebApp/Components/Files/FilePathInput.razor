@@ -3,19 +3,13 @@
 @rendermode InteractiveServer
 @inject IEphemeralState EphemeralState
 
-<MudThemeProvider/>
-<MudPopoverProvider/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
-
-<MudItem xs="12" sm="6" md="4">
-    <MudAutocomplete T="string" @bind-Value="Text" SearchFunc="@Search"
-                     TextChanged="@TextChanged"
-                     MaxItems="30"
-                     ResetValueOnEmptyText="true"
-                     CoerceText="false" CoerceValue="true" SelectValueOnTab="true"
-                     AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary"/>
-</MudItem>
+<MudAutocomplete T="string" @bind-Value="Text" SearchFunc="@Search"
+                 Label="Path"
+                 TextChanged="@TextChanged"
+                 MaxItems="30"
+                 ResetValueOnEmptyText="true"
+                 CoerceText="false" CoerceValue="true" SelectValueOnTab="true"
+                 AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary"/>
 
 @code {
     private SuffixTrie<string> _directories = null!;

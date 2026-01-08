@@ -7,11 +7,6 @@
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events
 @implements IDisposable
 
-<MudThemeProvider/>
-<MudPopoverProvider/>
-<MudDialogProvider/>
-<MudSnackbarProvider/>
-
 <MudDataGrid Items="@_jobs" ExpandSingleRow="true">
     <Columns>
         <PropertyColumn Property="x => x.Id" Sortable="false"/>

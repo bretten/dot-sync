@@ -1,0 +1,32 @@
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs.Forms
+@rendermode InteractiveServer
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                @if (JobType == JobType.Scan)
+                {
+                    <ScanForm/>
+                }
+                else if (JobType == JobType.Verify)
+                {
+                    <VerifyForm/>
+                }
+                else if (JobType == JobType.Push)
+                {
+                    <PushForm/>
+                }
+                else if (JobType == JobType.Sort)
+                {
+                    <SortForm/>
+                }
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter] public JobType JobType { get; set; }
+}
