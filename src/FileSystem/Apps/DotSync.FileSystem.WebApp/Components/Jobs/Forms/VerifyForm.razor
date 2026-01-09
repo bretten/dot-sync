@@ -6,6 +6,7 @@
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
 @inherits BaseForm
 
 <MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
@@ -29,40 +30,11 @@
             <MudTextField T="string" Label="Paths to Skip CSV:" @bind-Value="VerifyModel!.PathsToSkip"/>
         </MudItem>
         <MudItem xs="12">
-            <div class="d-flex align-center justify-space-between">
-                @if (MudDialog != null)
-                {
-                    <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
-                               Class="ml-auto" Disabled="@(!IsValid)" OnClick="@(() => Submit())">
-                        Submit
-                    </MudButton>
-                }
-                else
-                {
-                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
-                               Class="ml-auto" Disabled="@(!IsValid)">
-                        Submit
-                    </MudButton>
-                }
-            </div>
+            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())" OnClick="@(Submit)"/>
         </MudItem>
     </MudGrid>
 </MudForm>
-<MudGrid Class="mt-3 mb-3">
-    <MudItem xs="3"></MudItem>
-    <MudItem xs="6">
-        @if (Errors.Any())
-        {
-            <MudAlert Severity="Severity.Error">
-                @foreach (var error in Errors)
-                {
-                    <MudText Typo="Typo.subtitle1">@error</MudText>
-                }
-            </MudAlert>
-        }
-    </MudItem>
-    <MudItem xs="3"></MudItem>
-</MudGrid>
+<ErrorMessages Errors="Errors"/>
 
 @code {
 
@@ -76,6 +48,7 @@
             Type = StorageLocationType.Local,
             StoragePath = (await MainStorageProvider.GetMainStoragePath()).Value
         };
+        await base.OnInitializedAsync();
     }
 
     protected override Task Submit()

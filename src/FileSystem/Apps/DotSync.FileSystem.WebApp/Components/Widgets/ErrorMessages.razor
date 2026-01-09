@@ -1,0 +1,19 @@
+@if (Errors != null && Errors.Any())
+{
+    <MudGrid Class="mt-3 mb-3">
+        <MudItem xs="3"></MudItem>
+        <MudItem xs="6">
+            <MudAlert Severity="Severity.Error">
+                @foreach (var error in Errors)
+                {
+                    <MudText Typo="Typo.subtitle1">@error</MudText>
+                }
+            </MudAlert>
+        </MudItem>
+        <MudItem xs="3"></MudItem>
+    </MudGrid>
+}
+
+@code {
+    [Parameter] public string[]? Errors { get; set; }
+}
