@@ -1,11 +1,13 @@
 using System.Collections.Concurrent;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Handlers;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Progress;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Execution;
 
 /// <summary>
 /// Hangfire implementation of the job manager

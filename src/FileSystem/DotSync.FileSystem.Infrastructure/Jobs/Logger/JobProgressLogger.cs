@@ -1,4 +1,4 @@
-using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;

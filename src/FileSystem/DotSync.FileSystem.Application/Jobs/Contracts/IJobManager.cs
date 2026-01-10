@@ -1,6 +1,7 @@
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Events;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Progress;
 
-namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
+namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 
 /// <summary>
 /// Manages jobs that are run by the system

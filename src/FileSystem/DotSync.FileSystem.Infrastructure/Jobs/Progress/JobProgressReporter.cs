@@ -1,6 +1,7 @@
-using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Progress;
 
-namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Progress;
 
 /// <inheritdoc />
 public sealed class JobProgressReporter : IJobProgressReporter

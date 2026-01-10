@@ -1,5 +1,6 @@
 ﻿using com.brettnamba.DotSync.Common.Domain.Tenants;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;

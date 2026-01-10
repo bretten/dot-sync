@@ -1,5 +1,6 @@
 using com.brettnamba.DotSync.Common.DateAndTme;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;

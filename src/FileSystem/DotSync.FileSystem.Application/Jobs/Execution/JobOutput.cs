@@ -1,4 +1,6 @@
-namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+
+namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 
 public sealed class JobOutput : IJobOutput
 {

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using com.brettnamba.DotSync.Common.DateAndTme;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Handlers;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;

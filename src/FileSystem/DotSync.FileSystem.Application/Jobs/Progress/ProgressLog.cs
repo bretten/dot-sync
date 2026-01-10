@@ -1,4 +1,4 @@
-namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
+namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Progress;
 
 /// <summary>
 /// Represents a reported log message

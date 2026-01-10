@@ -1,4 +1,4 @@
-namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Handlers;
+namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 
 /// <summary>
 /// Runs a Job

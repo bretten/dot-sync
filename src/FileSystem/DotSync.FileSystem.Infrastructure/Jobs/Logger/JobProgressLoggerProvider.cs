@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 

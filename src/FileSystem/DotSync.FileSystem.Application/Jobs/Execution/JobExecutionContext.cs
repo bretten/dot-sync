@@ -1,6 +1,6 @@
 using com.brettnamba.DotSync.Common.DateAndTme;
 
-namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
+namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 
 /// <summary>
 /// Conceptually the same as <see cref="ExecutionContext"/>, but it represents the state of a single <see cref="Job"/> execution

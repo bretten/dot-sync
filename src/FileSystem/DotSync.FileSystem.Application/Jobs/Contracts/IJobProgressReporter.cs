@@ -1,4 +1,6 @@
-namespace com.brettnamba.DotSync.FileSystem.Application.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Progress;
+
+namespace com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 
 /// <summary>
 /// Reports on job progress
