@@ -121,11 +121,9 @@ builder.Services.AddDbContext<FileSystemsDbContext>(optionsBuilder =>
 {
     optionsBuilder.UseNpgsql(cs,
         b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema));
-});
-builder.Services.AddDbContextFactory<FileSystemsDbContext>(
-    optionsBuilder => optionsBuilder.UseNpgsql(cs,
-        b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema)),
-    ServiceLifetime.Scoped
+}, optionsLifetime: ServiceLifetime.Singleton); // Options lifetime needs to be singleton because DbContextFactory is
+builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder => optionsBuilder.UseNpgsql(cs,
+    b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema))
 );
 builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository>();
 
@@ -198,10 +196,10 @@ builder.Services.AddScoped<IThumbnailGenerator, MagickThumbnailGenerator>();
 builder.Services.AddScoped<IThumbnailProvider, ThumbnailProvider>();
 
 // State
-builder.Services.AddScoped<IEphemeralState, MemoryCacheEphemeralState>();
+builder.Services.AddSingleton<IEphemeralState, MemoryCacheEphemeralState>();
 
 // File paths
-builder.Services.AddScoped<IFileDirectoryIndexer, FileDirectoryIndexer>();
+builder.Services.AddSingleton<IFileDirectoryIndexer, FileDirectoryIndexer>();
 
 // Maintenance
 builder.Services.Configure<LocalCheckpointFileBackfillerConfiguration>(

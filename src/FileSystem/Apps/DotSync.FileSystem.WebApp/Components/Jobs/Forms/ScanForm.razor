@@ -1,0 +1,47 @@
+@inject IJobManager JobManager
+@inject IMainStorageProvider MainStorageProvider
+@using com.brettnamba.DotSync.FileSystem.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Application.Storage
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
+@inherits BaseForm
+
+<MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudTextField T="string" Label="Path" Required="true" RequiredError="Path is required"
+                          @bind-Value="ScanModel!.Path" OnBlur="@(() => Form.Validate())"/>
+        </MudItem>
+        <MudItem xs="12">
+            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())" OnClick="@(Submit)"/>
+        </MudItem>
+    </MudGrid>
+</MudForm>
+<ErrorMessages Errors="Errors"/>
+
+@code {
+
+    [SupplyParameterFromForm(FormName = "Scan")]
+    private ScanFormModel? ScanModel { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ScanModel ??= new ScanFormModel()
+        {
+            Path = (await MainStorageProvider.GetMainStoragePath()).Value
+        };
+        await base.OnInitializedAsync();
+    }
+
+    protected override Task Submit()
+    {
+        _ = Task.Run(() => JobManager.RunJob(new ScanParameters(ScanModel!.Path!)));
+        return base.Submit();
+    }
+
+    public class ScanFormModel
+    {
+        public string? Path { get; set; }
+    }
+
+}

@@ -1,0 +1,22 @@
+<div class="d-flex align-center justify-space-between">
+    @if (IsTypeButton)
+    {
+        <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Primary"
+                   Class="ml-auto" Disabled="@(IsDisabled)" OnClick="@(OnClick)">
+            Submit
+        </MudButton>
+    }
+    else
+    {
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary"
+                   Class="ml-auto" Disabled="@(IsDisabled)">
+            Submit
+        </MudButton>
+    }
+</div>
+
+@code {
+    [Parameter] public bool IsTypeButton { get; set; }
+    [Parameter] public bool IsDisabled { get; set; }
+    [Parameter] public EventCallback<MouseEventArgs> OnClick { get; set; }
+}

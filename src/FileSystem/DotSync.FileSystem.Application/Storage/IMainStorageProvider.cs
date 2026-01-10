@@ -11,6 +11,12 @@ public interface IMainStorageProvider
     Task<FileSystemPath> GetMainStoragePath();
 
     /// <summary>
+    /// Returns the path to the default cloud storage location
+    /// </summary>
+    /// <returns>The path to the default cloud storage location</returns>
+    Task<FileSystemPath> GetDefaultCloudStoragePath();
+
+    /// <summary>
     /// Returns the full local file path for the specified relative file path
     /// </summary>
     /// <param name="filePath">Relative file path</param>
