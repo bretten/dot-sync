@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+﻿using com.brettnamba.DotSync.Common.DateAndTme;
+using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -39,16 +40,16 @@ public class LocalFileSystemScannerTests
             .Returns(newFile.Sha256Checksum.Value);
 
         var scanner = new LocalFileSystemScanner(stubFileRepository.Object, stubFileMetadataReader.Object,
-            stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>(), Mock.Of<JobExecutionContext>(),
-            Mock.Of<IJobProgressReporter>());
+            stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>(),
+            new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>());
 
         // Act
         var actual = await scanner.Scan(FileSystemPath.Create(LocalFileSystemFilesPath));
 
         // Assert
         Assert.Single(actual.NewFiles);
-        Assert.Equal(newFile.Sha256Checksum, actual.NewFiles[0].Item2);
-        Assert.Equal(newFile.Path, actual.NewFiles[0].Item1);
+        Assert.Equal(newFile.Sha256Checksum, actual.NewFiles[0].Sha256Checksum);
+        Assert.Equal(newFile.Path, actual.NewFiles[0].Path);
 
         stubFileRepository.Verify(x =>
             x.Add(It.Is<DotFile>(y => y.Sha256Checksum == newFile.Sha256Checksum && y.Path == newFile.Path)));

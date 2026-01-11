@@ -28,7 +28,7 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
 
     private static FileResults ToResult(FileSystemScannerResult result)
     {
-        var newFiles = result.NewFiles.Select(x => new[] { x.Item1.Value });
+        var newFiles = result.NewFiles.Select(x => new[] { x.Path.Value });
         return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
         {
             { "New Files", newFiles }
