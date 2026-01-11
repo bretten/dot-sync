@@ -71,7 +71,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     public async Task<FileSystemScannerResult> Scan(FileSystemPath path)
     {
         var tasks = ScanDirectory(new DirectoryInfo(path.Value), path).ToList();
-        var newFiles = new ConcurrentBag<Tuple<FileSystemPath, FileSha256Checksum>>();
+        var newFiles = new ConcurrentBag<DotFile>();
         var completedTasks = 0;
         var taskExecutions = tasks.Select(async task =>
         {
@@ -84,6 +84,11 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         });
         await Task.WhenAll(taskExecutions);
 
+        foreach (var newFile in newFiles)
+        {
+            await _fileRepository.Add(newFile);
+        }
+
         return new FileSystemScannerResult(newFiles.ToImmutableList());
     }
 
@@ -93,12 +98,11 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="directoryInfo">The directory to scan</param>
     /// <param name="rootDirectoryPath">The original root directory that is being scanned</param>
     /// <returns>New files found in the directory</returns>
-    private IEnumerable<Func<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>> ScanDirectory(
-        DirectoryInfo directoryInfo,
+    private IEnumerable<Func<Task<DotFile?>>> ScanDirectory(DirectoryInfo directoryInfo,
         FileSystemPath rootDirectoryPath)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
-        var tasks = new List<Func<Task<Tuple<FileSystemPath, FileSha256Checksum>?>>>();
+        var tasks = new List<Func<Task<DotFile?>>>();
         foreach (var entry in entries)
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden))
@@ -127,8 +131,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="fileInfo">The file</param>
     /// <param name="rootDirectoryPath">The original root directory of the file</param>
     /// <returns><see cref="DotFile"/> if it is a new file, otherwise null</returns>
-    private async Task<Tuple<FileSystemPath, FileSha256Checksum>?> ScanFile(FileInfo fileInfo,
-        FileSystemPath rootDirectoryPath)
+    private async Task<DotFile?> ScanFile(FileInfo fileInfo, FileSystemPath rootDirectoryPath)
     {
         // Determine its relative path compared to the root directory
         var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName),
@@ -156,9 +159,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         // Generate a checksum for the new file
         var checksum = FileSha256Checksum.Create(_fileChecksumGenerator.GenerateChecksum(fileInfo));
 
-        // The file could not be found via checksum or file path. It is a new file, so add it
-        var newFile = new DotFile(Guid.NewGuid(), relativePath, checksum, fileInfo.Length, fileCreation);
-        await _fileRepository.Add(newFile);
-        return new Tuple<FileSystemPath, FileSha256Checksum>(relativePath, checksum);
+        // The file could not be found via checksum or file path. It is a new file
+        return new DotFile(Guid.NewGuid(), relativePath, checksum, fileInfo.Length, fileCreation);
     }
 }
