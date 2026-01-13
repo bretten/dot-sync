@@ -33,10 +33,11 @@
         await base.OnInitializedAsync();
     }
 
-    protected override Task Submit()
+    /// <inheritdoc/>
+    protected override Task OnSubmit()
     {
         _ = Task.Run(() => JobManager.RunJob(new ScanParameters(ScanModel!.Path!)));
-        return base.Submit();
+        return Task.CompletedTask;
     }
 
     public class ScanFormModel

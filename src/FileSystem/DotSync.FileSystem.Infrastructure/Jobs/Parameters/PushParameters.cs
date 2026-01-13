@@ -1,14 +1,13 @@
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 
 public sealed record PushParameters(
-    string? SourceRootPath,
-    string? SourcePushPath,
-    StorageLocationType DestinationType,
-    string? DestinationPath) : IJobParameters
+    StorageLocation Source,
+    string? SourcePath,
+    StorageLocation Destination) : IJobParameters
 {
     public JobType Type => JobType.Push;
 
@@ -16,10 +15,9 @@ public sealed record PushParameters(
     {
         return new Dictionary<string, string>()
         {
-            { "SourceRootPath", SourceRootPath! },
-            { "SourcePushPath", SourcePushPath! },
-            { "StorageLocationType", DestinationType.ToString() },
-            { "DestinationPath", DestinationPath! },
+            { "Source", $"{Source.Type} - {Source.Path.Value}" },
+            { "SourcePath", SourcePath! },
+            { "Destination", $"{Destination.Type} - {Destination.Path.Value}" }
         }.AsReadOnly();
     }
 }

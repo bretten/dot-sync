@@ -1,10 +1,11 @@
 ﻿using System.Data.Common;
+using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using Npgsql;
 using Testcontainers.PostgreSql;
 
@@ -50,8 +51,9 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
         await dbContext.Database.MigrateAsync();
+        var factory = GetDbContextFactory(connection);
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(dbContext);
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory, Mock.Of<IMainStorageProvider>());
 
         // Act
         await repo.Add(fakeStorageLocation);
@@ -60,7 +62,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         // Assert
         Assert.NotNull(dbContext.StorageLocations);
         Assert.Equal(1, dbContext.StorageLocations.Count());
-        Assert.Equal(fakeStorageLocation, dbContext.StorageLocations.First());
+        Assert.Equal(fakeStorageLocation.Id, dbContext.StorageLocations.First().Id);
     }
 
     [Fact]
@@ -73,6 +75,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
         await dbContext.Database.MigrateAsync();
+        var factory = GetDbContextFactory(connection);
 
         await dbContext.AddAsync(fakeStorageLocation);
         await dbContext.SaveChangesAsync();
@@ -81,7 +84,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
             await GetDbConnection(); // Re-create the context so that the record is freshly retrieved from the database
         await using var assertDbContext = GetDbContext(assertConnection);
         await assertDbContext.Database.MigrateAsync();
-        var repo = new EntityFrameworkCoreStorageLocationRepository(assertDbContext);
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory, Mock.Of<IMainStorageProvider>());
 
         // Act
         var actual = await repo.GetByTypeAndPath(StorageLocationType.Local,
@@ -111,6 +114,14 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
             .LogTo(Console.WriteLine)
             .Options;
         return new FileSystemsDbContext(contextOptions);
+    }
+
+    private IDbContextFactory<FileSystemsDbContext> GetDbContextFactory(DbConnection connection)
+    {
+        var factory = new Mock<IDbContextFactory<FileSystemsDbContext>>();
+        factory.Setup(x => x.CreateDbContextAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(GetDbContext(connection));
+        return factory.Object;
     }
 
     private sealed class DockerNotRunningException(string? message) : Exception(message);

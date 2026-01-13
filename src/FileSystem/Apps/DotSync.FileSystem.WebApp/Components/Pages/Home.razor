@@ -154,6 +154,7 @@
     private FileSystemsDbContext _context = default!;
     private IJSObjectReference? _module;
     private FileSystemPath _mainStoragePath;
+    private StorageLocation _mainStorageLocation = null!;
     private IReadOnlyList<StorageLocation> _storageLocations = null!;
     private string _currentImgUrl = string.Empty;
     private string _searchQuery = string.Empty;
@@ -174,6 +175,7 @@
         _context = await DbContextFactory.CreateDbContextAsync();
         _storageLocations = _context.StorageLocations.ToList();
         _mainStoragePath = await MainStorageProvider.GetMainStoragePath();
+        _mainStorageLocation = await MainStorageProvider.GetMainStorageLocation();
     }
 
     protected override bool ShouldRender()
@@ -271,7 +273,8 @@
             return;
         }
 
-        await JobComponent.JobManager.RunJob(new PushByStorageParameters(_selectedStorageLocationId, _searchQuery, _uploadLimit));
+        var destination = _storageLocations.First(x => x.Id == _selectedStorageLocationId);
+        await JobComponent.JobManager.RunJob(new PushByStorageParameters(_mainStorageLocation, _searchQuery, _uploadLimit, destination));
     }
 
     // TODO: Move to DotFile

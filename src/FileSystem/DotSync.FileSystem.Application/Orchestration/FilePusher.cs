@@ -1,10 +1,6 @@
-﻿using com.brettnamba.DotSync.Common.Domain.Tenants;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+﻿using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
-using com.brettnamba.DotSync.FileSystem.Application.Orchestration.Exceptions;
-using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -12,102 +8,66 @@ using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 
-public sealed class FilePusher(
-    IStorageLocationRepository storageLocationRepository,
-    IFileRepository fileRepository,
-    ITenantContext tenantContext,
-    IFileCopier fileCopier,
-    IMainStorageProvider mainStorageProvider,
-    ILogger<FilePusher> logger,
-    JobExecutionContext jobContext,
-    IJobProgressReporter jobProgressReporter) : TenantAware(tenantContext), IFilePusher
+/// <inheritdoc/>
+public sealed class FilePusher : IFilePusher
 {
-    public async Task<IEnumerable<DotFile>> PushUnverifiedFiles(StorageLocationType sourceType,
-        FileSystemPath sourceRootPath, StorageLocationType destinationType, FileSystemPath destinationRootPath)
+    private readonly IFileRepository _fileRepository;
+
+    private readonly IFileCopier _fileCopier;
+
+    private readonly JobExecutionContext _jobContext;
+
+    private readonly IJobProgressReporter _jobProgressReporter;
+
+    private readonly ILogger<FilePusher> _logger;
+
+    public FilePusher(IFileRepository fileRepository, IFileCopier fileCopier, JobExecutionContext jobContext,
+        IJobProgressReporter jobProgressReporter, ILogger<FilePusher> logger)
     {
-        var source = await storageLocationRepository.GetByTypeAndPath(sourceType, sourceRootPath);
-        var destination = await storageLocationRepository.GetByTypeAndPath(destinationType, destinationRootPath);
-        if (source == null || destination == null)
-        {
-            throw new DirectoryNotStorageLocationException(
-                $"No storage location for file set {TenantContext.CurrentTenant}");
-        }
-
-        if (source.Type != StorageLocationType.Local)
-        {
-            throw new NotSupportedException("Can only copy from local");
-        }
-
-        var unverifiedFiles = (await fileRepository.GetUnverifiedFiles()).ToList();
-
-        var pushedFiles = new List<DotFile>();
-        foreach (var file in unverifiedFiles)
-        {
-            //logger.LogInformation($"Uploading {file.Path}");
-            var pushed = await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
-            if (pushed) pushedFiles.Add(file);
-        }
-
-        return pushedFiles;
+        _fileRepository = fileRepository;
+        _fileCopier = fileCopier;
+        _jobContext = jobContext;
+        _jobProgressReporter = jobProgressReporter;
+        _logger = logger;
     }
 
-    public async Task<IEnumerable<DotFile>> PushFilesInDir(StorageLocationType sourceType,
-        FileSystemPath sourceRootPath, FileSystemPath sourcePushPath, StorageLocationType destinationType,
-        FileSystemPath destinationRootPath)
+    /// <inheritdoc/>
+    public async Task<IEnumerable<DotFile>> PushFilesByPath(StorageLocation source, FileSystemPath sourcePath,
+        StorageLocation destination)
     {
-        var source = await storageLocationRepository.GetByTypeAndPath(sourceType, sourceRootPath);
-        var destination = await storageLocationRepository.GetByTypeAndPath(destinationType, destinationRootPath);
-        if (source == null || destination == null)
-        {
-            throw new DirectoryNotStorageLocationException(
-                $"No storage location for file set {TenantContext.CurrentTenant}");
-        }
-
-        if (source.Type != StorageLocationType.Local)
-        {
-            throw new NotSupportedException("Can only copy from local");
-        }
-
-        var files = (await fileRepository.GetFilesByPath(sourcePushPath)).ToList();
+        var files = (await _fileRepository.GetFilesByPath(sourcePath)).ToList();
         var totalBytes = files.Sum(f => f.Size);
 
         var pushedFiles = new List<DotFile>();
         var bytesPushed = 0L;
         foreach (var file in files)
         {
-            var pushed = await fileCopier.CopyFile(sourceRootPath, file.Path, destination.Path);
+            var pushed = await _fileCopier.CopyFile(source.Path, file.Path, destination.Path);
             bytesPushed += file.Size;
-            jobProgressReporter.ReportPercent(this, jobContext.Id, bytesPushed, totalBytes);
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, bytesPushed, totalBytes);
 
             if (!pushed) continue;
-            using (logger.BeginScope(new List<KeyValuePair<string, object>>()
+            using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
                    {
-                       new(nameof(JobExecutionContext), jobContext.Id)
+                       new(nameof(JobExecutionContext), _jobContext.Id)
                    }))
             {
-                logger.LogInformation($"Uploaded {file.Path.Value}");
+                _logger.LogInformation($"Uploaded {file.Path.Value}");
             }
 
             pushedFiles.Add(file);
-            await fileRepository.AddSyncedFile(file.Id, destination.Id);
+            await _fileRepository.AddSyncedFile(file.Id, destination.Id);
         }
 
         return pushedFiles;
     }
 
-    public async Task<IEnumerable<DotFile>> PushFilesInStorage(Guid storageLocationId, string prefixFilter,
-        long uploadLimitMb)
+    /// <inheritdoc/>
+    public async Task<IEnumerable<DotFile>> PushFilesInStorage(StorageLocation source, string prefixFilter,
+        long uploadLimitMb, StorageLocation destination)
     {
-        var storageLocations = await storageLocationRepository.GetAll();
-        var destination = storageLocations.FirstOrDefault(x => x.Id == storageLocationId);
-        if (destination == null)
-        {
-            throw new DirectoryNotStorageLocationException($"No storage location for {storageLocationId:D}");
-        }
+        var files = (await _fileRepository.GetUnsyncedFiles(destination.Id, prefixFilter)).ToList();
 
-        var files = (await fileRepository.GetUnsyncedFiles(destination.Id, prefixFilter)).ToList();
-
-        var mainStoragePath = await mainStorageProvider.GetMainStoragePath();
         var pushedFiles = new List<DotFile>();
         var uploadedBytes = 0L;
         var uploadLimitBytes = uploadLimitMb * 1000000; // Use MB, not MiB since that is the user-facing value
@@ -117,24 +77,23 @@ public sealed class FilePusher(
             var projectedTotalUploadAmount = uploadedBytes + file.Size;
             if (uploadLimitMb != 0 && projectedTotalUploadAmount > uploadLimitBytes)
             {
-                logger.LogInformation(
+                _logger.LogInformation(
                     $"Skipping {file.Path.Value} ({file.Size}) because it would put it over the limit of {uploadLimitBytes} bytes. Current upload size: {uploadedBytes}");
                 continue;
             }
 
-            var pushed = await fileCopier.CopyFile(mainStoragePath, file.Path, destination.Path);
+            var pushed = await _fileCopier.CopyFile(source.Path, file.Path, destination.Path);
             if (!pushed) continue;
-            using (logger.BeginScope(new List<KeyValuePair<string, object>>()
+            using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
                    {
-                       new(nameof(JobExecutionContext), jobContext.Id)
+                       new(nameof(JobExecutionContext), _jobContext.Id)
                    }))
             {
-                logger.LogInformation($"Uploaded {file.Path.Value}");
+                _logger.LogInformation($"Uploaded {file.Path.Value}");
             }
 
-
             pushedFiles.Add(file);
-            await fileRepository.AddSyncedFile(file.Id, destination.Id);
+            await _fileRepository.AddSyncedFile(file.Id, destination.Id);
             uploadedBytes += file.Size;
         }
 

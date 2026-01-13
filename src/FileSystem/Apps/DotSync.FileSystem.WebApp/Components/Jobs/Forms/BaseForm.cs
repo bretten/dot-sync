@@ -24,15 +24,22 @@ public abstract class BaseForm : ComponentBase
         return base.OnAfterRenderAsync(firstRender);
     }
 
-    protected virtual Task Submit()
+    protected async Task Submit()
     {
-        if (MudDialog != null)
+        await Form.Validate();
+        if (!Form.IsValid)
         {
-            MudDialog.Close();
+            return;
         }
 
-        return Task.CompletedTask;
+        await OnSubmit();
+        MudDialog?.Close();
     }
+
+    /// <summary>
+    /// Will be executed on a valid form submit
+    /// </summary>
+    protected abstract Task OnSubmit();
 
     protected bool IsSubmitButtonDisabled()
     {

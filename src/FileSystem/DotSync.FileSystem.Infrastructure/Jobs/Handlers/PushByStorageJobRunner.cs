@@ -22,8 +22,8 @@ public sealed class PushByStorageJobRunner : BaseJobRunner<PushByStorageParamete
 
     protected override async Task<IJobOutput> RunJob(IJob<PushByStorageParameters> job)
     {
-        var result = await _filePusher.PushFilesInStorage(job.Parameters.StorageLocationId,
-            job.Parameters.PathPrefixFilter, job.Parameters.UploadLimitMb);
+        var result = await _filePusher.PushFilesInStorage(job.Parameters.Source, job.Parameters.PathPrefixFilter,
+            job.Parameters.UploadLimitMb, job.Parameters.Destination);
 
         return new JobOutput(job, ToResults(result));
     }

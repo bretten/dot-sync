@@ -5,7 +5,6 @@
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs.Progress
 @using com.brettnamba.DotSync.FileSystem.Application.Orchestration
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
-@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
@@ -86,7 +85,7 @@
     {
         _progressPercent = 0;
         JobComponent.Logger.LogInformation($"Pushing {PushModel!.SourceRootPath} {PushModel.SourcePushPath} to {PushModel.DestinationType} {PushModel.DestinationPath}");
-        _ = Task.Run(() => JobComponent.JobManager.RunJob(new PushParameters(PushModel.SourceRootPath, PushModel.SourcePushPath, PushModel.DestinationType, PushModel.DestinationPath)));
+        //_ = Task.Run(() => JobComponent.JobManager.RunJob(new PushParameters(PushModel.SourceRootPath, PushModel.SourcePushPath, PushModel.DestinationType, PushModel.DestinationPath)));
     }
 
     // private void ParseResult(object? sender, IJobOutput data)

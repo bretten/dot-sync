@@ -1,4 +1,5 @@
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
@@ -10,12 +11,25 @@ public sealed class MainStorageProvider : IMainStorageProvider
 {
     private readonly IDbContextFactory<FileSystemsDbContext> _dbContextFactory;
 
+    private static StorageLocation? _mainStorageLocation;
     private static FileSystemPath? _mainStoragePath;
     private static FileSystemPath? _defaultCloudStoragePath;
 
     public MainStorageProvider(IDbContextFactory<FileSystemsDbContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;
+    }
+
+    /// <inheritdoc />
+    public async Task<StorageLocation> GetMainStorageLocation()
+    {
+        if (_mainStorageLocation != null)
+        {
+            return _mainStorageLocation;
+        }
+
+        _mainStorageLocation = await GetMainStorage();
+        return _mainStorageLocation;
     }
 
     /// <inheritdoc />
@@ -47,6 +61,14 @@ public sealed class MainStorageProvider : IMainStorageProvider
     {
         var mainStoragePath = await GetMainStoragePath();
         return FileSystemPath.Create(Path.Combine(mainStoragePath.Value, filePath.Value));
+    }
+
+    private async Task<StorageLocation> GetMainStorage()
+    {
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        var defaultStorage = dbContext.StorageLocations.FirstOrDefault(x => x.Type == StorageLocationType.Local);
+        if (defaultStorage == null) throw new NullReferenceException("No local storage location found");
+        return defaultStorage;
     }
 
     private async Task<FileSystemPath> GetMainLocalStoragePath()
