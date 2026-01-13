@@ -22,7 +22,10 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
 
     protected override async Task<IJobOutput> RunJob(IJob<ScanParameters> job)
     {
-        var result = await _scanner.Scan(FileSystemPath.Create(job.Parameters.Path!));
+        FileSystemPath? pathToScan = string.IsNullOrWhiteSpace(job.Parameters.Path)
+            ? null
+            : FileSystemPath.Create(job.Parameters.Path);
+        var result = await _scanner.Scan(job.Parameters.Source, pathToScan);
         return new JobOutput(job, ToResult(result));
     }
 

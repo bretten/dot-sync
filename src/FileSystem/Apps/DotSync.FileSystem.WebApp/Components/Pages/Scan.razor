@@ -3,7 +3,6 @@
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs.Progress
 @using com.brettnamba.DotSync.FileSystem.Application.Orchestration
-@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
 @using com.brettnamba.DotSync.FileSystem.WebApp.Startup
@@ -66,7 +65,7 @@
         _progressPercent = 0;
         JobComponent.Logger.LogInformation($"Scanning {ScanModel!.Path}");
         _startTime = DateTime.UtcNow;
-        _ = Task.Run(() => JobComponent.JobManager.RunJob(new ScanParameters(ScanModel!.Path!)));
+        //_ = Task.Run(() => JobComponent.JobManager.RunJob(new ScanParameters(ScanModel!.Path!)));
     }
 
     // private void ParseResult(object? sender, JobResult data)

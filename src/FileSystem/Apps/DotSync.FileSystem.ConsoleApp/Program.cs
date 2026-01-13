@@ -119,7 +119,7 @@ static async Task Scan(string[] args)
         throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
     }
 
-    var result = await service.Scan(storageLocationPath);
+    //var result = await service.Scan(storageLocationPath);
     // Console.WriteLine("New Files:");
     // // foreach (var newFile in result.NewFiles)
     // // {

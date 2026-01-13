@@ -51,6 +51,9 @@
       <None Update="FileIntegrity\Services\TestFiles\LocalFileSystemFileIntegrityVerifier\dir3\skip.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+      <None Update="FileSystems\Services\TestFiles\LocalFileSystemScanner\someDir\nestedFile.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
