@@ -1,11 +1,11 @@
-using com.brettnamba.DotSync.FileSystem.Application.Files;
+using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using ImageMagick;
 using ImageMagick.Formats;
 using Microsoft.Extensions.Options;
 
-namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Thumbnails;
 
 public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 {

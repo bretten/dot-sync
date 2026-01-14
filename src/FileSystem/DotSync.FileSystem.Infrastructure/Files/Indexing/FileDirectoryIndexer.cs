@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 using System.Text;
-using com.brettnamba.DotSync.FileSystem.Application.Files;
+using com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Indexing;
 
 public sealed class FileDirectoryIndexer : IFileDirectoryIndexer
 {

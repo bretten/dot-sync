@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using com.brettnamba.DotSync.Common.DateAndTme;
-using com.brettnamba.DotSync.FileSystem.Application.Files;
+using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
