@@ -37,10 +37,11 @@ public abstract class BaseFileIntegrityVerifier(
     /// <summary>
     /// Verifies the integrity of all files within the specified path
     /// </summary>
+    /// <param name="storageLocation">The storage location to verify</param>
     /// <param name="path">The path that will be verified</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification result for the path</returns>
-    public async Task<FileSetIntegrityVerificationResult> Verify(FileSystemPath path,
+    public async Task<FileSetIntegrityVerificationResult> Verify(StorageLocation storageLocation, FileSystemPath path,
         IEnumerable<FileSystemPath> pathsToSkip)
     {
         // Verify all files at the specified directory

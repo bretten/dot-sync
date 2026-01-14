@@ -1,8 +1,8 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -25,6 +25,7 @@ public class LocalFileSystemFileIntegrityVerifierTests
         /*
          * Arrange
          */
+        var storageLocation = Faker.FakeStorageLocation(StorageLocationType.Local, "storage1");
         // This file's checksum and file path have been verified
         var verifiedFile = Faker.FakeFile(path: "verified.txt", checksum: "verified");
         // This file's checksum has been verified, but the file path has changed
@@ -62,13 +63,13 @@ public class LocalFileSystemFileIntegrityVerifierTests
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubMetadataReader.Object,
-            FileSystemPath.Create(LocalFileSystemFilesPath), Mock.Of<JobExecutionContext>(),
-            Mock.Of<IJobProgressReporter>());
+            FileSystemPath.Create(LocalFileSystemFilesPath),
+            Application.Tests.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
 
         /*
          * Act
          */
-        var actual = await verifier.Verify(FileSystemPath.Create(""), new List<FileSystemPath>()
+        var actual = await verifier.Verify(storageLocation, FileSystemPath.Create(""), new List<FileSystemPath>()
         {
             FileSystemPath.Create("skipDir")
         });

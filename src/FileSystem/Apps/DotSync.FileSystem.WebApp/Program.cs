@@ -178,7 +178,6 @@ builder.Services.AddScoped<IFileCopier, AmazonS3FileCopier>(sp =>
         sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
 });
 
-builder.Services.AddScoped<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
 builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
 builder.Services.AddScoped<IFilePusher, FilePusher>();
 builder.Services.AddSingleton<IJobManager, HangfireJobManager>();

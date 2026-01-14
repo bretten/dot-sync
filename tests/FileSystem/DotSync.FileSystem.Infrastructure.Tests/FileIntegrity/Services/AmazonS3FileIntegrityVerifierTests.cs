@@ -5,6 +5,7 @@ using Amazon.S3.Model;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
@@ -21,6 +22,7 @@ public class AmazonS3FileIntegrityVerifierTests
     public async Task Verify_PaginatorReturnsNonOkStatusCode_ThrowsException()
     {
         // Arrange
+        var storageLocation = Faker.FakeStorageLocation(StorageLocationType.AmazonS3, "bucket");
         var responses = new List<ListObjectsV2Response>()
         {
             new()
@@ -33,7 +35,8 @@ public class AmazonS3FileIntegrityVerifierTests
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object, "bucket");
 
-        var action = async () => await verifier.Verify(FileSystemPath.Create(""), Array.Empty<FileSystemPath>());
+        var action = async () =>
+            await verifier.Verify(storageLocation, FileSystemPath.Create(""), Array.Empty<FileSystemPath>());
 
         // Act
         var actual = await Record.ExceptionAsync(action);
@@ -47,6 +50,7 @@ public class AmazonS3FileIntegrityVerifierTests
     public async Task Verify_S3ObjectWithNoChecksum_ThrowsException()
     {
         // Arrange
+        var storageLocation = Faker.FakeStorageLocation(StorageLocationType.AmazonS3, "bucket");
         const string bucketName = "bucket";
         const string key = "key1";
         var responses = new List<ListObjectsV2Response>()
@@ -74,7 +78,7 @@ public class AmazonS3FileIntegrityVerifierTests
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object, bucketName);
 
         var action = async () =>
-            await verifier.Verify(FileSystemPath.Create(bucketName), Array.Empty<FileSystemPath>());
+            await verifier.Verify(storageLocation, FileSystemPath.Create(bucketName), Array.Empty<FileSystemPath>());
 
         // Act
         var actual = await Record.ExceptionAsync(action);
@@ -88,6 +92,7 @@ public class AmazonS3FileIntegrityVerifierTests
     public async Task Verify_VerifiedAndUnverifiedFile_ReturnsVerificationResult()
     {
         // Arrange
+        var storageLocation = Faker.FakeStorageLocation(StorageLocationType.AmazonS3, "bucket");
         const string bucketName = "bucket";
         const string verifiedKey = "verified";
         const string unverifiedKey = "unverified";
@@ -162,10 +167,11 @@ public class AmazonS3FileIntegrityVerifierTests
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object, bucketName);
 
         // Act
-        var actual = await verifier.Verify(FileSystemPath.Create(bucketName), new List<FileSystemPath>()
-        {
-            FileSystemPath.Create("skip")
-        });
+        var actual = await verifier.Verify(storageLocation, FileSystemPath.Create(bucketName),
+            new List<FileSystemPath>()
+            {
+                FileSystemPath.Create("skip")
+            });
 
         // Assert
         Assert.Equal(1, actual.TotalVerified);

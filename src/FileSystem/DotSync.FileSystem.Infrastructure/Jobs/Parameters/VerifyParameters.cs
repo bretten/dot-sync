@@ -1,13 +1,12 @@
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 
 public sealed record VerifyParameters(
-    StorageLocationType StorageType,
-    string? StoragePath,
-    string? VerifyPath,
+    StorageLocation Source,
+    string? Path,
     string? PathsToSkip) : IJobParameters
 {
     public JobType Type => JobType.Verify;
@@ -16,9 +15,8 @@ public sealed record VerifyParameters(
     {
         return new Dictionary<string, string>()
         {
-            { "StorageType", StorageType.ToString() },
-            { "StoragePath", StoragePath! },
-            { "VerifyPath", VerifyPath! },
+            { "Source", $"{Source.Type} - {Source.Path.Value}" },
+            { "Path", Path ?? string.Empty },
             { "PathsToSkip", PathsToSkip! }
         }.AsReadOnly();
     }

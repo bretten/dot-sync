@@ -4,7 +4,6 @@ using Amazon.Runtime;
 using Amazon.S3;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
-using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -77,20 +76,18 @@ static async Task Verify(string[] args)
 
     var scopeFactory = host.Services.GetRequiredService<IServiceScopeFactory>();
     using var scope = scopeFactory.CreateScope();
-    var service = scope.ServiceProvider.GetService<IStorageLocationIntegrityVerificationService>();
-    var clock = host.Services.GetRequiredService<IClock>();
-    if (service == null)
-    {
-        throw new ServiceNotFoundException(
-            $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
-    }
-
-    var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath, pathsToSkip);
-    Console.WriteLine($"Storage location type: {result.StorageLocation.Type.GetDisplayName()}");
-    Console.WriteLine($"Storage location path: {result.StorageLocation.Path.Value}");
-    var reportFileName =
-        $"verify_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
-    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
+    // var service = scope.ServiceProvider.GetService<IStorageLocationIntegrityVerificationService>();
+    // var clock = host.Services.GetRequiredService<IClock>();
+    // if (service == null)
+    // {
+    //     throw new ServiceNotFoundException(
+    //         $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
+    // }
+    //
+    // var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath, pathsToSkip);
+    // var reportFileName =
+    //     $"verify_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    // await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
 
     await host.StopAsync();
 }
@@ -351,8 +348,6 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
             sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
     });
 
-    builder.Services
-        .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
     builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
     builder.Services.AddTransient<IFilePusher, FilePusher>();
 
