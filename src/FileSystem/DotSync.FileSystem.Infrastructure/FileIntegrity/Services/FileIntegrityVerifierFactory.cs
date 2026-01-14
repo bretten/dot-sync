@@ -1,36 +1,30 @@
-﻿using Amazon.S3;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
-using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 
+/// <summary>
+/// Factory for <see cref="IFileIntegrityVerifier"/>
+/// </summary>
 public sealed class FileIntegrityVerifierFactory : IFileIntegrityVerifierFactory
 {
-    private readonly IFileRepository _fileRepository;
-    private readonly IFileChecksumGenerator _fileChecksumGenerator;
-    private readonly IFileMetadataReader _metadataReader;
-    private readonly IAmazonS3 _s3;
-    private readonly ILogger<IFileIntegrityVerifier> _logger;
-    private readonly JobExecutionContext _jobContext;
-    private readonly IJobProgressReporter _jobProgressReporter;
+    /// <summary>
+    /// Resolves the <see cref="IFileIntegrityVerifier"/> based on the current scope
+    ///
+    /// NOTE: I prefer injecting the service provider over the other option of manually resolving each dependency
+    /// required by all the implementations of <see cref="IFileIntegrityVerifier"/> and passing those dependencies
+    /// to the new instances.
+    ///
+    /// <see cref="IServiceScopeFactory"/> doesn't work here because this factory is resolved within a scope and all
+    /// services need to share that scope
+    /// </summary>
+    private readonly IServiceProvider _serviceProvider;
 
-    public FileIntegrityVerifierFactory(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
-        IFileMetadataReader metadataReader, IAmazonS3 s3, ILogger<IFileIntegrityVerifier> logger,
-        JobExecutionContext jobContext, IJobProgressReporter jobProgressReporter)
+    public FileIntegrityVerifierFactory(IServiceProvider serviceProvider)
     {
-        _fileRepository = fileRepository;
-        _fileChecksumGenerator = fileChecksumGenerator;
-        _metadataReader = metadataReader;
-        _s3 = s3;
-        _logger = logger;
-        _jobContext = jobContext;
-        _jobProgressReporter = jobProgressReporter;
+        _serviceProvider = serviceProvider;
     }
 
     public IFileIntegrityVerifier GetBy(StorageLocation storageLocation)
@@ -38,11 +32,9 @@ public sealed class FileIntegrityVerifierFactory : IFileIntegrityVerifierFactory
         switch (storageLocation.Type)
         {
             case StorageLocationType.Local:
-                return new LocalFileSystemFileIntegrityVerifier(_fileRepository, _fileChecksumGenerator, _logger,
-                    _metadataReader, storageLocation.Path, _jobContext, _jobProgressReporter);
+                return _serviceProvider.GetRequiredService<LocalFileSystemFileIntegrityVerifier>();
             case StorageLocationType.AmazonS3:
-                return new AmazonS3FileIntegrityVerifier(_fileRepository, _fileChecksumGenerator, _logger, _s3,
-                    storageLocation.Path.Value);
+                return _serviceProvider.GetRequiredService<AmazonS3FileIntegrityVerifier>();
             default:
                 throw new UnknownStorageLocationTypeForFactoryException($"Unknown type {storageLocation.Type}");
         }

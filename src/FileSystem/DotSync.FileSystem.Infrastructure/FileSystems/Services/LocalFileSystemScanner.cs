@@ -4,6 +4,8 @@ using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -68,9 +70,17 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     }
 
     /// <inheritdoc />
-    public async Task<FileSystemScannerResult> Scan(FileSystemPath path)
+    public async Task<FileSystemScannerResult> Scan(StorageLocation storageLocation, FileSystemPath? scanPath = null)
     {
-        var tasks = ScanDirectory(new DirectoryInfo(path.Value), path).ToList();
+        if (storageLocation.Type != StorageLocationType.Local)
+        {
+            throw new IncompatibleStorageLocationException("Not a local storage location");
+        }
+
+        var pathToScan = scanPath.HasValue
+            ? Path.Combine(storageLocation.Path.Value, scanPath.Value.Value)
+            : storageLocation.Path.Value;
+        var tasks = ScanDirectory(new DirectoryInfo(pathToScan), storageLocation.Path).ToList();
         var newFiles = new ConcurrentBag<DotFile>();
         var completedTasks = 0;
         var taskExecutions = tasks.Select(async task =>

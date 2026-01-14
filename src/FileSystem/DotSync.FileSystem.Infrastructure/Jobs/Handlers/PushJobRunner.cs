@@ -3,7 +3,6 @@ using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
@@ -24,11 +23,8 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
 
     protected override async Task<IJobOutput> RunJob(IJob<PushParameters> job)
     {
-        var result = await _filePusher.PushFilesInDir(StorageLocationType.Local,
-            FileSystemPath.Create(job.Parameters.SourceRootPath ?? ""),
-            FileSystemPath.Create(job.Parameters.SourcePushPath ?? ""),
-            job.Parameters.DestinationType,
-            FileSystemPath.Create(job.Parameters.DestinationPath ?? ""));
+        var result = await _filePusher.PushFilesByPath(job.Parameters.Source,
+            FileSystemPath.Create(job.Parameters.SourcePath ?? string.Empty), job.Parameters.Destination);
 
         return new JobOutput(job, ToResults(result));
     }

@@ -1,9 +1,8 @@
 @inject IJobManager JobManager
 @inject IMainStorageProvider MainStorageProvider
-@using System.ComponentModel.DataAnnotations
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.FileSystem.Application.Storage
-@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
@@ -12,19 +11,10 @@
 <MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
     <MudGrid>
         <MudItem xs="12">
-            <MudSelect @bind-Value="VerifyModel!.Type" Label="Type">
-                @foreach (var t in Enum.GetValues<StorageLocationType>())
-                {
-                    <MudSelectItem Value="t">@t</MudSelectItem>
-                }
-            </MudSelect>
+            <StorageLocationSelect IncludeAllStorages="true" @bind-StorageLocation="VerifyModel.Source"/>
         </MudItem>
         <MudItem xs="12">
-            <MudTextField T="string" Label="Storage Path" Required="true" RequiredError="Storage Path is required"
-                          @bind-Value="VerifyModel!.StoragePath" OnBlur="@(() => Form.Validate())"/>
-        </MudItem>
-        <MudItem xs="12">
-            <FilePathInput @bind-Text="VerifyModel!.VerifyPath"/>
+            <FilePathInput @bind-Text="VerifyModel.Path"/>
         </MudItem>
         <MudItem xs="12">
             <MudTextField T="string" Label="Paths to Skip CSV:" @bind-Value="VerifyModel!.PathsToSkip"/>
@@ -39,32 +29,27 @@
 @code {
 
     [SupplyParameterFromForm(FormName = "Verify")]
-    private VerifyFormModel? VerifyModel { get; set; }
+    private VerifyFormModel VerifyModel { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        VerifyModel ??= new VerifyFormModel()
-        {
-            Type = StorageLocationType.Local,
-            StoragePath = (await MainStorageProvider.GetMainStoragePath()).Value
-        };
+        VerifyModel = new VerifyFormModel();
         await base.OnInitializedAsync();
     }
 
-    protected override Task Submit()
+    /// <inheritdoc/>
+    protected override Task OnSubmit()
     {
-        _ = Task.Run(() => JobManager.RunJob(new VerifyParameters(VerifyModel!.Type, VerifyModel.StoragePath, VerifyModel.VerifyPath, VerifyModel.PathsToSkip)));
-        return base.Submit();
+        _ = Task.Run(() => JobManager.RunJob(new VerifyParameters(VerifyModel.Source!, VerifyModel.Path, VerifyModel.PathsToSkip)));
+        return Task.CompletedTask;
     }
 
     public class VerifyFormModel
     {
-        [Required, EnumDataType(typeof(StorageLocationType))]
-        public StorageLocationType Type { get; set; }
+        public StorageLocation? Source { get; set; }
 
-        public string StoragePath { get; set; } = null!;
-        public string VerifyPath { get; set; } = null!;
-        public string PathsToSkip { get; set; } = null!;
+        public string? Path { get; set; }
+        public string? PathsToSkip { get; set; }
     }
 
 }

@@ -1,9 +1,16 @@
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Storage;
 
 public interface IMainStorageProvider
 {
+    /// <summary>
+    /// Returns the main storage location
+    /// </summary>
+    /// <returns>Main storage location</returns>
+    Task<StorageLocation> GetMainStorageLocation();
+
     /// <summary>
     /// Returns the path to the main storage location
     /// </summary>

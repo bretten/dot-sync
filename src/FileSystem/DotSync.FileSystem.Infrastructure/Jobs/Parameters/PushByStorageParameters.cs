@@ -1,10 +1,14 @@
 using com.brettnamba.DotSync.FileSystem.Application.Jobs;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 
-public sealed record PushByStorageParameters(Guid StorageLocationId, string PathPrefixFilter, long UploadLimitMb)
-    : IJobParameters
+public sealed record PushByStorageParameters(
+    StorageLocation Source,
+    string PathPrefixFilter,
+    long UploadLimitMb,
+    StorageLocation Destination) : IJobParameters
 {
     public JobType Type => JobType.PushByStorage;
 
@@ -12,9 +16,10 @@ public sealed record PushByStorageParameters(Guid StorageLocationId, string Path
     {
         return new Dictionary<string, string>()
         {
-            { "StorageLocationId", StorageLocationId.ToString("D") },
+            { "Source", $"{Source.Type} - {Source.Path.Value}" },
             { "PathPrefixFilter", PathPrefixFilter },
             { "UploadLimitMb", UploadLimitMb.ToString() },
+            { "Destination", $"{Destination.Type} - {Destination.Path.Value}" }
         }.AsReadOnly();
     }
 }

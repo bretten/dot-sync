@@ -1,9 +1,10 @@
 @inject IJobManager JobManager
 @inject IMainStorageProvider MainStorageProvider
-@using System.ComponentModel.DataAnnotations
+@inject IStorageLocationRepository StorageLocationRepository
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.FileSystem.Application.Storage
-@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
@@ -12,28 +13,14 @@
 <MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
     <MudGrid>
         <MudItem xs="12">
-            <MudTextField T="string" Label="Source Root Path" Required="true"
-                          RequiredError="Source Root Path is required"
-                          @bind-Value="PushModel!.SourceRootPath" OnBlur="@(() => Form.Validate())"/>
+            <StorageLocationSelect @bind-StorageLocation="PushModel.Destination"/>
         </MudItem>
         <MudItem xs="12">
-            <FilePathInput @bind-Text="PushModel!.SourcePushPath"/>
+            <FilePathInput @bind-Text="PushModel.SourcePushPath"/>
         </MudItem>
         <MudItem xs="12">
-            <MudSelect @bind-Value="PushModel!.DestinationType" Label="Type">
-                @foreach (var t in Enum.GetValues<StorageLocationType>())
-                {
-                    <MudSelectItem Value="t">@t</MudSelectItem>
-                }
-            </MudSelect>
-        </MudItem>
-        <MudItem xs="12">
-            <MudTextField T="string" Label="Destination Path" Required="true"
-                          RequiredError="Destination Path is required"
-                          @bind-Value="PushModel!.DestinationPath" OnBlur="@(() => Form.Validate())"/>
-        </MudItem>
-        <MudItem xs="12">
-            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())" OnClick="@(Submit)"/>
+            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())"
+                              OnClick="@(Submit)"/>
         </MudItem>
     </MudGrid>
 </MudForm>
@@ -42,35 +29,27 @@
 @code {
 
     [SupplyParameterFromForm(FormName = "Push")]
-    private PushFormModel? PushModel { get; set; }
+    private PushFormModel PushModel { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        PushModel ??= new PushFormModel()
-        {
-            SourceRootPath = (await MainStorageProvider.GetMainStoragePath()).Value,
-            DestinationType = StorageLocationType.AmazonS3,
-            DestinationPath = (await MainStorageProvider.GetDefaultCloudStoragePath()).Value
-        };
+        PushModel = new PushFormModel();
         await base.OnInitializedAsync();
     }
 
-    protected override Task Submit()
+    /// <inheritdoc/>
+    protected override async Task OnSubmit()
     {
-        var parameters = new PushParameters(PushModel!.SourceRootPath, PushModel.SourcePushPath, PushModel.DestinationType, PushModel.DestinationPath);
+        var mainStorage = await MainStorageProvider.GetMainStorageLocation();
+        var parameters = new PushParameters(mainStorage, PushModel.SourcePushPath, PushModel.Destination!);
         _ = Task.Run(() => JobManager.RunJob(parameters));
-        return base.Submit();
     }
 
     public class PushFormModel
     {
-        public string SourceRootPath { get; set; } = null!;
         public string SourcePushPath { get; set; } = null!;
 
-        [Required, EnumDataType(typeof(StorageLocationType))]
-        public StorageLocationType DestinationType { get; set; }
-
-        public string DestinationPath { get; set; } = null!;
+        public StorageLocation? Destination { get; set; }
     }
 
 }

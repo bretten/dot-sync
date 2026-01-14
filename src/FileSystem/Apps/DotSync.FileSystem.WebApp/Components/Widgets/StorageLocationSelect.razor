@@ -1,0 +1,33 @@
+@using System.Collections.Immutable
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
+@inject IStorageLocationRepository StorageLocationRepo
+
+<MudSelect T="StorageLocation" Label="Storage" ValueChanged="OnChange" Required="true" RequiredError="Pick a storage">
+    @foreach (var storageLocation in _storageLocations)
+    {
+        <MudSelectItem
+            Value="@storageLocation">@($"({storageLocation.Type}) - {storageLocation.Path.Value}")</MudSelectItem>
+    }
+</MudSelect>
+
+@code {
+    private IReadOnlyList<StorageLocation> _storageLocations = new List<StorageLocation>();
+
+    [Parameter] public bool IncludeAllStorages { get; set; } = false;
+    [Parameter] public StorageLocation? StorageLocation { get; set; }
+    [Parameter] public EventCallback<StorageLocation> StorageLocationChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _storageLocations = IncludeAllStorages ? (await StorageLocationRepo.GetAll()).ToImmutableList() : (await StorageLocationRepo.GetAllButMainStorage()).ToImmutableList();
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task OnChange(StorageLocation id)
+    {
+        await StorageLocationChanged.InvokeAsync(id);
+    }
+
+}

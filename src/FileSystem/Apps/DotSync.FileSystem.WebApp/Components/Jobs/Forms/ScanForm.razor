@@ -2,18 +2,20 @@
 @inject IMainStorageProvider MainStorageProvider
 @using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.FileSystem.Application.Storage
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
 @inherits BaseForm
 
 <MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
     <MudGrid>
         <MudItem xs="12">
-            <MudTextField T="string" Label="Path" Required="true" RequiredError="Path is required"
-                          @bind-Value="ScanModel!.Path" OnBlur="@(() => Form.Validate())"/>
+            <FilePathInput @bind-Text="ScanModel.Path"/>
         </MudItem>
         <MudItem xs="12">
-            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())" OnClick="@(Submit)"/>
+            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())"
+                              OnClick="@(Submit)"/>
         </MudItem>
     </MudGrid>
 </MudForm>
@@ -22,25 +24,27 @@
 @code {
 
     [SupplyParameterFromForm(FormName = "Scan")]
-    private ScanFormModel? ScanModel { get; set; }
+    private ScanFormModel ScanModel { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        ScanModel ??= new ScanFormModel()
+        ScanModel = new ScanFormModel()
         {
-            Path = (await MainStorageProvider.GetMainStoragePath()).Value
+            Source = await MainStorageProvider.GetMainStorageLocation()
         };
         await base.OnInitializedAsync();
     }
 
-    protected override Task Submit()
+    /// <inheritdoc/>
+    protected override Task OnSubmit()
     {
-        _ = Task.Run(() => JobManager.RunJob(new ScanParameters(ScanModel!.Path!)));
-        return base.Submit();
+        _ = Task.Run(() => JobManager.RunJob(new ScanParameters(ScanModel.Source, ScanModel.Path)));
+        return Task.CompletedTask;
     }
 
     public class ScanFormModel
     {
+        public required StorageLocation Source { get; set; }
         public string? Path { get; set; }
     }
 

@@ -1,8 +1,6 @@
-using System.Text.Json;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
-using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -54,12 +52,4 @@ public abstract class BaseJobRunner<T> : IJobRunner<T> where T : IJobParameters
     /// </summary>
     /// <param name="job">The job to run</param>
     protected abstract Task<IJobOutput> RunJob(IJob<T> job);
-
-    private async Task WriteReport(string reportName, DateTimeOffset startTime, IReadOnlyList<FileResultList> report)
-    {
-        var dir = Directory.CreateDirectory(_jobConfiguration.ReportPath);
-        var filePath = Path.Combine(dir.FullName, $"{startTime.ToLocalTime():yyyy-MM-dd__HH-mm-ss}_{reportName}.json");
-        await using var fileStream = File.CreateText(filePath);
-        await fileStream.WriteAsync(JsonSerializer.Serialize(report));
-    }
 }

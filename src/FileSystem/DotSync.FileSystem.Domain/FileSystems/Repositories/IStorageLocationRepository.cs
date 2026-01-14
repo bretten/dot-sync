@@ -10,4 +10,5 @@ public interface IStorageLocationRepository
     Task Update(StorageLocation storageLocation);
     Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, FileSystemPath path);
     Task<IEnumerable<StorageLocation>> GetAll();
+    Task<IEnumerable<StorageLocation>> GetAllButMainStorage();
 }

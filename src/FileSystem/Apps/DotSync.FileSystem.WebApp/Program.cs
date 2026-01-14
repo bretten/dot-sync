@@ -32,7 +32,6 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Progress;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Storage;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs;
 using com.brettnamba.DotSync.FileSystem.WebApp.Hangfire;
@@ -132,7 +131,11 @@ builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
-builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
+
+// File organization
+builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
+
+// File metadata
 if (!OperatingSystem.IsWindows())
 {
     builder.Services.AddTransient<IFileMetadataReader, CrossPlatformFileMetadataReader>();
@@ -143,9 +146,13 @@ else
     builder.Services.AddTransient<IFileMetadataReader, CrossPlatformFileMetadataReader>();
 }
 
-builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
+// File integrity
 builder.Services.AddScoped<IFileIntegrityVerifierFactory, FileIntegrityVerifierFactory>();
+builder.Services.AddScoped<LocalFileSystemFileIntegrityVerifier>();
+builder.Services.AddScoped<AmazonS3FileIntegrityVerifier>();
+builder.Services.AddTransient<IFileChecksumGenerator, Sha256FileChecksumGenerator>();
 
+// File transfer
 builder.Services.AddScoped<IAmazonS3>(sp =>
 {
     if (!string.IsNullOrWhiteSpace(builder.Configuration["Aws:AccessKey"]))
@@ -179,7 +186,6 @@ builder.Services.AddScoped<IFileCopier, AmazonS3FileCopier>(sp =>
         sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
 });
 
-builder.Services.AddScoped<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
 builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
 builder.Services.AddScoped<IFilePusher, FilePusher>();
 builder.Services.AddSingleton<IJobManager, HangfireJobManager>();

@@ -3,7 +3,7 @@ using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
-using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
+using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
@@ -14,22 +14,22 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
 
 public sealed class VerifyJobRunner : BaseJobRunner<VerifyParameters>
 {
-    private readonly IStorageLocationIntegrityVerificationService _verifier;
+    private readonly IFileIntegrityVerifierFactory _verifierFactory;
     private readonly IThumbnailProvider _thumbnailProvider;
 
     public VerifyJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        ILogger<BaseJobRunner<VerifyParameters>> logger, IStorageLocationIntegrityVerificationService verifier,
+        ILogger<BaseJobRunner<VerifyParameters>> logger, IFileIntegrityVerifierFactory verifierFactory,
         IThumbnailProvider thumbnailProvider) : base(context, clock, jobConfiguration, logger)
     {
-        _verifier = verifier;
+        _verifierFactory = verifierFactory;
         _thumbnailProvider = thumbnailProvider;
     }
 
     protected override async Task<IJobOutput> RunJob(IJob<VerifyParameters> job)
     {
-        var result = await _verifier.Execute(job.Parameters.StorageType,
-            FileSystemPath.Create(job.Parameters.StoragePath ?? ""),
-            FileSystemPath.Create(job.Parameters.VerifyPath ?? ""),
+        var verifier = _verifierFactory.GetBy(job.Parameters.Source);
+        var result = await verifier.Verify(job.Parameters.Source,
+            FileSystemPath.Create(job.Parameters.Path ?? ""),
             !string.IsNullOrWhiteSpace(job.Parameters.PathsToSkip)
                 ? job.Parameters.PathsToSkip.Split(',', StringSplitOptions.TrimEntries).Select(FileSystemPath.Create)
                 : new List<FileSystemPath>());
@@ -37,11 +37,11 @@ public sealed class VerifyJobRunner : BaseJobRunner<VerifyParameters>
         // Generate as many thumbnails as possible. Any that fail to generate will be lazy-generated
         _ = Task.Run(async () =>
         {
-            await Parallel.ForEachAsync(result.Result.New,
+            await Parallel.ForEachAsync(result.New,
                 async (newFile, token) => { await _thumbnailProvider.GetThumbnail(newFile.Path); });
         });
 
-        return new JobOutput(job, ToResults(result.Result));
+        return new JobOutput(job, ToResults(result));
     }
 
     private static FileResults ToResults(FileSetIntegrityVerificationResult result)

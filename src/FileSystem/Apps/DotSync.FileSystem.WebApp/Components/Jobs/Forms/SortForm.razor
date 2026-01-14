@@ -17,12 +17,12 @@
 
 @code {
 
-    protected override async Task Submit()
+    /// <inheritdoc/>
+    protected override async Task OnSubmit()
     {
         const string sourcePath = "";
         var destinationPath = (await MainStorageProvider.GetMainStoragePath()).Value;
         _ = Task.Run(() => JobManager.RunJob(new SortParameters(sourcePath, destinationPath)));
-        await base.Submit();
     }
 
 }

@@ -4,7 +4,6 @@ using Amazon.Runtime;
 using Amazon.S3;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Domain.Tenants;
-using com.brettnamba.DotSync.Common.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -17,7 +16,6 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.StorageLocations.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -78,20 +76,18 @@ static async Task Verify(string[] args)
 
     var scopeFactory = host.Services.GetRequiredService<IServiceScopeFactory>();
     using var scope = scopeFactory.CreateScope();
-    var service = scope.ServiceProvider.GetService<IStorageLocationIntegrityVerificationService>();
-    var clock = host.Services.GetRequiredService<IClock>();
-    if (service == null)
-    {
-        throw new ServiceNotFoundException(
-            $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
-    }
-
-    var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath, pathsToSkip);
-    Console.WriteLine($"Storage location type: {result.StorageLocation.Type.GetDisplayName()}");
-    Console.WriteLine($"Storage location path: {result.StorageLocation.Path.Value}");
-    var reportFileName =
-        $"verify_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
-    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
+    // var service = scope.ServiceProvider.GetService<IStorageLocationIntegrityVerificationService>();
+    // var clock = host.Services.GetRequiredService<IClock>();
+    // if (service == null)
+    // {
+    //     throw new ServiceNotFoundException(
+    //         $"Verify could not resolve service of type {nameof(IStorageLocationIntegrityVerificationService)}");
+    // }
+    //
+    // var result = await service.Execute(storageLocationType, storageLocationPath, verifyPath, pathsToSkip);
+    // var reportFileName =
+    //     $"verify_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    // await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}", result.Report);
 
     await host.StopAsync();
 }
@@ -120,18 +116,18 @@ static async Task Scan(string[] args)
         throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
     }
 
-    var result = await service.Scan(storageLocationPath);
-    Console.WriteLine("New Files:");
-    foreach (var newFile in result.NewFiles)
-    {
-        Console.WriteLine($"{newFile.Item2.Value}\t{newFile.Item1.Value}");
-    }
-
-    var reportFileName =
-        $"scan_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
-    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
-        string.Join("<br/>",
-            result.NewFiles.Select(x => $"{x.Item2.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Item1.Value}")));
+    //var result = await service.Scan(storageLocationPath);
+    // Console.WriteLine("New Files:");
+    // // foreach (var newFile in result.NewFiles)
+    // // {
+    // //     Console.WriteLine($"{newFile.Item2.Value}\t{newFile.Item1.Value}");
+    // // }
+    //
+    // var reportFileName =
+    //     $"scan_{fileSet}_{storageLocationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    // await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
+    //     string.Join("<br/>",
+    //         result.NewFiles.Select(x => $"{x.Item2.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Item1.Value}")));
 
     await host.StopAsync();
 }
@@ -161,19 +157,19 @@ static async Task Push(string[] args)
         throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
     }
 
-    var result =
-        await service.PushUnverifiedFiles(StorageLocationType.Local, sourcePath, destinationType, destinationPath);
-    Console.WriteLine("New Files:");
-    foreach (var newFile in result)
-    {
-        Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
-    }
-
-    var reportFileName =
-        $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
-    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
-        string.Join("<br/>",
-            result.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
+    // var result =
+    //     await service.PushUnverifiedFiles(StorageLocationType.Local, sourcePath, destinationType, destinationPath);
+    // Console.WriteLine("New Files:");
+    // foreach (var newFile in result)
+    // {
+    //     Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
+    // }
+    //
+    // var reportFileName =
+    //     $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    // await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
+    //     string.Join("<br/>",
+    //         result.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
 
     await host.StopAsync();
 }
@@ -206,19 +202,19 @@ static async Task PushDir(string[] args)
         throw new ServiceNotFoundException($"Scan could not resolve service of type {nameof(IFileSystemScanner)}");
     }
 
-    var result = await service.PushFilesInDir(StorageLocationType.Local, sourceRootPath, sourcePushPath,
-        destinationType, destinationRootPath);
+    // var result = await service.PushFilesByPath(StorageLocationType.Local, sourceRootPath, sourcePushPath,
+    //     destinationType, destinationRootPath);
     // Console.WriteLine("New Files:");
     // foreach (var newFile in result)
     // {
     //     Console.WriteLine($"{newFile.Sha256Checksum.Value}\t{newFile.Path.Value}");
     // }
 
-    var reportFileName =
-        $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
-    await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
-        string.Join("<br/>",
-            result.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
+    // var reportFileName =
+    //     $"push_{fileSet}_{destinationType.GetDisplayName()}_{clock.GetUtcNow().ToString("yyyyMMddTHHmmss")}.html";
+    // await File.WriteAllTextAsync($"{reportOutputPath}{Path.AltDirectorySeparatorChar}{reportFileName}",
+    //     string.Join("<br/>",
+    //         result.Select(x => $"{x.Sha256Checksum.Value}&nbsp;&nbsp;&nbsp;&nbsp;{x.Path.Value}")));
 
     await host.StopAsync();
 }
@@ -352,8 +348,6 @@ static HostApplicationBuilder ConfigureAndRegisterServices(string fileSet, Stora
             sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
     });
 
-    builder.Services
-        .AddTransient<IStorageLocationIntegrityVerificationService, StorageLocationIntegrityVerificationService>();
     builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
     builder.Services.AddTransient<IFilePusher, FilePusher>();
 
