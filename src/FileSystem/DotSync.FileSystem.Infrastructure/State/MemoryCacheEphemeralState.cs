@@ -1,4 +1,4 @@
-using com.brettnamba.DotSync.FileSystem.Application.Files;
+using com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
 using com.brettnamba.DotSync.FileSystem.Application.State;
 using Microsoft.Extensions.Caching.Memory;
 

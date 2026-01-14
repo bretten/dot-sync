@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
-namespace com.brettnamba.DotSync.FileSystem.Application.Files;
+namespace com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 
 public sealed class ThumbnailProvider : IThumbnailProvider
 {

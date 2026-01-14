@@ -1,4 +1,4 @@
-namespace com.brettnamba.DotSync.FileSystem.Application.Files;
+namespace com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
 
 /// <summary>
 /// Indexes all the directories that contains files

@@ -1,4 +1,4 @@
-namespace com.brettnamba.DotSync.FileSystem.Application.Files;
+namespace com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 
 public sealed record ThumbnailConfiguration(string Path, int MaxWidth)
 {

@@ -1,6 +1,6 @@
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
-namespace com.brettnamba.DotSync.FileSystem.Application.Files;
+namespace com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 
 public interface IThumbnailProvider
 {

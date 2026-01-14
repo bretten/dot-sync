@@ -5,14 +5,13 @@ using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
 using com.brettnamba.DotSync.Common.DateAndTme;
-using com.brettnamba.DotSync.Common.Domain.Tenants;
 using com.brettnamba.DotSync.FileSystem.Application.Configuration;
-using com.brettnamba.DotSync.FileSystem.Application.Files;
+using com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
+using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
-using com.brettnamba.DotSync.FileSystem.Application.Reporting;
 using com.brettnamba.DotSync.FileSystem.Application.State;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -22,7 +21,8 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Indexing;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Execution;
@@ -46,6 +46,9 @@ using Npgsql;
 using Constants = com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Core
+builder.Services.AddTransient<IClock, Clock>();
 
 builder.Services.AddMemoryCache();
 
@@ -98,12 +101,7 @@ new List<Assembly>()
         builder.Services.AddScoped(jobRunnerType, x);
     });
 
-// Multitenancy
-builder.Services.AddTransient<ITenantContext, TenantContext>(s => new TenantContext(new Tenant("")));
-builder.Services.AddTransient<ITenantAware, TenantAware>();
-builder.Services.AddTransient<IClock, Clock>();
-
-
+// DB and EF Core
 const string migrationsTable = "__EFMigrationsHistory";
 const string fileSystemsSchema = Constants.Schema;
 
@@ -186,7 +184,6 @@ builder.Services.AddScoped<IFileCopier, AmazonS3FileCopier>(sp =>
         sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
 });
 
-builder.Services.AddTransient<IIntegrityReporter, HtmlIntegrityReporter>();
 builder.Services.AddScoped<IFilePusher, FilePusher>();
 builder.Services.AddSingleton<IJobManager, HangfireJobManager>();
 builder.Services.AddTransient<JobComponent>();
