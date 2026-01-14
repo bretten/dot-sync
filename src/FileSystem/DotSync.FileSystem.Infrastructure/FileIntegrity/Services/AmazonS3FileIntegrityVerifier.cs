@@ -23,24 +23,16 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     private readonly IAmazonS3 _s3;
 
     /// <summary>
-    /// The bucket name
-    /// </summary>
-    private readonly string _bucketName;
-
-    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
     /// <param name="logger">Logger</param>
     /// <param name="s3">Amazon S3 client</param>
-    /// <param name="bucketName">The bucket name</param>
     public AmazonS3FileIntegrityVerifier(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
-        ILogger<IFileIntegrityVerifier> logger, IAmazonS3 s3, string bucketName) : base(fileRepository,
-        fileChecksumGenerator, logger)
+        ILogger<IFileIntegrityVerifier> logger, IAmazonS3 s3) : base(fileRepository, fileChecksumGenerator, logger)
     {
         _s3 = s3;
-        _bucketName = bucketName;
     }
 
     /// <summary>
@@ -51,11 +43,12 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// <summary>
     /// Verifies the directory, in this case, an Amazon S3 bucket
     /// </summary>
-    /// <param name="directoryPath">The Amazon S3 bucket name</param>
+    /// <param name="bucket">The bucket</param>
+    /// <param name="directoryPath">The prefix within the Amazon S3 bucket to verify</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the bucket</returns>
     /// <exception cref="AmazonS3ListObjectsPaginationException">Thrown if paginating over the keys in the bucket returns a non-OK status</exception>
-    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
+    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(string bucket,
         FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip)
     {
         // Will hold the individual S3 Object verification results
@@ -66,7 +59,7 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
         // Paginate over all the S3 objects in the bucket
         var request = new ListObjectsV2Request
         {
-            BucketName = _bucketName,
+            BucketName = bucket,
             MaxKeys = MaxKeys,
             Prefix = directoryPath.Value
         };
@@ -91,7 +84,7 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
 
                 // Verify the object
                 Logger.LogInformation($"Verifying {s3Object.Key}");
-                var result = await VerifyS3Object(s3Object);
+                var result = await VerifyS3Object(bucket, s3Object);
                 results.Add(result);
             });
         }
@@ -102,12 +95,13 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// <summary>
     /// Verifies a S3 Object by its checksum
     /// </summary>
+    /// <param name="bucket">The containing S3 bucket</param>
     /// <param name="s3Object">The S3 Object to verify</param>
     /// <returns>The result of the verification</returns>
-    private async Task<FileIntegrityVerificationResult> VerifyS3Object(S3Object s3Object)
+    private async Task<FileIntegrityVerificationResult> VerifyS3Object(string bucket, S3Object s3Object)
     {
         // Get the S3 Object's checksum
-        var s3Checksum = FileSha256Checksum.Create(await GetS3ObjectSha256Checksum(s3Object.Key));
+        var s3Checksum = FileSha256Checksum.Create(await GetS3ObjectSha256Checksum(bucket, s3Object.Key));
 
         // The path of the S3 Object
         var s3Path = FileSystemPath.Create(s3Object.Key);
@@ -133,12 +127,13 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// the file was uploaded in parts and the checksum is based on all parts. So use the fallback checksum in
     /// the metadata which is based on the whole file.
     /// </summary>
+    /// <param name="bucket">The containing S3 bucket</param>
     /// <param name="key">The key of the S3 Object</param>
     /// <returns>The SHA256 checksum</returns>
     /// <exception cref="AmazonS3MissingChecksumException">Thrown if the checksum does not exist</exception>
-    private async Task<string> GetS3ObjectSha256Checksum(string key)
+    private async Task<string> GetS3ObjectSha256Checksum(string bucket, string key)
     {
-        var metaData = await GetObjectMetadata(key);
+        var metaData = await GetObjectMetadata(bucket, key);
         var s3Checksum = metaData?.ChecksumSHA256;
         var metadataChecksum = metaData?.Metadata[Constants.Metadata.Keys.Sha256Checksum];
 
@@ -155,13 +150,14 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// <summary>
     /// Gets the metadata of the S3 Object specified by the key
     /// </summary>
+    /// <param name="bucket">The containing S3 bucket</param>
     /// <param name="key">The key of the S3 Object</param>
     /// <returns>The S3 Object metadata</returns>
-    private async Task<GetObjectMetadataResponse?> GetObjectMetadata(string key)
+    private async Task<GetObjectMetadataResponse?> GetObjectMetadata(string bucket, string key)
     {
         var request = new GetObjectMetadataRequest()
         {
-            BucketName = _bucketName,
+            BucketName = bucket,
             Key = key,
             ChecksumMode = ChecksumMode.ENABLED
         };

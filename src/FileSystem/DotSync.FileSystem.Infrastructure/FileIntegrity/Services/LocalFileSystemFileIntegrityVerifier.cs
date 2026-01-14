@@ -14,39 +14,51 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Service
 /// <summary>
 /// Verifies the integrity of files on a local filesystem
 /// </summary>
-public sealed class LocalFileSystemFileIntegrityVerifier(
-    IFileRepository fileRepository,
-    IFileChecksumGenerator checksumGenerator,
-    ILogger<IFileIntegrityVerifier> logger,
-    IFileMetadataReader metadataReader,
-    FileSystemPath rootPath,
-    JobExecutionContext jobContext,
-    IJobProgressReporter jobProgressReporter)
-    : BaseFileIntegrityVerifier(fileRepository, checksumGenerator, logger)
+public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVerifier
 {
     /// <summary>
-    /// Verifies the integrity of all files within the specified directory
+    /// Reads metadata for new files
     /// </summary>
-    /// <param name="directoryPath">The path to the directory that will be verified</param>
-    /// <param name="pathsToSkip">Paths to skip</param>
-    /// <returns>Verification results for each file within the directory</returns>
-    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
+    private readonly IFileMetadataReader _metadataReader;
+
+    /// <summary>
+    /// Execution context for the current job
+    /// </summary>
+    private readonly JobExecutionContext _jobContext;
+
+    /// <summary>
+    /// Reports job progress
+    /// </summary>
+    private readonly IJobProgressReporter _jobProgressReporter;
+
+    public LocalFileSystemFileIntegrityVerifier(IFileRepository fileRepository,
+        IFileChecksumGenerator checksumGenerator, ILogger<IFileIntegrityVerifier> logger,
+        IFileMetadataReader metadataReader, JobExecutionContext jobContext,
+        IJobProgressReporter jobProgressReporter) : base(fileRepository, checksumGenerator, logger)
+    {
+        _metadataReader = metadataReader;
+        _jobContext = jobContext;
+        _jobProgressReporter = jobProgressReporter;
+    }
+
+    /// <inheritdoc/>
+    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(string rootPath,
         FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip)
     {
         var dbFiles = await FileRepository.GetFilesByPath(directoryPath);
         var trackedFiles = new TrackedFiles(dbFiles);
         var skips = pathsToSkip.ToList();
 
-        var dirPath = Path.Combine(rootPath.Value, directoryPath.Value);
+        var dirPath = Path.Combine(rootPath, directoryPath.Value);
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
         var completedTasks = 0;
-        var tasks = VerifyDirectory(new DirectoryInfo(dirPath), skips, trackedFiles).ToList();
+        var tasks = VerifyDirectory(rootPath, new DirectoryInfo(dirPath), skips, trackedFiles).ToList();
         var taskExecutions = tasks.Select(async task =>
         {
             var result = await task();
 
             Interlocked.Increment(ref completedTasks);
-            jobProgressReporter.ReportPercent(this, jobContext.Id, completedTasks, tasks.Count);
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, completedTasks, tasks.Count);
 
             results.Add(result);
         });
@@ -66,15 +78,16 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// <summary>
     /// Verifies the integrity of all files within the specified directory
     /// </summary>
+    /// <param name="rootPath">The root path</param>
     /// <param name="directoryInfo">The directory to verify</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <param name="trackedFiles">Currently tracked files</param>
     /// <returns>Verification results for each file within the directory</returns>
-    private IEnumerable<Func<Task<FileIntegrityVerificationResult>>> VerifyDirectory(DirectoryInfo directoryInfo,
-        List<FileSystemPath> pathsToSkip, TrackedFiles trackedFiles)
+    private IEnumerable<Func<Task<FileIntegrityVerificationResult>>> VerifyDirectory(string rootPath,
+        DirectoryInfo directoryInfo, List<FileSystemPath> pathsToSkip, TrackedFiles trackedFiles)
     {
         // Determine this directory's relative path compared to the root directory to see if it should be skipped
-        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath.Value, directoryInfo.FullName),
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath, directoryInfo.FullName),
             replaceBackslashes: OperatingSystem.IsWindows());
         if (pathsToSkip.Contains(relativePath))
         {
@@ -94,10 +107,10 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
             switch (entry)
             {
                 case FileInfo info:
-                    tasks.Add(() => VerifyFile(info, trackedFiles));
+                    tasks.Add(() => VerifyFile(rootPath, info, trackedFiles));
                     break;
                 case DirectoryInfo info:
-                    tasks.AddRange(VerifyDirectory(info, pathsToSkip, trackedFiles));
+                    tasks.AddRange(VerifyDirectory(rootPath, info, pathsToSkip, trackedFiles));
                     break;
             }
         }
@@ -108,14 +121,16 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
     /// <summary>
     /// Verifies the integrity of a single file
     /// </summary>
+    /// <param name="rootPath">The root path</param>
     /// <param name="fileInfo">The file</param>
     /// <param name="trackedFiles">Currently tracked files</param>
     /// <returns>Verification result of the file</returns>
-    private async Task<FileIntegrityVerificationResult> VerifyFile(FileInfo fileInfo, TrackedFiles trackedFiles)
+    private async Task<FileIntegrityVerificationResult> VerifyFile(string rootPath, FileInfo fileInfo,
+        TrackedFiles trackedFiles)
     {
         using (Logger.BeginScope(new List<KeyValuePair<string, object>>()
                {
-                   new(nameof(JobExecutionContext), jobContext.Id)
+                   new(nameof(JobExecutionContext), _jobContext.Id)
                }))
         {
             Logger.LogInformation($"Verifying {fileInfo.FullName}");
@@ -124,7 +139,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         // Generate the checksum of the file on the filesystem
         var checksum = FileSha256Checksum.Create(ChecksumGenerator.GenerateChecksum(fileInfo));
         // Determine its relative path compared to the root directory
-        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath.Value, fileInfo.FullName),
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath, fileInfo.FullName),
             replaceBackslashes: OperatingSystem.IsWindows());
 
         var pathExists = trackedFiles.Paths.Contains(relativePath.Value);
@@ -135,7 +150,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier(
         if (!pathExists && !checksumExists)
         {
             // File creation time (or best estimation)
-            var fileCreation = metadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
+            var fileCreation = _metadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
             return FileIntegrityVerificationResult.New(relativePath, checksum, fileInfo.Length, fileCreation);
         }
 

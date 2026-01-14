@@ -1,4 +1,5 @@
 using com.brettnamba.DotSync.Common.DateAndTme;
+using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
@@ -12,12 +13,14 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
 public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
 {
     private readonly IFileSystemScanner _scanner;
+    private readonly IThumbnailProvider _thumbnailProvider;
 
     public ScanJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
-        ILogger<BaseJobRunner<ScanParameters>> logger, IFileSystemScanner scanner) : base(context, clock,
-        jobConfiguration, logger)
+        ILogger<BaseJobRunner<ScanParameters>> logger, IFileSystemScanner scanner,
+        IThumbnailProvider thumbnailProvider) : base(context, clock, jobConfiguration, logger)
     {
         _scanner = scanner;
+        _thumbnailProvider = thumbnailProvider;
     }
 
     protected override async Task<IJobOutput> RunJob(IJob<ScanParameters> job)
@@ -26,6 +29,14 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
             ? null
             : FileSystemPath.Create(job.Parameters.Path);
         var result = await _scanner.Scan(job.Parameters.Source, pathToScan);
+
+        // Generate as many thumbnails as possible. Any that fail to generate will be lazy-generated
+        _ = Task.Run(async () =>
+        {
+            await Parallel.ForEachAsync(result.NewFiles,
+                async (newFile, token) => { await _thumbnailProvider.GetThumbnail(newFile.Path); });
+        });
+
         return new JobOutput(job, ToResult(result));
     }
 

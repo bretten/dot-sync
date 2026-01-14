@@ -25,7 +25,8 @@ public class LocalFileSystemFileIntegrityVerifierTests
         /*
          * Arrange
          */
-        var storageLocation = Faker.FakeStorageLocation(StorageLocationType.Local, "storage1");
+        var testPathDirectoryInfo = new DirectoryInfo(LocalFileSystemFilesPath);
+        var storageLocation = Faker.FakeStorageLocation(StorageLocationType.Local, testPathDirectoryInfo.FullName);
         // This file's checksum and file path have been verified
         var verifiedFile = Faker.FakeFile(path: "verified.txt", checksum: "verified");
         // This file's checksum has been verified, but the file path has changed
@@ -63,7 +64,6 @@ public class LocalFileSystemFileIntegrityVerifierTests
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubMetadataReader.Object,
-            FileSystemPath.Create(LocalFileSystemFilesPath),
             Application.Tests.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
 
         /*
