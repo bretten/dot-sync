@@ -12,8 +12,8 @@ public sealed class MainStorageProvider : IMainStorageProvider
     private readonly IDbContextFactory<FileSystemsDbContext> _dbContextFactory;
 
     private static StorageLocation? _mainStorageLocation;
-    private static FileSystemPath? _mainStoragePath;
-    private static FileSystemPath? _defaultCloudStoragePath;
+    private static StoragePath? _mainStoragePath;
+    private static StoragePath? _defaultCloudStoragePath;
 
     public MainStorageProvider(IDbContextFactory<FileSystemsDbContext> dbContextFactory)
     {
@@ -33,7 +33,7 @@ public sealed class MainStorageProvider : IMainStorageProvider
     }
 
     /// <inheritdoc />
-    public async Task<FileSystemPath> GetMainStoragePath()
+    public async Task<StoragePath> GetMainStoragePath()
     {
         if (_mainStoragePath != null)
         {
@@ -45,7 +45,7 @@ public sealed class MainStorageProvider : IMainStorageProvider
     }
 
     /// <inheritdoc />
-    public async Task<FileSystemPath> GetDefaultCloudStoragePath()
+    public async Task<StoragePath> GetDefaultCloudStoragePath()
     {
         if (_defaultCloudStoragePath != null)
         {
@@ -57,10 +57,10 @@ public sealed class MainStorageProvider : IMainStorageProvider
     }
 
     /// <inheritdoc />
-    public async Task<FileSystemPath> GetFileFullLocalPath(FileSystemPath filePath)
+    public async Task<string> GetFileFullLocalPath(FileSystemPath filePath)
     {
         var mainStoragePath = await GetMainStoragePath();
-        return FileSystemPath.Create(Path.Combine(mainStoragePath.Value, filePath.Value));
+        return Path.Combine(mainStoragePath.Value, filePath.Value);
     }
 
     private async Task<StorageLocation> GetMainStorage()
@@ -71,7 +71,7 @@ public sealed class MainStorageProvider : IMainStorageProvider
         return defaultStorage;
     }
 
-    private async Task<FileSystemPath> GetMainLocalStoragePath()
+    private async Task<StoragePath> GetMainLocalStoragePath()
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         var defaultStorage = dbContext.StorageLocations.FirstOrDefault(x => x.Type == StorageLocationType.Local);
@@ -79,7 +79,7 @@ public sealed class MainStorageProvider : IMainStorageProvider
         return defaultStorage.Path;
     }
 
-    private async Task<FileSystemPath> GetMainCloudStoragePath()
+    private async Task<StoragePath> GetMainCloudStoragePath()
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         var defaultStorage = dbContext.StorageLocations.FirstOrDefault(x => x.Type == StorageLocationType.AmazonS3);

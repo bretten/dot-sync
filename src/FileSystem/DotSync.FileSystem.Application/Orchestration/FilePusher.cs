@@ -3,7 +3,6 @@ using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
@@ -32,17 +31,17 @@ public sealed class FilePusher : IFilePusher
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DotFile>> PushFilesByPath(StorageLocation source, FileSystemPath sourcePath,
+    public async Task<IEnumerable<DotFile>> PushFilesByPath(StorageLocation source, string pathPrefix,
         StorageLocation destination)
     {
-        var files = (await _fileRepository.GetFilesByPath(sourcePath)).ToList();
+        var files = (await _fileRepository.GetFilesByPathPrefix(pathPrefix)).ToList();
         var totalBytes = files.Sum(f => f.Size);
 
         var pushedFiles = new List<DotFile>();
         var bytesPushed = 0L;
         foreach (var file in files)
         {
-            var pushed = await _fileCopier.CopyFile(source.Path, file.Path, destination.Path);
+            var pushed = await _fileCopier.CopyFile(source, file, destination);
             bytesPushed += file.Size;
             _jobProgressReporter.ReportPercent(this, _jobContext.Id, bytesPushed, totalBytes);
 
@@ -63,10 +62,10 @@ public sealed class FilePusher : IFilePusher
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DotFile>> PushFilesInStorage(StorageLocation source, string prefixFilter,
+    public async Task<IEnumerable<DotFile>> PushFilesInStorage(StorageLocation source, string pathPrefix,
         long uploadLimitMb, StorageLocation destination)
     {
-        var files = (await _fileRepository.GetUnsyncedFiles(destination.Id, prefixFilter)).ToList();
+        var files = (await _fileRepository.GetUnsyncedFiles(destination.Id, pathPrefix)).ToList();
 
         var pushedFiles = new List<DotFile>();
         var uploadedBytes = 0L;
@@ -82,7 +81,7 @@ public sealed class FilePusher : IFilePusher
                 continue;
             }
 
-            var pushed = await _fileCopier.CopyFile(source.Path, file.Path, destination.Path);
+            var pushed = await _fileCopier.CopyFile(source, file, destination);
             if (!pushed) continue;
             using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
                    {

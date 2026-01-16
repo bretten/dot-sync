@@ -3,8 +3,8 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Transfer;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Aws;
 using Microsoft.Extensions.Logging;
 
@@ -31,31 +31,36 @@ public sealed class AmazonS3FileCopier : IFileCopier
         _logger = logger;
     }
 
-    public async Task<bool> CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination)
+    public async Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination)
     {
-        var exists = await Exists(destination.Value, sourceFile.Value);
-        if (exists) return false;
-        _logger.LogInformation($"Uploading {sourcePath.Value}/{sourceFile.Value}");
+        // The storage location is a S3 bucket, so get the bucket name
+        var bucket = destination.Path.WithoutLeadingAndTrailingSlash;
+        var key = file.Path.Value;
+        // The file that will be uploaded
+        var fullFilePath = source.Path.ConcatenateFilePath(file.Path);
 
-        var fileInfo =
-            new FileInfo(FileSystemPath.Create(Path.Combine(sourcePath.Value, sourceFile.Value), true).Value);
+        var exists = await Exists(bucket, key);
+        if (exists) return false;
+        _logger.LogInformation($"Uploading {fullFilePath}");
+
+        var fileInfo = new FileInfo(fullFilePath);
 
         if (fileInfo.Length >= SinglePartUploadMaxSize)
         {
-            await MultiPartUpload(sourceFile, destination, fileInfo);
+            await MultiPartUpload(bucket: bucket, key: key, fileInfo);
             return true;
         }
 
-        await SinglePartUpload(sourceFile, destination, fileInfo);
+        await SinglePartUpload(bucket: bucket, key: key, fileInfo);
         return true;
     }
 
-    private async Task SinglePartUpload(FileSystemPath sourceFile, FileSystemPath destination, FileInfo fileInfo)
+    private async Task SinglePartUpload(string bucket, string key, FileInfo fileInfo)
     {
         var request = new PutObjectRequest
         {
-            BucketName = destination.Value,
-            Key = sourceFile.Value,
+            BucketName = bucket,
+            Key = key,
             FilePath = fileInfo.FullName,
             ChecksumAlgorithm = ChecksumAlgorithm.SHA256,
             ChecksumSHA256 = _fileChecksumGenerator.GenerateChecksum(fileInfo),
@@ -67,13 +72,13 @@ public sealed class AmazonS3FileCopier : IFileCopier
         await _s3.PutObjectAsync(request);
     }
 
-    private async Task MultiPartUpload(FileSystemPath sourceFile, FileSystemPath destination, FileInfo fileInfo)
+    private async Task MultiPartUpload(string bucket, string key, FileInfo fileInfo)
     {
         using var fileTransferUtility = new TransferUtility(_s3);
         var fileTransferUtilityRequest = new TransferUtilityUploadRequest
         {
-            BucketName = destination.Value,
-            Key = sourceFile.Value,
+            BucketName = bucket,
+            Key = key,
             FilePath = fileInfo.FullName,
             ChecksumAlgorithm = ChecksumAlgorithm.SHA256,
             ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256,
@@ -109,11 +114,11 @@ public sealed class AmazonS3FileCopier : IFileCopier
         return await _s3.CopyObjectAsync(request);
     }
 
-    private async Task<bool> Exists(string bucketName, string key)
+    private async Task<bool> Exists(string bucket, string key)
     {
         var request = new GetObjectMetadataRequest()
         {
-            BucketName = bucketName,
+            BucketName = bucket,
             Key = key,
             ChecksumMode = ChecksumMode.ENABLED
         };

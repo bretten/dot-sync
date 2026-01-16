@@ -5,6 +5,6 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 public interface IThumbnailGenerator
 {
     string ThumbnailContentType { get; }
-    FileSystemPath DetermineThumbnailPath(FileSystemPath filePath);
+    string DetermineThumbnailPath(FileSystemPath filePath);
     Task<Thumbnail> CreateThumbnail(FileSystemPath filePath);
 }

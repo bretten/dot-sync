@@ -10,9 +10,9 @@ public interface IFileRepository
     Task Update(DotFile file);
     Task<DotFile?> GetFileByChecksum(FileSha256Checksum checksum);
     Task<DotFile?> GetFileByPath(FileSystemPath path);
-    Task SetAllAsUnverified(FileSystemPath path);
+    Task SetAllAsUnverified(string pathPrefix);
     Task<IEnumerable<DotFile>> GetUnverifiedFiles();
-    Task<IEnumerable<DotFile>> GetFilesByPath(FileSystemPath path);
+    Task<IEnumerable<DotFile>> GetFilesByPathPrefix(string pathPrefix);
 
     /// <summary>
     /// Returns files that do not have a row in the synced files join table corresponding to all storage locations
@@ -31,7 +31,7 @@ public interface IFileRepository
     /// Returns files that have no corresponding row in the synced files join table and filters on file path prefix
     /// </summary>
     /// <param name="storageLocationId">The storage location to check</param>
-    /// <param name="path">File path prefix filter</param>
+    /// <param name="pathPrefix">File path prefix filter</param>
     /// <returns><see cref="DotFile"/>s that have not been synced with the storage location</returns>
-    Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string path);
+    Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string pathPrefix);
 }

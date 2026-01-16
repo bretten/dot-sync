@@ -1,5 +1,4 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
@@ -18,7 +17,7 @@ public sealed class FileSystemsDbContext(DbContextOptions<FileSystemsDbContext> 
     ///         FROM file_systems.files AS f
     ///         WHERE f.path::text LIKE @__path_Value_0_startswith
     /// </summary>
-    public IQueryable<DotFile> FilesThatStartWith(FileSystemPath path, bool includeRelated = false)
+    public IQueryable<DotFile> FilesThatStartWith(string pathPrefix, bool includeRelated = false)
     {
         var query = includeRelated
             ? Files.Include(e => e.SyncedFiles).ThenInclude(e => e.StorageLocation).AsSplitQuery()
@@ -26,7 +25,7 @@ public sealed class FileSystemsDbContext(DbContextOptions<FileSystemsDbContext> 
         // https://stackoverflow.com/a/63862850/1251396
         // Tricks the EF Core LINQ to SQL translator to just write WHERE Path like "value%"
         // This executes server-side
-        return query.Where(x => ((string)(object)x.Path).StartsWith(path.Value));
+        return query.Where(x => ((string)(object)x.Path).StartsWith(pathPrefix));
     }
 
     /// <summary>

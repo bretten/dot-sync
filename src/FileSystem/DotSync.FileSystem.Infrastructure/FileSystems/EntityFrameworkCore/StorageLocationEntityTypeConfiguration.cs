@@ -42,6 +42,6 @@ public sealed class StorageLocationEntityTypeConfiguration : IEntityTypeConfigur
             .HasColumnName(Constants.StorageLocations.Path)
             .HasColumnOrder(columnOrder++)
             .HasConversion(v => v.Value,
-                v => FileSystemPath.Create(v));
+                v => StoragePath.Create(v));
     }
 }

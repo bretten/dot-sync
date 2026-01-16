@@ -1,13 +1,18 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects.Exceptions;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.FileSystems.ValueObjects;
 
 public class FileSystemPathTests
 {
     [Theory]
-    [InlineData("file://file.jpg")]
-    [InlineData("file://dir/file.png")]
-    [InlineData("file://dir/dir2/test.txt")]
+    [InlineData("C:/dir/file.jpg")]
+    [InlineData("C:dir/file.jpg")]
+    [InlineData("/some/storage/file.png")]
+    // Reversed
+    [InlineData(@"C:\dir\file.jpg")]
+    [InlineData(@"C:dir\file.jpg")]
+    [InlineData(@"\some\storage\file.png")]
     public void Create_InvalidPath_ThrowsException(string path)
     {
         // Arrange
@@ -18,46 +23,23 @@ public class FileSystemPathTests
 
         // Assert
         Assert.NotNull(actual);
-        Assert.IsType<FileSystemPath.InvalidUriForFileSystemPathException>(actual);
+        Assert.IsType<InvalidFilePathException>(actual);
     }
 
+    // Backslashes are valid characters in filenames in Unix: https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/8.0/file-path-backslash
     [Theory]
-    [InlineData("file.jpg", "file.jpg")]
-    [InlineData("dir/file.png", "dir/file.png")]
-    [InlineData("dir/dir2/test.txt", "dir/dir2/test.txt")]
-    [InlineData(@"dir\dir2\test.txt",
-        @"dir\dir2\test.txt")] // Backslashes are valid characters in filenames in Unix: https://learn.microsoft.com/en-us/dotnet/core/compatibility/core-libraries/8.0/file-path-backslash
-    [InlineData(@"C:\path\to\file.txt", @"C:\path\to\file.txt")] // Path to file
-    [InlineData(@"C:\path\to\dir", @"C:\path\to\dir")]
-    [InlineData(@"C:\path\to\dir\", @"C:\path\to\dir\")]
-    public void Create_Path_ReturnsFileSystemPath(string path, string expected)
+    [InlineData("file.jpg", "file.jpg", "file.jpg")]
+    [InlineData("dir/file.png", "dir/file.png", "dir/file.png")]
+    [InlineData("dir/dir2/test.txt", "dir/dir2/test.txt", "dir/dir2/test.txt")]
+    // Reversed
+    [InlineData(@"dir\file.png", @"dir\file.png", "dir/file.png")]
+    [InlineData(@"dir\dir2\test.txt", @"dir\dir2\test.txt", "dir/dir2/test.txt")]
+    public void Create_Path_ReturnsFileSystemPath(string path, string expected, string expectedWindows)
     {
-        // Arrange
-
         // Act
         var actual = FileSystemPath.Create(path);
 
         // Assert
-        Assert.Equal(expected, actual.Value);
-    }
-
-    [Theory]
-    [InlineData("file.jpg", "file.jpg")]
-    [InlineData("dir/file.png", "dir/file.png")]
-    [InlineData(@"dir\file.png", "dir/file.png")]
-    [InlineData("dir/dir2/test.txt", "dir/dir2/test.txt")]
-    [InlineData(@"dir\dir2\test.txt", "dir/dir2/test.txt")]
-    [InlineData(@"C:\path\to\file.txt", @"C:/path/to/file.txt")] // Path to file
-    [InlineData(@"C:\path\to\dir", @"C:/path/to/dir")]
-    [InlineData(@"C:\path\to\dir\", @"C:/path/to/dir/")]
-    public void Create_PathAndReplaceBackslashes_ReturnsFileSystemPath(string path, string expected)
-    {
-        // Arrange
-
-        // Act
-        var actual = FileSystemPath.Create(path, replaceBackslashes: true);
-
-        // Assert
-        Assert.Equal(expected, actual.Value);
+        Assert.Equal(OperatingSystem.IsWindows() ? expectedWindows : expected, actual.Value);
     }
 }

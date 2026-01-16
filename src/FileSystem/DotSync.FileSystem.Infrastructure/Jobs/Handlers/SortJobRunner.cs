@@ -17,7 +17,7 @@ public sealed class SortJobRunner : BaseJobRunner<SortParameters>
     private readonly IStorageLocationRepository _storageLocationRepo;
     private readonly IFileSorter _fileSorter;
 
-    public const string DefaultSortDir = "ToUpload";
+    public const string DefaultSortDir = "ToUpload/";
 
     public SortJobRunner(JobExecutionContext context, IClock clock, JobConfiguration jobConfiguration,
         ILogger<BaseJobRunner<SortParameters>> logger, IStorageLocationRepository storageLocationRepo,
@@ -32,9 +32,7 @@ public sealed class SortJobRunner : BaseJobRunner<SortParameters>
         var location = (await _storageLocationRepo.GetAll()).FirstOrDefault(x => x.Type == StorageLocationType.Local);
         if (location == null) throw new NoLocalStorageException("No Local storage for sorting");
 
-        var sortSourcePath =
-            FileSystemPath.Create($"{location.Path.Value}{Path.AltDirectorySeparatorChar}{DefaultSortDir}",
-                OperatingSystem.IsWindows());
+        var sortSourcePath = StoragePath.Create(Path.Combine(location.Path.Value, DefaultSortDir));
 
         var result = await _fileSorter.Sort(sortSourcePath, location.Path);
         return new JobOutput(job, ToResults(result));

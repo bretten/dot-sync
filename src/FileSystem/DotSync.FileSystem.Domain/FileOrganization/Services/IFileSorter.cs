@@ -13,5 +13,5 @@ public interface IFileSorter
     /// <param name="sourcePath">The path where the files are stored</param>
     /// <param name="destinationPath">The path where the files will be sorted to</param>
     /// <returns>The list of sorted files</returns>
-    Task<IEnumerable<string>> Sort(FileSystemPath sourcePath, FileSystemPath destinationPath);
+    Task<IEnumerable<string>> Sort(StoragePath sourcePath, StoragePath destinationPath);
 }

@@ -1,6 +1,5 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 
@@ -13,9 +12,9 @@ public interface IFileIntegrityVerifier
     /// Should verify the integrity of all files within the specified path
     /// </summary>
     /// <param name="storageLocation">The storage location to verify</param>
-    /// <param name="path">The path that will be verified</param>
+    /// <param name="pathPrefix">Files that have a path with this prefix will be verified</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification result for the path</returns>
-    Task<FileSetIntegrityVerificationResult> Verify(StorageLocation storageLocation, FileSystemPath path,
-        IEnumerable<FileSystemPath> pathsToSkip);
+    Task<FileSetIntegrityVerificationResult> Verify(StorageLocation storageLocation, string pathPrefix,
+        IEnumerable<string> pathsToSkip);
 }

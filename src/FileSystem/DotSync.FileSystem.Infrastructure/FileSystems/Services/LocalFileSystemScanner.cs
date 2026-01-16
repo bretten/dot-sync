@@ -70,15 +70,15 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     }
 
     /// <inheritdoc />
-    public async Task<FileSystemScannerResult> Scan(StorageLocation storageLocation, FileSystemPath? scanPath = null)
+    public async Task<FileSystemScannerResult> Scan(StorageLocation storageLocation, string pathPrefix)
     {
         if (storageLocation.Type != StorageLocationType.Local)
         {
             throw new IncompatibleStorageLocationException("Not a local storage location");
         }
 
-        var pathToScan = scanPath.HasValue
-            ? Path.Combine(storageLocation.Path.Value, scanPath.Value.Value)
+        var pathToScan = !string.IsNullOrWhiteSpace(pathPrefix)
+            ? Path.Combine(storageLocation.Path.Value, pathPrefix)
             : storageLocation.Path.Value;
         var tasks = ScanDirectory(new DirectoryInfo(pathToScan), storageLocation.Path).ToList();
         var newFiles = new ConcurrentBag<DotFile>();
@@ -108,8 +108,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="directoryInfo">The directory to scan</param>
     /// <param name="rootDirectoryPath">The original root directory that is being scanned</param>
     /// <returns>New files found in the directory</returns>
-    private IEnumerable<Func<Task<DotFile?>>> ScanDirectory(DirectoryInfo directoryInfo,
-        FileSystemPath rootDirectoryPath)
+    private IEnumerable<Func<Task<DotFile?>>> ScanDirectory(DirectoryInfo directoryInfo, StoragePath rootDirectoryPath)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
         var tasks = new List<Func<Task<DotFile?>>>();
@@ -141,11 +140,10 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="fileInfo">The file</param>
     /// <param name="rootDirectoryPath">The original root directory of the file</param>
     /// <returns><see cref="DotFile"/> if it is a new file, otherwise null</returns>
-    private async Task<DotFile?> ScanFile(FileInfo fileInfo, FileSystemPath rootDirectoryPath)
+    private async Task<DotFile?> ScanFile(FileInfo fileInfo, StoragePath rootDirectoryPath)
     {
         // Determine its relative path compared to the root directory
-        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName),
-            replaceBackslashes: OperatingSystem.IsWindows());
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName));
 
         // See if the file's path exists
         var existingFileByPath = await _fileRepository.GetFileByPath(relativePath);
@@ -164,7 +162,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         }
 
         // File creation time (or best estimation)
-        var fileCreation = _fileMetadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
+        var fileCreation = _fileMetadataReader.ReadFileCreationDate(fileInfo.FullName);
 
         // Generate a checksum for the new file
         var checksum = FileSha256Checksum.Create(_fileChecksumGenerator.GenerateChecksum(fileInfo));

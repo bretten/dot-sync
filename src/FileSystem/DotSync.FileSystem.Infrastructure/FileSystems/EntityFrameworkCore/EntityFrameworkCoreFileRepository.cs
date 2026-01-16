@@ -54,12 +54,12 @@ public sealed class EntityFrameworkCoreFileRepository(
         return await dbContext.Files.FirstOrDefaultAsync(x => x.Path == path);
     }
 
-    public async Task SetAllAsUnverified(FileSystemPath path)
+    public async Task SetAllAsUnverified(string pathPrefix)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        if (path.Value != "")
+        if (pathPrefix != "")
         {
-            await dbContext.FilesThatStartWith(path)
+            await dbContext.FilesThatStartWith(pathPrefix)
                 .ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
             return;
         }
@@ -73,10 +73,10 @@ public sealed class EntityFrameworkCoreFileRepository(
         return await dbContext.Files.Where(x => !x.IsVerified).ToListAsync();
     }
 
-    public async Task<IEnumerable<DotFile>> GetFilesByPath(FileSystemPath path)
+    public async Task<IEnumerable<DotFile>> GetFilesByPathPrefix(string pathPrefix)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        return await dbContext.FilesThatStartWith(path).ToListAsync();
+        return await dbContext.FilesThatStartWith(pathPrefix).ToListAsync();
     }
 
     /// <inheritdoc/>
@@ -126,10 +126,10 @@ public sealed class EntityFrameworkCoreFileRepository(
         return await files.ToListAsync();
     }
 
-    public async Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string path)
+    public async Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string pathPrefix)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        var query = dbContext.FilesThatStartWith(FileSystemPath.Create(path));
+        var query = dbContext.FilesThatStartWith(pathPrefix);
         query = dbContext.UnsyncedFiles(query, storageLocationId);
         return await query.ToListAsync();
     }

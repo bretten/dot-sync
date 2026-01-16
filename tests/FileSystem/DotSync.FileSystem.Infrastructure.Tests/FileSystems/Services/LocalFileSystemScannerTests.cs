@@ -6,7 +6,6 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
@@ -17,8 +16,8 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileSystems.Ser
 
 public class LocalFileSystemScannerTests
 {
-    private const string LocalFileSystemFilesPath =
-        "FileSystems/Services/TestFiles/LocalFileSystemScanner/";
+    private static readonly string LocalFileSystemFilesPath =
+        $"{AppContext.BaseDirectory}/FileSystems/Services/TestFiles/LocalFileSystemScanner/";
 
     [Fact]
     public async Task Scan_DirectoryWithNewAndOldFile_ReturnsResult()
@@ -34,7 +33,7 @@ public class LocalFileSystemScannerTests
             .ReturnsAsync(oldFile);
 
         var stubFileMetadataReader = new Mock<IFileMetadataReader>();
-        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<FileSystemPath>()))
+        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<string>()))
             .Returns(new DateTime(2024, 6, 15, 1, 2, 3));
 
         var stubChecksumGenerator = new Mock<IFileChecksumGenerator>();
@@ -50,7 +49,7 @@ public class LocalFileSystemScannerTests
             new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>());
 
         // Act
-        var actual = await scanner.Scan(storage);
+        var actual = await scanner.Scan(storage, string.Empty);
 
         // Assert
         Assert.Equal(2, actual.NewFiles.Count);
@@ -76,7 +75,7 @@ public class LocalFileSystemScannerTests
             .ReturnsAsync(oldFile);
 
         var stubFileMetadataReader = new Mock<IFileMetadataReader>();
-        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<FileSystemPath>()))
+        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<string>()))
             .Returns(new DateTime(2024, 6, 15, 1, 2, 3));
 
         var stubChecksumGenerator = new Mock<IFileChecksumGenerator>();
@@ -89,7 +88,7 @@ public class LocalFileSystemScannerTests
             new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>());
 
         // Act
-        var actual = await scanner.Scan(storage, FileSystemPath.Create("someDir"));
+        var actual = await scanner.Scan(storage, "someDir");
 
         // Assert
         Assert.Equal(1, actual.NewFiles.Count);

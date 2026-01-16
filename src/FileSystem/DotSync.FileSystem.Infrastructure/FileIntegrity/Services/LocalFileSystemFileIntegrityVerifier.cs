@@ -42,16 +42,21 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
     }
 
     /// <inheritdoc/>
-    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(string rootPath,
-        FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip)
+    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
+        StorageLocation storageLocation, string pathPrefix, IEnumerable<string> pathsToSkip)
     {
-        var dbFiles = await FileRepository.GetFilesByPath(directoryPath);
+        // Existing files to verify
+        var dbFiles = await FileRepository.GetFilesByPathPrefix(pathPrefix);
         var trackedFiles = new TrackedFiles(dbFiles);
         var skips = pathsToSkip.ToList();
 
-        var dirPath = Path.Combine(rootPath, directoryPath.Value);
+        // Path to verify
+        var rootPath = storageLocation.Path.Value;
+        var dirPath = Path.Combine(rootPath, pathPrefix);
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
         var completedTasks = 0;
+
+        // Verify tasks
         var tasks = VerifyDirectory(rootPath, new DirectoryInfo(dirPath), skips, trackedFiles).ToList();
         var taskExecutions = tasks.Select(async task =>
         {
@@ -67,7 +72,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
         // Any leftover tracked files that could not be verified are considered missing
         foreach (var trackedFile in trackedFiles.AllFiles)
         {
-            if (skips.Any(x => trackedFile.Path.StartsWith(x.Value))) continue;
+            if (skips.Any(x => trackedFile.Path.StartsWith(x))) continue;
             results.Add(FileIntegrityVerificationResult.Missing(FileSystemPath.Create(trackedFile.Path),
                 FileSha256Checksum.Create(trackedFile.Checksum), 0));
         }
@@ -84,11 +89,10 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
     /// <param name="trackedFiles">Currently tracked files</param>
     /// <returns>Verification results for each file within the directory</returns>
     private IEnumerable<Func<Task<FileIntegrityVerificationResult>>> VerifyDirectory(string rootPath,
-        DirectoryInfo directoryInfo, List<FileSystemPath> pathsToSkip, TrackedFiles trackedFiles)
+        DirectoryInfo directoryInfo, List<string> pathsToSkip, TrackedFiles trackedFiles)
     {
         // Determine this directory's relative path compared to the root directory to see if it should be skipped
-        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath, directoryInfo.FullName),
-            replaceBackslashes: OperatingSystem.IsWindows());
+        var relativePath = Path.GetRelativePath(rootPath, directoryInfo.FullName);
         if (pathsToSkip.Contains(relativePath))
         {
             return Array.Empty<Func<Task<FileIntegrityVerificationResult>>>();
@@ -125,7 +129,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
     /// <param name="fileInfo">The file</param>
     /// <param name="trackedFiles">Currently tracked files</param>
     /// <returns>Verification result of the file</returns>
-    private async Task<FileIntegrityVerificationResult> VerifyFile(string rootPath, FileInfo fileInfo,
+    private Task<FileIntegrityVerificationResult> VerifyFile(string rootPath, FileInfo fileInfo,
         TrackedFiles trackedFiles)
     {
         using (Logger.BeginScope(new List<KeyValuePair<string, object>>()
@@ -139,8 +143,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
         // Generate the checksum of the file on the filesystem
         var checksum = FileSha256Checksum.Create(ChecksumGenerator.GenerateChecksum(fileInfo));
         // Determine its relative path compared to the root directory
-        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath, fileInfo.FullName),
-            replaceBackslashes: OperatingSystem.IsWindows());
+        var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootPath, fileInfo.FullName));
 
         var pathExists = trackedFiles.Paths.Contains(relativePath.Value);
         var checksumExists = trackedFiles.ChecksumsToPaths.ContainsKey(checksum.Value);
@@ -150,8 +153,9 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
         if (!pathExists && !checksumExists)
         {
             // File creation time (or best estimation)
-            var fileCreation = _metadataReader.ReadFileCreationDate(FileSystemPath.Create(fileInfo.FullName));
-            return FileIntegrityVerificationResult.New(relativePath, checksum, fileInfo.Length, fileCreation);
+            var fileCreation = _metadataReader.ReadFileCreationDate(fileInfo.FullName);
+            return Task.FromResult(
+                FileIntegrityVerificationResult.New(relativePath, checksum, fileInfo.Length, fileCreation));
         }
 
         trackedFiles.ExcludeTrackedFile(new TrackedFile(relativePath.Value, checksum.Value));
@@ -160,19 +164,19 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
         if (pathExists && checksumVerified)
         {
             // The file is verified
-            return FileIntegrityVerificationResult.Verified(relativePath, checksum, fileInfo.Length);
+            return Task.FromResult(FileIntegrityVerificationResult.Verified(relativePath, checksum, fileInfo.Length));
         }
 
 
         if (!pathExists && checksumExists)
         {
             // The file moved
-            return FileIntegrityVerificationResult.Moved(relativePath, checksum, fileInfo.Length);
+            return Task.FromResult(FileIntegrityVerificationResult.Moved(relativePath, checksum, fileInfo.Length));
         }
         else
         {
             // The checksum has changed
-            return FileIntegrityVerificationResult.Unverified(relativePath, checksum, fileInfo.Length);
+            return Task.FromResult(FileIntegrityVerificationResult.Unverified(relativePath, checksum, fileInfo.Length));
         }
     }
 

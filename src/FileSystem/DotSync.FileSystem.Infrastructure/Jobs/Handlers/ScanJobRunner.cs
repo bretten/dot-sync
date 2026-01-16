@@ -25,10 +25,7 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
 
     protected override async Task<IJobOutput> RunJob(IJob<ScanParameters> job)
     {
-        FileSystemPath? pathToScan = string.IsNullOrWhiteSpace(job.Parameters.Path)
-            ? null
-            : FileSystemPath.Create(job.Parameters.Path);
-        var result = await _scanner.Scan(job.Parameters.Source, pathToScan);
+        var result = await _scanner.Scan(job.Parameters.Source, job.Parameters.Path ?? string.Empty);
 
         // Generate as many thumbnails as possible. Any that fail to generate will be lazy-generated
         _ = Task.Run(async () =>

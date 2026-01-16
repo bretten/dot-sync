@@ -1,6 +1,5 @@
 ﻿using System.Text.RegularExpressions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 
@@ -33,9 +32,9 @@ public sealed class WindowsFileMetadataReader : IFileMetadataReader
     /// <inheritdoc cref="IFileMetadataReader.ReadFileCreationDate"/>
     /// <para>Attempts to read the taken date from different meta data properties. If it cannot find a date, it will throw an exception of type <see cref="DateTakenCouldNotBeFoundException"/></para>
     /// </summary>
-    public DateTime ReadFileCreationDate(FileSystemPath path)
+    public DateTime ReadFileCreationDate(string path)
     {
-        var shellObject = GetShellObject(new FileInfo(path.Value));
+        var shellObject = GetShellObject(new FileInfo(path));
         try
         {
             return DateTime.Parse(GetMetadataValue(shellObject, DateTakenId));
@@ -61,7 +60,7 @@ public sealed class WindowsFileMetadataReader : IFileMetadataReader
         {
         }
 
-        throw new DateTakenCouldNotBeFoundException($"Date taken could not be found for {path.Value}");
+        throw new DateTakenCouldNotBeFoundException($"Date taken could not be found for {path}");
     }
 
     /// <summary>

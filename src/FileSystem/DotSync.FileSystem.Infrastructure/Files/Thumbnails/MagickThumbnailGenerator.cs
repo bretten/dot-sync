@@ -9,7 +9,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Thumbnails;
 
 public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 {
-    private readonly IMainStorageProvider _storageProvider;
+    private readonly IMainStorageProvider _mainStorageProvider;
     private readonly ThumbnailConfiguration _config;
 
     private DirectoryInfo? _thumbnailsDir;
@@ -27,20 +27,19 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
         }
     }
 
-    public MagickThumbnailGenerator(IMainStorageProvider storageProvider, IOptions<ThumbnailConfiguration> config)
+    public MagickThumbnailGenerator(IMainStorageProvider mainStorageProvider, IOptions<ThumbnailConfiguration> config)
     {
-        _storageProvider = storageProvider;
+        _mainStorageProvider = mainStorageProvider;
         _config = config.Value;
     }
 
     public string ThumbnailContentType => "image/jpeg";
 
-    public FileSystemPath DetermineThumbnailPath(FileSystemPath filePath)
+    public string DetermineThumbnailPath(FileSystemPath filePath)
     {
         var fileDirPath = Path.GetDirectoryName(filePath.Value)!;
         var thumbnailFilename = $"{Path.GetFileNameWithoutExtension(filePath.Value)}.jpg";
-        return FileSystemPath.Create(Path.Combine(ThumbnailsDir.FullName, fileDirPath, thumbnailFilename),
-            !OperatingSystem.IsWindows());
+        return Path.Combine(ThumbnailsDir.FullName, fileDirPath, thumbnailFilename);
     }
 
     public async Task<Thumbnail> CreateThumbnail(FileSystemPath filePath)
@@ -51,7 +50,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
             return await CreateThumbnailFromRaw(filePath);
         }
 
-        var fullLocalPath = (await _storageProvider.GetFileFullLocalPath(filePath)).Value;
+        var fullLocalPath = await _mainStorageProvider.GetFileFullLocalPath(filePath);
 
         await using var fileStream = File.Open(fullLocalPath, FileMode.Open, FileAccess.Read);
         using var thumbnail = new MagickImage(fileStream);
@@ -76,7 +75,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
             ReadThumbnail = true
         };
 
-        var fullLocalPath = (await _storageProvider.GetFileFullLocalPath(filePath)).Value;
+        var fullLocalPath = await _mainStorageProvider.GetFileFullLocalPath(filePath);
 
         using var raw = new MagickImage();
         raw.Settings.SetDefines(defines);
@@ -122,9 +121,9 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
     {
         var thumbnailPath = DetermineThumbnailPath(filePath);
         // Create the directory if it does not exist
-        Directory.CreateDirectory(Path.GetDirectoryName(thumbnailPath.Value)!);
+        Directory.CreateDirectory(Path.GetDirectoryName(thumbnailPath)!);
 
-        return thumbnailPath.Value;
+        return thumbnailPath;
     }
 
     private void ResizeThumbnail(MagickImage thumbnail)

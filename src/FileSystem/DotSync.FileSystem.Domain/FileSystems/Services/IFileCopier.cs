@@ -1,4 +1,4 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 
@@ -7,5 +7,5 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 /// </summary>
 public interface IFileCopier
 {
-    Task<bool> CopyFile(FileSystemPath sourcePath, FileSystemPath sourceFile, FileSystemPath destination);
+    Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination);
 }

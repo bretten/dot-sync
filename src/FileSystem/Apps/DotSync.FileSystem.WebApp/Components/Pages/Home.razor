@@ -154,7 +154,7 @@
     private PaginationState _pagination = new PaginationState { ItemsPerPage = DefaultItemsPerPage };
     private FileSystemsDbContext _context = default!;
     private IJSObjectReference? _module;
-    private FileSystemPath _mainStoragePath;
+    private StoragePath _mainStoragePath;
     private StorageLocation _mainStorageLocation = null!;
     private IReadOnlyList<StorageLocation> _storageLocations = null!;
     private string _currentImgUrl = string.Empty;
@@ -169,7 +169,7 @@
     ///
     /// Avoid this by writing a custom method <see cref="FilterFiles"/>
     /// </summary>
-    private IQueryable<DotFile> FilteredFiles => _context.FilesThatStartWith(FileSystemPath.Create(_searchQuery));
+    private IQueryable<DotFile> FilteredFiles => _context.FilesThatStartWith(_searchQuery);
 
     protected override async Task OnInitializedAsync()
     {
@@ -213,7 +213,7 @@
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
-        var query = context.FilesThatStartWith(FileSystemPath.Create(_searchQuery));
+        var query = context.FilesThatStartWith(_searchQuery);
         if (IsPageFilteredByStorageLocation())
         {
             query = context.UnsyncedFiles(query, _selectedStorageLocationId);

@@ -4,6 +4,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Aws;
@@ -43,25 +44,24 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     /// <summary>
     /// Verifies the directory, in this case, an Amazon S3 bucket
     /// </summary>
-    /// <param name="bucket">The bucket</param>
-    /// <param name="directoryPath">The prefix within the Amazon S3 bucket to verify</param>
+    /// <param name="storageLocation">The storage location to verify</param>
+    /// <param name="pathPrefix">The prefix within the Amazon S3 bucket to verify</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the bucket</returns>
     /// <exception cref="AmazonS3ListObjectsPaginationException">Thrown if paginating over the keys in the bucket returns a non-OK status</exception>
-    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(string bucket,
-        FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip)
+    protected override async Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
+        StorageLocation storageLocation, string pathPrefix, IEnumerable<string> pathsToSkip)
     {
+        string bucket = storageLocation.Path.WithoutLeadingAndTrailingSlash;
         // Will hold the individual S3 Object verification results
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
-        // Prefixes to skip since they are virtual paths
-        var prefixesToSkip = pathsToSkip.Select(x => x.Value).ToList();
 
         // Paginate over all the S3 objects in the bucket
         var request = new ListObjectsV2Request
         {
             BucketName = bucket,
             MaxKeys = MaxKeys,
-            Prefix = directoryPath.Value
+            Prefix = pathPrefix
         };
         var paginator = _s3.Paginators.ListObjectsV2(request);
         await foreach (var response in paginator.Responses)
@@ -76,7 +76,7 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
             await Parallel.ForEachAsync(response.S3Objects, async (s3Object, token) =>
             {
                 // See if the object should be skipped
-                if (prefixesToSkip.Any(prefixToSkip => s3Object.Key.StartsWith(prefixToSkip)))
+                if (pathsToSkip.Any(x => s3Object.Key.StartsWith(x)))
                 {
                     Logger.LogInformation($"Skipping {s3Object.Key}");
                     return;

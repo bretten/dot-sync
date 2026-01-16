@@ -1,6 +1,4 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-
-namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
+﻿namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 
 /// <summary>
 /// Represents a service that reads metadata from files
@@ -12,5 +10,5 @@ public interface IFileMetadataReader
     /// </summary>
     /// <param name="path">The path of the file</param>
     /// <returns>The creation date of the file</returns>
-    DateTime ReadFileCreationDate(FileSystemPath path);
+    DateTime ReadFileCreationDate(string path);
 }
