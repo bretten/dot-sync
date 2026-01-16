@@ -17,8 +17,8 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileSystems.Ser
 
 public class LocalFileSystemScannerTests
 {
-    private const string LocalFileSystemFilesPath =
-        "FileSystems/Services/TestFiles/LocalFileSystemScanner/";
+    private static readonly string LocalFileSystemFilesPath =
+        $"{AppContext.BaseDirectory}/FileSystems/Services/TestFiles/LocalFileSystemScanner/";
 
     [Fact]
     public async Task Scan_DirectoryWithNewAndOldFile_ReturnsResult()
@@ -34,7 +34,7 @@ public class LocalFileSystemScannerTests
             .ReturnsAsync(oldFile);
 
         var stubFileMetadataReader = new Mock<IFileMetadataReader>();
-        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<FileSystemPath>()))
+        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<string>()))
             .Returns(new DateTime(2024, 6, 15, 1, 2, 3));
 
         var stubChecksumGenerator = new Mock<IFileChecksumGenerator>();
@@ -76,7 +76,7 @@ public class LocalFileSystemScannerTests
             .ReturnsAsync(oldFile);
 
         var stubFileMetadataReader = new Mock<IFileMetadataReader>();
-        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<FileSystemPath>()))
+        stubFileMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<string>()))
             .Returns(new DateTime(2024, 6, 15, 1, 2, 3));
 
         var stubChecksumGenerator = new Mock<IFileChecksumGenerator>();

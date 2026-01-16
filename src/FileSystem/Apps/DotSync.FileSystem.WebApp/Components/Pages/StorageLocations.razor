@@ -109,7 +109,7 @@
             return;
         }
 
-        await _dbContext.StorageLocations.AddAsync(new StorageLocation(NewStorageModel.Type, FileSystemPath.Create(NewStorageModel.Path)));
+        await _dbContext.StorageLocations.AddAsync(new StorageLocation(NewStorageModel.Type, StoragePath.Create(NewStorageModel.Path)));
         await _dbContext.SaveChangesAsync();
         await _module!.InvokeVoidAsync("closeModal", "storageModal");
     }

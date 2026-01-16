@@ -5,7 +5,6 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
@@ -55,11 +54,11 @@ public class LocalFileSystemFileIntegrityVerifierTests
             .Returns(newFile.Sha256Checksum.Value);
         // It will try to verify files by their checksum
         var stubFileRepository = new Mock<IFileRepository>();
-        stubFileRepository.Setup(x => x.GetFilesByPath(FileSystemPath.Create("")))
+        stubFileRepository.Setup(x => x.GetFilesByPathPrefix(string.Empty))
             .ReturnsAsync(new List<DotFile>() { verifiedFile, pathChangedFile, checksumFailPathMatchFile });
         // Metadata reader
         var stubMetadataReader = new Mock<IFileMetadataReader>();
-        stubMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<FileSystemPath>()))
+        stubMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<string>()))
             .Returns(new DateTime(2024, 4, 25));
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
@@ -69,9 +68,9 @@ public class LocalFileSystemFileIntegrityVerifierTests
         /*
          * Act
          */
-        var actual = await verifier.Verify(storageLocation, FileSystemPath.Create(""), new List<FileSystemPath>()
+        var actual = await verifier.Verify(storageLocation, string.Empty, new List<string>()
         {
-            FileSystemPath.Create("skipDir")
+            "skipDir"
         });
 
         /*

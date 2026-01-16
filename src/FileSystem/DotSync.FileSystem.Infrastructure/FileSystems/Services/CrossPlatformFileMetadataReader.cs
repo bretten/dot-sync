@@ -1,5 +1,4 @@
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using MetadataExtractor;
 using MetadataExtractor.Formats.Exif;
 using MetadataExtractor.Formats.FileSystem;
@@ -21,11 +20,11 @@ public sealed class CrossPlatformFileMetadataReader : IFileMetadataReader
         "ddd MMM dd HH:mm:ss zzz yyyy"
     ];
 
-    public DateTime ReadFileCreationDate(FileSystemPath path)
+    public DateTime ReadFileCreationDate(string path)
     {
         try
         {
-            IEnumerable<Directory> directories = ImageMetadataReader.ReadMetadata(path.Value);
+            IEnumerable<Directory> directories = ImageMetadataReader.ReadMetadata(path);
 
             var exifBaseDir = directories.OfType<ExifDirectoryBase>().FirstOrDefault();
             var quicktimeMovieHeaderDir = directories.OfType<QuickTimeMovieHeaderDirectory>().FirstOrDefault();
@@ -87,7 +86,7 @@ public sealed class CrossPlatformFileMetadataReader : IFileMetadataReader
             throw;
         }
 
-        return File.GetLastWriteTime(path.Value);
+        return File.GetLastWriteTime(path);
     }
 
     public sealed class MediaHasNoDateException(string message) : Exception(message);

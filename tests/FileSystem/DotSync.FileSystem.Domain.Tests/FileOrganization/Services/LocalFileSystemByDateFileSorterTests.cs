@@ -9,8 +9,8 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.FileOrganization.Servic
 
 public class LocalFileSystemByDateFileSorterTests
 {
-    private const string SourceDirectoryName = "source";
-    private const string DestinationDirectoryName = "dest";
+    private const string SourceDirectoryName = "source/";
+    private const string DestinationDirectoryName = "dest/";
 
     private static readonly string TestFilesPath =
         $"FileOrganization{Path.AltDirectorySeparatorChar}Services{Path.AltDirectorySeparatorChar}TestFiles";
@@ -46,8 +46,8 @@ public class LocalFileSystemByDateFileSorterTests
         /*
          * Act
          */
-        await sorter.Sort(FileSystemPath.Create(_sourceDirectory.FullName),
-            FileSystemPath.Create(_destinationDirectory.FullName));
+        await sorter.Sort(StoragePath.Create(_sourceDirectory.FullName),
+            StoragePath.Create(_destinationDirectory.FullName));
 
         /*
          * Assert
@@ -71,9 +71,9 @@ public class LocalFileSystemByDateFileSorterTests
         RemoveDirectory(_destinationDirectory);
     }
 
-    private FileSystemPath PathEndingIn(string fileName)
+    private string PathEndingIn(string fileName)
     {
-        return It.Is<FileSystemPath>(x => x.Value.EndsWith(fileName));
+        return It.Is<string>(x => x.EndsWith(fileName));
     }
 
     private void CreateDirectoryFresh(DirectoryInfo directory)

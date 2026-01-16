@@ -28,7 +28,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
                 .WithName(GetType().Name + Guid.NewGuid())
                 .WithUsername("postgres")
                 .WithPassword("password99")
-                .WithPortBinding(54327, 5432)
+                .WithPortBinding(54321, 5432)
                 .Build();
         }
         catch (ArgumentException e)
@@ -140,7 +140,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
         await repo.Add(fakeFile2);
 
         // Act
-        await repo.SetAllAsUnverified(FileSystemPath.Create(""));
+        await repo.SetAllAsUnverified(string.Empty);
         var actual = await repo.GetFileByChecksum(fakeFile.Sha256Checksum);
         var actual2 = await repo.GetFileByChecksum(fakeFile2.Sha256Checksum);
 
@@ -170,7 +170,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
         await repo.Add(fakeFile3);
 
         // Act
-        await repo.SetAllAsUnverified(FileSystemPath.Create("path/to"));
+        await repo.SetAllAsUnverified("path/to");
         var actual = await repo.GetFileByChecksum(fakeFile.Sha256Checksum);
         var actual2 = await repo.GetFileByChecksum(fakeFile2.Sha256Checksum);
         var actual3 = await repo.GetFileByChecksum(fakeFile3.Sha256Checksum);
@@ -211,7 +211,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GetFilesByPath_Path_ReturnsRowsWithMatchingPath()
+    public async Task GetFilesByPathPrefix_Path_ReturnsRowsWithMatchingPath()
     {
         // Arrange
         var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
@@ -226,7 +226,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
         await repo.Add(fakeFile3);
 
         // Act
-        var actual = (await repo.GetFilesByPath(FileSystemPath.Create("path/to"))).ToList();
+        var actual = (await repo.GetFilesByPathPrefix("path/to")).ToList();
 
         // Assert
         Assert.Equal(2, actual.Count);

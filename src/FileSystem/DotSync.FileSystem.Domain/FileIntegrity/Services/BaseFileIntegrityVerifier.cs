@@ -3,7 +3,6 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
@@ -36,18 +35,12 @@ public abstract class BaseFileIntegrityVerifier : IFileIntegrityVerifier
         Logger = logger;
     }
 
-    /// <summary>
-    /// Verifies the integrity of all files within the specified path
-    /// </summary>
-    /// <param name="storageLocation">The storage location to verify</param>
-    /// <param name="path">The path that will be verified</param>
-    /// <param name="pathsToSkip">Paths to skip</param>
-    /// <returns>Verification result for the path</returns>
-    public async Task<FileSetIntegrityVerificationResult> Verify(StorageLocation storageLocation, FileSystemPath path,
-        IEnumerable<FileSystemPath> pathsToSkip)
+    /// <inheritdoc/>
+    public async Task<FileSetIntegrityVerificationResult> Verify(StorageLocation storageLocation, string pathPrefix,
+        IEnumerable<string> pathsToSkip)
     {
         // Verify all files at the specified directory
-        var results = (await VerifyDirectory(storageLocation.Path.Value, path, pathsToSkip)).ToImmutableList();
+        var results = (await VerifyDirectory(storageLocation, pathPrefix, pathsToSkip)).ToImmutableList();
 
         foreach (var result in results)
         {
@@ -63,10 +56,10 @@ public abstract class BaseFileIntegrityVerifier : IFileIntegrityVerifier
     /// <summary>
     /// Verifies the integrity of all files within the specified directory
     /// </summary>
-    /// <param name="root">The root. In a local context, it is the root path. In a cloud context, it is the container (like a S3 bucket)</param>
-    /// <param name="directoryPath">The path to the directory that will be verified</param>
+    /// <param name="storageLocation">The storage location to verify</param>
+    /// <param name="pathPrefix">Files that have a path with this prefix will be verified</param>
     /// <param name="pathsToSkip">Paths to skip</param>
     /// <returns>Verification results for each file within the directory</returns>
-    protected abstract Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(string root,
-        FileSystemPath directoryPath, IEnumerable<FileSystemPath> pathsToSkip);
+    protected abstract Task<IEnumerable<FileIntegrityVerificationResult>> VerifyDirectory(
+        StorageLocation storageLocation, string pathPrefix, IEnumerable<string> pathsToSkip);
 }

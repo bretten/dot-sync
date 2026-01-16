@@ -21,7 +21,7 @@ public sealed class StorageLocation
     /// <summary>
     /// The path to the storage location
     /// </summary>
-    public FileSystemPath Path { get; private set; }
+    public StoragePath Path { get; private set; }
 
     /// <summary>
     /// Navigation property to <see cref="DotFile"/>
@@ -36,15 +36,10 @@ public sealed class StorageLocation
     /// <summary>
     /// Constructor
     /// </summary>
-    public StorageLocation(StorageLocationType type, FileSystemPath path)
+    public StorageLocation(StorageLocationType type, StoragePath path)
     {
         Id = Guid.NewGuid();
         Type = type;
-        Path = path;
-    }
-
-    public void UpdatePath(FileSystemPath path)
-    {
         Path = path;
     }
 }

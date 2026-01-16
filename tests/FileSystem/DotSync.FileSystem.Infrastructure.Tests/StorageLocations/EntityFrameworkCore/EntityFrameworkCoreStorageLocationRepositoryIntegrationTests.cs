@@ -27,7 +27,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
                 .WithName(GetType().Name + Guid.NewGuid())
                 .WithUsername("postgres")
                 .WithPassword("password99")
-                .WithPortBinding(54327, 5432)
+                .WithPortBinding(54322, 5432)
                 .Build();
         }
         catch (ArgumentException e)
@@ -46,7 +46,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
     public async Task Add_StorageLocation_AddsStorageLocationToDbContextSet()
     {
         // Arrange
-        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/storage", fileCount: 1, size: 2);
+        var fakeStorageLocation = Faker.FakeStorageLocation(path: "/path/to/storage/", fileCount: 1, size: 2);
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
@@ -70,7 +70,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
     public async Task GetByTypeAndPath_TypeAndPath_ReturnsStorageLocation()
     {
         // Arrange
-        var fakeStorageLocation = Faker.FakeStorageLocation(path: "path/to/storage", fileCount: 1, size: 2);
+        var fakeStorageLocation = Faker.FakeStorageLocation(path: "/path/to/storage/", fileCount: 1, size: 2);
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
@@ -87,8 +87,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         var repo = new EntityFrameworkCoreStorageLocationRepository(factory, Mock.Of<IMainStorageProvider>());
 
         // Act
-        var actual = await repo.GetByTypeAndPath(StorageLocationType.Local,
-            FileSystemPath.Create(@"path\to\storage", replaceBackslashes: OperatingSystem.IsWindows()));
+        var actual = await repo.GetByTypeAndPath(StorageLocationType.Local, StoragePath.Create("/path/to/storage/"));
 
         // Assert
         Assert.NotNull(actual);

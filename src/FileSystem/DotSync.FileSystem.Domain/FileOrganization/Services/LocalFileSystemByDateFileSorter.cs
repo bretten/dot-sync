@@ -44,7 +44,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <summary>
     /// <inheritdoc cref="IFileSorter.Sort"/>
     /// </summary>
-    public async Task<IEnumerable<string>> Sort(FileSystemPath sourcePath, FileSystemPath destinationPath)
+    public async Task<IEnumerable<string>> Sort(StoragePath sourcePath, StoragePath destinationPath)
     {
         var localStorageLocations = (await _storageLocationRepository.GetAll())
             .Where(x => x.Type == StorageLocationType.Local).ToList();
@@ -109,14 +109,14 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <param name="destinationPath">The destination</param>
     /// <returns>Files that were moved</returns>
     private List<string> MoveFiles(DirectoryInfo sourceDirectory, IEnumerable<FileInfo> files,
-        FileSystemPath destinationPath)
+        StoragePath destinationPath)
     {
         var result = new List<string>();
         var containingDirectories = new List<DirectoryInfo>();
         foreach (var file in files)
         {
             // Get the date of the file
-            var date = _fileMetadataReader.ReadFileCreationDate(FileSystemPath.Create(file.FullName));
+            var date = _fileMetadataReader.ReadFileCreationDate(file.FullName);
 
             // Get the directory of the file's containing folder so we can delete it when it becomes empty
             if (file.Directory != null) containingDirectories.Add(file.Directory);
@@ -151,7 +151,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <param name="file">The file to move</param>
     /// <returns>New path</returns>
     /// <exception cref="FileAlreadyExistsAtMoveDestinationException">Thrown if there is already a file at the specified location</exception>
-    private string MoveFile(DirectoryInfo sourceDirectory, DateTime fileDate, FileSystemPath destinationPath,
+    private string MoveFile(DirectoryInfo sourceDirectory, DateTime fileDate, StoragePath destinationPath,
         FileInfo file)
     {
         // If the file was located at path/to/file.txt, the sourceDirectory would be "path"

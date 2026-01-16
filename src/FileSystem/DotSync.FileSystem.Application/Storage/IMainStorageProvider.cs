@@ -15,18 +15,18 @@ public interface IMainStorageProvider
     /// Returns the path to the main storage location
     /// </summary>
     /// <returns>The path to the main storage location</returns>
-    Task<FileSystemPath> GetMainStoragePath();
+    Task<StoragePath> GetMainStoragePath();
 
     /// <summary>
     /// Returns the path to the default cloud storage location
     /// </summary>
     /// <returns>The path to the default cloud storage location</returns>
-    Task<FileSystemPath> GetDefaultCloudStoragePath();
+    Task<StoragePath> GetDefaultCloudStoragePath();
 
     /// <summary>
     /// Returns the full local file path for the specified relative file path
     /// </summary>
     /// <param name="filePath">Relative file path</param>
     /// <returns>Full local file path</returns>
-    Task<FileSystemPath> GetFileFullLocalPath(FileSystemPath filePath);
+    Task<string> GetFileFullLocalPath(FileSystemPath filePath);
 }

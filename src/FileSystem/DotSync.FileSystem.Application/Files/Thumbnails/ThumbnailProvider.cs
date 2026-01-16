@@ -7,7 +7,7 @@ public sealed class ThumbnailProvider : IThumbnailProvider
 {
     private readonly IThumbnailGenerator _thumbnailGenerator;
 
-    private static readonly IReadOnlyList<string> _extensions = new List<string>()
+    private static readonly IReadOnlyList<string> Extensions = new List<string>()
     {
         ".jpg", ".jpeg", ".png", ".heic", ".dng"
     }.ToImmutableList();
@@ -20,15 +20,15 @@ public sealed class ThumbnailProvider : IThumbnailProvider
     public async Task<Thumbnail> GetThumbnail(FileSystemPath filePath)
     {
         var extension = Path.GetExtension(filePath.Value).ToLowerInvariant();
-        if (!_extensions.Contains(extension))
+        if (!Extensions.Contains(extension))
         {
             return new Thumbnail("", _thumbnailGenerator.ThumbnailContentType);
         }
 
         var thumbnailPath = _thumbnailGenerator.DetermineThumbnailPath(filePath);
-        if (File.Exists(thumbnailPath.Value))
+        if (File.Exists(thumbnailPath))
         {
-            return new Thumbnail(thumbnailPath.Value, _thumbnailGenerator.ThumbnailContentType);
+            return new Thumbnail(thumbnailPath, _thumbnailGenerator.ThumbnailContentType);
         }
 
         return await _thumbnailGenerator.CreateThumbnail(filePath);

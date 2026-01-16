@@ -71,8 +71,8 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         // Arrange
         var fakeFile1 = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
         var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
-        var fakeStorage1 = Faker.FakeStorageLocation(path: "a");
-        var fakeStorage2 = Faker.FakeStorageLocation(path: "b");
+        var fakeStorage1 = Faker.FakeStorageLocation(path: "/a/path/");
+        var fakeStorage2 = Faker.FakeStorageLocation(path: "/b/path/");
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
@@ -218,7 +218,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         var repo = new EntityFrameworkCoreFileRepository(await GetDbContextFactory(), Mock.Of<IClock>());
 
         // Act
-        await repo.SetAllAsUnverified(FileSystemPath.Create(""));
+        await repo.SetAllAsUnverified(string.Empty);
 
         // Assert
         var actual = assertDbContext.Files.ToList();
@@ -276,8 +276,8 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
         var fakeFile1 = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
         var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
         var fakeFile3 = Faker.FakeFile(id: Faker.Guid3, path: "path/to/file3.txt", checksum: "file3");
-        var fakeStorage1 = Faker.FakeStorageLocation(path: "a");
-        var fakeStorage2 = Faker.FakeStorageLocation(path: "b");
+        var fakeStorage1 = Faker.FakeStorageLocation(path: "/a/path/");
+        var fakeStorage2 = Faker.FakeStorageLocation(path: "/b/path/");
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);
         await dbContext.Database.MigrateAsync();
@@ -320,9 +320,9 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
          */
         var fakeFile1 = Faker.FakeFile(id: Faker.Guid1, path: "path/to/file.txt", checksum: "file");
         var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2");
-        var fakeStorage1 = Faker.FakeStorageLocation(path: "a");
-        var fakeStorage2 = Faker.FakeStorageLocation(path: "b");
-        var fakeStorage3 = Faker.FakeStorageLocation(path: "c");
+        var fakeStorage1 = Faker.FakeStorageLocation(path: "/a/path/");
+        var fakeStorage2 = Faker.FakeStorageLocation(path: "/b/path/");
+        var fakeStorage3 = Faker.FakeStorageLocation(path: "/c/path/");
 
         await using var connection = await GetDbConnection();
         await using var dbContext = GetDbContext(connection);

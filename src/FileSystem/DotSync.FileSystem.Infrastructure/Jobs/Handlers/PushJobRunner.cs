@@ -3,7 +3,6 @@ using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 using Microsoft.Extensions.Logging;
@@ -23,8 +22,8 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
 
     protected override async Task<IJobOutput> RunJob(IJob<PushParameters> job)
     {
-        var result = await _filePusher.PushFilesByPath(job.Parameters.Source,
-            FileSystemPath.Create(job.Parameters.SourcePath ?? string.Empty), job.Parameters.Destination);
+        var result = await _filePusher.PushFilesByPath(job.Parameters.Source, job.Parameters.PathPrefix ?? string.Empty,
+            job.Parameters.Destination);
 
         return new JobOutput(job, ToResults(result));
     }

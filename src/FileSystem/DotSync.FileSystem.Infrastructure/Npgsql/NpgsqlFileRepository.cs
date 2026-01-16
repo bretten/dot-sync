@@ -134,13 +134,13 @@ public sealed class NpgsqlFileRepository : IFileRepository
             firstSync);
     }
 
-    public async Task SetAllAsUnverified(FileSystemPath path)
+    public async Task SetAllAsUnverified(string pathPrefix)
     {
         await using var connection = await _dataSource.OpenConnectionAsync();
-        if (path.Value != "")
+        if (pathPrefix != "")
         {
             await using var command = new NpgsqlCommand(FilesSetAsUnverifiedByPathCommand, connection);
-            command.Parameters.Add(new NpgsqlParameter { Value = path.Value + "%", DbType = DbType.String });
+            command.Parameters.Add(new NpgsqlParameter { Value = pathPrefix + "%", DbType = DbType.String });
             await command.ExecuteScalarAsync();
             return;
         }
@@ -175,11 +175,11 @@ public sealed class NpgsqlFileRepository : IFileRepository
         return entries;
     }
 
-    public async Task<IEnumerable<DotFile>> GetFilesByPath(FileSystemPath path)
+    public async Task<IEnumerable<DotFile>> GetFilesByPathPrefix(string pathPrefix)
     {
         await using var connection = await _dataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(FilesQueryByLikePath, connection);
-        command.Parameters.Add(new NpgsqlParameter { Value = path.Value + "%", DbType = DbType.String });
+        command.Parameters.Add(new NpgsqlParameter { Value = pathPrefix + "%", DbType = DbType.String });
 
         var entries = new List<DotFile>();
 
@@ -212,7 +212,7 @@ public sealed class NpgsqlFileRepository : IFileRepository
         throw new NotImplementedException();
     }
 
-    public Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string path)
+    public Task<IEnumerable<DotFile>> GetUnsyncedFiles(Guid storageLocationId, string pathPrefix)
     {
         throw new NotImplementedException();
     }

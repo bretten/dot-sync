@@ -5,7 +5,6 @@ using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 using Microsoft.Extensions.Logging;
@@ -29,10 +28,10 @@ public sealed class VerifyJobRunner : BaseJobRunner<VerifyParameters>
     {
         var verifier = _verifierFactory.GetBy(job.Parameters.Source);
         var result = await verifier.Verify(job.Parameters.Source,
-            FileSystemPath.Create(job.Parameters.Path ?? ""),
+            job.Parameters.Path ?? string.Empty,
             !string.IsNullOrWhiteSpace(job.Parameters.PathsToSkip)
-                ? job.Parameters.PathsToSkip.Split(',', StringSplitOptions.TrimEntries).Select(FileSystemPath.Create)
-                : new List<FileSystemPath>());
+                ? job.Parameters.PathsToSkip.Split(',', StringSplitOptions.TrimEntries)
+                : new List<string>());
 
         // Generate as many thumbnails as possible. Any that fail to generate will be lazy-generated
         _ = Task.Run(async () =>

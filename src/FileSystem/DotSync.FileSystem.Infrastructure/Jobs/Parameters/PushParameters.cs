@@ -6,7 +6,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 
 public sealed record PushParameters(
     StorageLocation Source,
-    string? SourcePath,
+    string? PathPrefix,
     StorageLocation Destination) : IJobParameters
 {
     public JobType Type => JobType.Push;
@@ -16,7 +16,7 @@ public sealed record PushParameters(
         return new Dictionary<string, string>()
         {
             { "Source", $"{Source.Type} - {Source.Path.Value}" },
-            { "SourcePath", SourcePath! },
+            { "Path prefix", PathPrefix! },
             { "Destination", $"{Destination.Type} - {Destination.Path.Value}" }
         }.AsReadOnly();
     }

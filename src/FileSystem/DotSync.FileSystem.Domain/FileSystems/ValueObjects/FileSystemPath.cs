@@ -1,27 +1,24 @@
-﻿namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects.Exceptions;
+
+namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 /// <summary>
-/// Represents a path in a file system
+/// Represents a file path
 /// </summary>
 public readonly record struct FileSystemPath
 {
     /// <summary>
-    /// The underlying URI value
-    /// </summary>
-    private readonly Uri _uri;
-
-    /// <summary>
     /// The path
     /// </summary>
-    public string Value => _uri.OriginalString;
+    public string Value { get; }
 
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="uri">The underlying URI value</param>
-    private FileSystemPath(Uri uri)
+    /// <param name="path">The underlying value</param>
+    private FileSystemPath(string path)
     {
-        _uri = uri;
+        Value = path;
     }
 
     /// <summary>
@@ -29,33 +26,21 @@ public readonly record struct FileSystemPath
     /// </summary>
     /// <param name="path">The path</param>
     /// <returns><see cref="FileSystemPath"/></returns>
-    /// <exception cref="InvalidUriForFileSystemPathException">Thrown if the path could not be parsed as a valid, relative URI</exception>
+    /// <exception cref="InvalidFilePathException">Thrown if the path could not be parsed as a valid, relative path</exception>
     public static FileSystemPath Create(string path)
     {
-        try
+        if (Path.IsPathFullyQualified(path) || Path.IsPathRooted(path))
         {
-            return new FileSystemPath(new Uri(path, UriKind.Relative));
+            throw new InvalidFilePathException($"File path must not specify drive: {path}");
         }
-        catch (UriFormatException)
+
+        if (path.Length > 0 && (path[0] == Path.DirectorySeparatorChar || path[0] == Path.AltDirectorySeparatorChar))
         {
-            throw new InvalidUriForFileSystemPathException(
-                $"A relative path is required. Could not create URI for path: {path}");
+            throw new InvalidFilePathException($"File path must be relative: {path}");
         }
-    }
 
-    /// <summary>
-    /// Creates a <see cref="FileSystemPath"/>
-    /// </summary>
-    /// <param name="path">The path</param>
-    /// <param name="replaceBackslashes">True if backslashes should be replaced with forward slashes</param>
-    /// <returns><see cref="FileSystemPath"/></returns>
-    public static FileSystemPath Create(string path, bool replaceBackslashes)
-    {
-        return Create(!replaceBackslashes ? path : path.Replace('\u005c', Path.AltDirectorySeparatorChar));
+        var normalizedPath =
+            !OperatingSystem.IsWindows() ? path : path.Replace('\u005c', Path.AltDirectorySeparatorChar);
+        return new FileSystemPath(normalizedPath);
     }
-
-    /// <summary>
-    /// Thrown if the path could not be parsed as a valid, relative URI
-    /// </summary>
-    public sealed class InvalidUriForFileSystemPathException(string? message) : Exception(message);
 }

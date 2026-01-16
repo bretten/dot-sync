@@ -34,7 +34,7 @@ public sealed class EntityFrameworkCoreStorageLocationRepository
         await dbContext.SaveChangesAsync();
     }
 
-    public async Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, FileSystemPath path)
+    public async Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, StoragePath path)
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         return await dbContext.StorageLocations
