@@ -15,7 +15,7 @@ public sealed record ScanParameters(
         return new Dictionary<string, string>()
         {
             { "Source", $"{Source.Type} - {Source.Path.Value}" },
-            { "Path", Path ?? string.Empty }
+            { "Path prefix", Path ?? string.Empty }
         }.AsReadOnly();
     }
 }

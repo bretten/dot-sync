@@ -70,15 +70,15 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     }
 
     /// <inheritdoc />
-    public async Task<FileSystemScannerResult> Scan(StorageLocation storageLocation, FileSystemPath? scanPath = null)
+    public async Task<FileSystemScannerResult> Scan(StorageLocation storageLocation, string pathPrefix)
     {
         if (storageLocation.Type != StorageLocationType.Local)
         {
             throw new IncompatibleStorageLocationException("Not a local storage location");
         }
 
-        var pathToScan = scanPath.HasValue
-            ? Path.Combine(storageLocation.Path.Value, scanPath.Value.Value)
+        var pathToScan = !string.IsNullOrWhiteSpace(pathPrefix)
+            ? Path.Combine(storageLocation.Path.Value, pathPrefix)
             : storageLocation.Path.Value;
         var tasks = ScanDirectory(new DirectoryInfo(pathToScan), storageLocation.Path).ToList();
         var newFiles = new ConcurrentBag<DotFile>();

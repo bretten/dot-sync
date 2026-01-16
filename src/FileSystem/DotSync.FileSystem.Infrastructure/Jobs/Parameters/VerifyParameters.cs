@@ -16,8 +16,8 @@ public sealed record VerifyParameters(
         return new Dictionary<string, string>()
         {
             { "Source", $"{Source.Type} - {Source.Path.Value}" },
-            { "Path", Path ?? string.Empty },
-            { "PathsToSkip", PathsToSkip! }
+            { "Path prefix", Path ?? string.Empty },
+            { "Paths to skip", PathsToSkip! }
         }.AsReadOnly();
     }
 }

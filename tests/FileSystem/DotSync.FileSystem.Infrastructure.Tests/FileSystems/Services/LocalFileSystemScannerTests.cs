@@ -6,7 +6,6 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
@@ -50,7 +49,7 @@ public class LocalFileSystemScannerTests
             new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>());
 
         // Act
-        var actual = await scanner.Scan(storage);
+        var actual = await scanner.Scan(storage, string.Empty);
 
         // Assert
         Assert.Equal(2, actual.NewFiles.Count);
@@ -89,7 +88,7 @@ public class LocalFileSystemScannerTests
             new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>());
 
         // Act
-        var actual = await scanner.Scan(storage, FileSystemPath.Create("someDir"));
+        var actual = await scanner.Scan(storage, "someDir");
 
         // Assert
         Assert.Equal(1, actual.NewFiles.Count);
