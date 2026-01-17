@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+﻿using com.brettnamba.DotSync.Common.Domain.SeedWork;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 
 namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -6,13 +7,8 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 /// <summary>
 /// Defines a storage location for files
 /// </summary>
-public sealed class StorageLocation
+public sealed class StorageLocation : Entity
 {
-    /// <summary>
-    /// ID
-    /// </summary>
-    public Guid Id { get; }
-
     /// <summary>
     /// The type of storage location
     /// </summary>
@@ -36,9 +32,8 @@ public sealed class StorageLocation
     /// <summary>
     /// Constructor
     /// </summary>
-    public StorageLocation(StorageLocationType type, StoragePath path)
+    public StorageLocation(StorageLocationType type, StoragePath path) : base(Guid.NewGuid())
     {
-        Id = Guid.NewGuid();
         Type = type;
         Path = path;
     }

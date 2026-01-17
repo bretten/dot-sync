@@ -107,8 +107,11 @@ public sealed class NpgsqlFileRepository : IFileRepository
         var lastSync = reader.GetDateTime(6).ToUniversalTime();
         var firstSync = reader.GetDateTime(7).ToUniversalTime();
         await reader.CloseAsync();
-        return new DotFile(id, FileSystemPath.Create(path), checksum, size, fileCreation, isVerified, lastSync,
-            firstSync);
+        return new DotFile(id, FileSystemPath.Create(path), checksum, size, fileCreation)
+        {
+            FirstSync = firstSync,
+            LastSync = lastSync
+        };
     }
 
     public async Task<DotFile?> GetFileByPath(FileSystemPath path)
@@ -130,8 +133,11 @@ public sealed class NpgsqlFileRepository : IFileRepository
         var lastSync = reader.GetDateTime(6).ToUniversalTime();
         var firstSync = reader.GetDateTime(7).ToUniversalTime();
         await reader.CloseAsync();
-        return new DotFile(id, path, FileSha256Checksum.Create(checksum), size, fileCreation, isVerified, lastSync,
-            firstSync);
+        return new DotFile(id, path, FileSha256Checksum.Create(checksum), size, fileCreation)
+        {
+            FirstSync = firstSync,
+            LastSync = lastSync
+        };
     }
 
     public async Task SetAllAsUnverified(string pathPrefix)
@@ -168,7 +174,11 @@ public sealed class NpgsqlFileRepository : IFileRepository
             var lastSync = reader.GetDateTime(6).ToUniversalTime();
             var firstSync = reader.GetDateTime(7).ToUniversalTime();
             entries.Add(new DotFile(id, FileSystemPath.Create(path), FileSha256Checksum.Create(checksum), size,
-                fileCreation, isVerified, lastSync, firstSync));
+                fileCreation)
+            {
+                LastSync = lastSync,
+                FirstSync = firstSync
+            });
         }
 
         await reader.CloseAsync();
@@ -195,7 +205,11 @@ public sealed class NpgsqlFileRepository : IFileRepository
             var lastSync = reader.GetDateTime(6).ToUniversalTime();
             var firstSync = reader.GetDateTime(7).ToUniversalTime();
             entries.Add(new DotFile(id, FileSystemPath.Create(pathStr), FileSha256Checksum.Create(checksum), size,
-                fileCreation, isVerified, lastSync, firstSync));
+                fileCreation)
+            {
+                LastSync = lastSync,
+                FirstSync = firstSync
+            });
         }
 
         await reader.CloseAsync();
