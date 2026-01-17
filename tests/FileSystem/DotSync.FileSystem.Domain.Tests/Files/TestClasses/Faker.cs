@@ -16,15 +16,17 @@ public static class Faker
         DateTime? fileCreation = null, bool? isVerified = false, DateTimeOffset? lastSync = null,
         DateTimeOffset? firstSync = null)
     {
-        return new DotFile(id: id ?? Guid1,
+        var f = new DotFile(id: id ?? Guid1,
             FileSystemPath.Create(path?.AsPath() ?? string.Empty),
             FileSha256Checksum.Create(checksum ?? string.Empty),
             size,
-            fileCreation ?? new DateTime(2024, 5, 25),
-            isVerified ?? false,
-            lastSync ?? new DateTimeOffset(2024, 7, 26, 1, 2, 3, TimeSpan.FromHours(0)),
-            firstSync ?? new DateTimeOffset(2024, 7, 26, 4, 5, 6, TimeSpan.FromHours(0))
-        );
+            fileCreation ?? new DateTime(2024, 5, 25))
+        {
+            LastSync = lastSync ?? new DateTimeOffset(2024, 7, 26, 1, 2, 3, TimeSpan.FromHours(0)),
+            FirstSync = firstSync ?? new DateTimeOffset(2024, 7, 26, 4, 5, 6, TimeSpan.FromHours(0))
+        };
+        if (isVerified.HasValue && isVerified.Value) f.SetAsVerified();
+        return f;
     }
 
     public static StorageLocation FakeStorageLocation(StorageLocationType type = StorageLocationType.Local,
