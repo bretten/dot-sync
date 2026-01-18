@@ -2,6 +2,8 @@
 using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
+using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.Infrastructure.Aws;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
@@ -24,16 +26,31 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
     private readonly IAmazonS3 _s3;
 
     /// <summary>
+    /// Execution context for the current job
+    /// </summary>
+    private readonly JobExecutionContext _jobContext;
+
+    /// <summary>
+    /// Reports job progress
+    /// </summary>
+    private readonly IJobProgressReporter _jobProgressReporter;
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
     /// <param name="fileChecksumGenerator">Generates checksums for files</param>
     /// <param name="logger">Logger</param>
     /// <param name="s3">Amazon S3 client</param>
+    /// <param name="jobContext">Execution context for the current job</param>
+    /// <param name="jobProgressReporter">Reports job progress</param>
     public AmazonS3FileIntegrityVerifier(IFileRepository fileRepository, IFileChecksumGenerator fileChecksumGenerator,
-        ILogger<IFileIntegrityVerifier> logger, IAmazonS3 s3) : base(fileRepository, fileChecksumGenerator, logger)
+        ILogger<IFileIntegrityVerifier> logger, IAmazonS3 s3, JobExecutionContext jobContext,
+        IJobProgressReporter jobProgressReporter) : base(fileRepository, fileChecksumGenerator, logger)
     {
         _s3 = s3;
+        _jobContext = jobContext;
+        _jobProgressReporter = jobProgressReporter;
     }
 
     /// <summary>
@@ -55,6 +72,9 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
         string bucket = storageLocation.Path.WithoutLeadingAndTrailingSlash;
         // Will hold the individual S3 Object verification results
         var results = new ConcurrentBag<FileIntegrityVerificationResult>();
+
+        // Keep track of how many were verified
+        var verified = 0;
 
         // Paginate over all the S3 objects in the bucket
         var request = new ListObjectsV2Request
@@ -85,6 +105,11 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
                 // Verify the object
                 Logger.LogInformation($"Verifying {s3Object.Key}");
                 var result = await VerifyS3Object(bucket, s3Object);
+
+                // Update progress
+                Interlocked.Increment(ref verified);
+                _jobProgressReporter.ReportPercent(this, _jobContext.Id, verified, response.S3Objects.Count);
+
                 results.Add(result);
             });
         }

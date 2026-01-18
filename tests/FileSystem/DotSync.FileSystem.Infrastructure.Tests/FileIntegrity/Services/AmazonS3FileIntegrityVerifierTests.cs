@@ -2,6 +2,7 @@
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
+using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -33,7 +34,8 @@ public class AmazonS3FileIntegrityVerifierTests
         var stubS3 = MockS3ListObjectsV2Paginator(responses);
 
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
-            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object);
+            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object,
+            Common.Application.Tests.Jobs.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
 
         var action = async () => await verifier.Verify(storageLocation, string.Empty, Array.Empty<string>());
 
@@ -74,7 +76,8 @@ public class AmazonS3FileIntegrityVerifierTests
             .ReturnsAsync((GetObjectMetadataResponse)null!);
 
         var verifier = new AmazonS3FileIntegrityVerifier(Mock.Of<IFileRepository>(), Mock.Of<IFileChecksumGenerator>(),
-            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object);
+            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object,
+            Common.Application.Tests.Jobs.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
 
         var action = async () => await verifier.Verify(storageLocation, bucketName, Array.Empty<string>());
 
@@ -162,7 +165,8 @@ public class AmazonS3FileIntegrityVerifierTests
             .ReturnsAsync((DotFile?)null);
 
         var verifier = new AmazonS3FileIntegrityVerifier(stubFileRepository.Object, Mock.Of<IFileChecksumGenerator>(),
-            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object);
+            Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubS3.Object,
+            Common.Application.Tests.Jobs.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
 
         // Act
         var actual = await verifier.Verify(storageLocation, bucketName,
