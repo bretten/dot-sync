@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using Microsoft.Extensions.Logging;
 
@@ -9,6 +10,7 @@ namespace com.brettnamba.DotSync.Common.Infrastructure.Jobs.Logger;
 /// <param name="name">Category name</param>
 /// <param name="config">Logger config</param>
 /// <param name="progressReporter"><see cref="IJobProgressReporter"/></param>
+[ExcludeFromCodeCoverage]
 public sealed class JobProgressLogger(
     string name,
     JobProgressLoggerConfiguration config,

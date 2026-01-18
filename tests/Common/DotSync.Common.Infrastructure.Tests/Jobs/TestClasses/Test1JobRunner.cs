@@ -1,3 +1,4 @@
+using com.brettnamba.DotSync.Common.Application.Jobs;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.DateAndTme;
@@ -23,7 +24,7 @@ public sealed class Test1JobRunner : BaseJobRunner<Test1Parameters>
                 {
                     "Result", new List<string[]>()
                     {
-                        new  [] { job.Parameters.Param1, job.Parameters.Delay.ToString() },
+                        new[] { job.Parameters.Param1, job.Parameters.Delay.ToString() },
                     }
                 }
             }
@@ -31,4 +32,18 @@ public sealed class Test1JobRunner : BaseJobRunner<Test1Parameters>
     }
 
     public sealed class Test1JobRunnerFakeException : Exception;
+}
+
+public sealed record Test1Parameters(string Param1, int Delay, bool ThrowException = false) : IJobParameters
+{
+    public JobType Type => JobType.Verify;
+
+    public IReadOnlyDictionary<string, string> AsKeyValuePairs()
+    {
+        return new Dictionary<string, string>()
+        {
+            { "Param1", Param1 },
+            { "Delay", Delay.ToString() },
+        }.AsReadOnly();
+    }
 }
