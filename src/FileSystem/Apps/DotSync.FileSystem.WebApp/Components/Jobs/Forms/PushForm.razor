@@ -1,10 +1,8 @@
 @inject IJobManager JobManager
 @inject IMainStorageProvider MainStorageProvider
-@inject IStorageLocationRepository StorageLocationRepository
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.FileSystem.Application.Storage
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
-@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
@@ -17,6 +15,9 @@
         </MudItem>
         <MudItem xs="12">
             <FilePathInput @bind-Text="PushModel.SourcePushPath"/>
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField @bind-Value="PushModel.UploadLimitMb" Label="Upload Limit (MB)"/>
         </MudItem>
         <MudItem xs="12">
             <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())"
@@ -41,13 +42,15 @@
     protected override async Task OnSubmit()
     {
         var mainStorage = await MainStorageProvider.GetMainStorageLocation();
-        var parameters = new PushParameters(mainStorage, PushModel.SourcePushPath, PushModel.Destination!);
+        var parameters = new PushParameters(mainStorage, PushModel.SourcePushPath, PushModel.UploadLimitMb, PushModel.Destination!);
         _ = Task.Run(() => JobManager.RunJob(parameters));
     }
 
     public class PushFormModel
     {
-        public string SourcePushPath { get; set; } = null!;
+        public string? SourcePushPath { get; set; }
+
+        public long? UploadLimitMb { get; set; }
 
         public StorageLocation? Destination { get; set; }
     }
