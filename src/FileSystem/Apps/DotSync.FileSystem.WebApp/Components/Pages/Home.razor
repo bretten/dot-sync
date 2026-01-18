@@ -267,15 +267,16 @@
         return _selectedStorageLocationId != Guid.Empty;
     }
 
-    private async Task OnClickUpload(MouseEventArgs e)
+    private Task OnClickUpload(MouseEventArgs e)
     {
         if (!IsPageFilteredByStorageLocation())
         {
-            return;
+            return Task.CompletedTask;
         }
 
         var destination = _storageLocations.First(x => x.Id == _selectedStorageLocationId);
-        await JobComponent.JobManager.RunJob(new PushByStorageParameters(_mainStorageLocation, _searchQuery, _uploadLimit, destination));
+        _ = Task.Run(() => JobComponent.JobManager.RunJob(new PushParameters(_mainStorageLocation, _searchQuery, _uploadLimit, destination)));
+        return Task.CompletedTask;
     }
 
     // TODO: Move to DotFile

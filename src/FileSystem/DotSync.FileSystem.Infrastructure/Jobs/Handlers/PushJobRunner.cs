@@ -23,8 +23,8 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
 
     protected override async Task<IJobOutput> RunJob(IJob<PushParameters> job)
     {
-        var result = await _filePusher.PushFilesByPath(job.Parameters.Source, job.Parameters.PathPrefix ?? string.Empty,
-            job.Parameters.Destination);
+        var result = await _filePusher.PushFilesInStorage(job.Parameters.Source,
+            job.Parameters.PathPrefix ?? string.Empty, job.Parameters.UploadLimitMb ?? 0, job.Parameters.Destination);
 
         return new JobOutput(job, ToResults(result));
     }

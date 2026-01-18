@@ -7,6 +7,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 public sealed record PushParameters(
     StorageLocation Source,
     string? PathPrefix,
+    long? UploadLimitMb,
     StorageLocation Destination) : IJobParameters
 {
     public JobType Type => JobType.Push;
@@ -17,6 +18,7 @@ public sealed record PushParameters(
         {
             { "Source", $"{Source.Type} - {Source.Path.Value}" },
             { "Path prefix", PathPrefix! },
+            { "Upload limit (MB)", UploadLimitMb.HasValue ? $"{UploadLimitMb.Value}MB" : "--" },
             { "Destination", $"{Destination.Type} - {Destination.Path.Value}" }
         }.AsReadOnly();
     }
