@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Options;
 namespace com.brettnamba.DotSync.Common.Infrastructure.Jobs.Logger;
 
 [ProviderAlias("JobProgress")]
+[ExcludeFromCodeCoverage]
 public sealed class JobProgressLoggerProvider : ILoggerProvider, ISupportExternalScope
 {
     private readonly IDisposable? _onChangeToken;
