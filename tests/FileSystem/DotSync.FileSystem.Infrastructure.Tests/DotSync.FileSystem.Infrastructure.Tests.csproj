@@ -12,6 +12,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.6.0"/>
+        <PackageReference Include="Moq" Version="4.20.72" />
         <PackageReference Include="Testcontainers.PostgreSql" Version="3.8.0" />
         <PackageReference Include="xunit" Version="2.4.2"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
@@ -26,6 +27,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\..\src\FileSystem\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj" />
+      <ProjectReference Include="..\..\Common\DotSync.Common.Infrastructure.Tests\DotSync.Common.Infrastructure.Tests.csproj" />
       <ProjectReference Include="..\DotSync.FileSystem.Application.Tests\DotSync.FileSystem.Application.Tests.csproj" />
     </ItemGroup>
 

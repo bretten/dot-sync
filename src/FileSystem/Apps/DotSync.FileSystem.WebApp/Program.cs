@@ -4,31 +4,31 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.Runtime.CredentialManagement;
 using Amazon.S3;
+using com.brettnamba.DotSync.Common.Application.Configuration;
+using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.State;
 using com.brettnamba.DotSync.Common.DateAndTme;
-using com.brettnamba.DotSync.FileSystem.Application.Configuration;
+using com.brettnamba.DotSync.Common.Infrastructure.Configuration;
+using com.brettnamba.DotSync.Common.Infrastructure.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Infrastructure.Jobs.Logger;
+using com.brettnamba.DotSync.Common.Infrastructure.Jobs.Progress;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
-using com.brettnamba.DotSync.FileSystem.Application.State;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Indexing;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Logger;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Progress;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Storage;
@@ -85,7 +85,7 @@ builder.Logging.AddJobProgressLogger(config => { config.SetJobExecutionContextKe
 // Register all job runners
 new List<Assembly>()
     {
-        typeof(BaseJobRunner<>).Assembly
+        typeof(VerifyJobRunner).Assembly
     }.SelectMany(x => x.GetTypes())
     .Where(x =>
     {

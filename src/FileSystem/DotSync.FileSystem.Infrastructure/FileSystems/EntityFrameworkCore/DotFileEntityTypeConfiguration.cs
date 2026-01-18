@@ -1,6 +1,6 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+﻿using com.brettnamba.DotSync.Common.Infrastructure.EntityFrameworkCore;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

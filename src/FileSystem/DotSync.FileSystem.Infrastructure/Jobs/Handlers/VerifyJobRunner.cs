@@ -1,11 +1,12 @@
 using System.Collections.Immutable;
+using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.DateAndTme;
+using com.brettnamba.DotSync.Common.Infrastructure.Configuration;
+using com.brettnamba.DotSync.Common.Infrastructure.Jobs.Handlers;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Execution;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Configuration;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;
 using Microsoft.Extensions.Logging;
 

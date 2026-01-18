@@ -1,4 +1,4 @@
-﻿using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+﻿using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -63,7 +63,7 @@ public class LocalFileSystemFileIntegrityVerifierTests
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubMetadataReader.Object,
-            Application.Tests.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
+            Common.Application.Tests.Jobs.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
 
         /*
          * Act

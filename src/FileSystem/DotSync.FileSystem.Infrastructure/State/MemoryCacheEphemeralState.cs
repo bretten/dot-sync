@@ -1,5 +1,5 @@
+using com.brettnamba.DotSync.Common.Application.State;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
-using com.brettnamba.DotSync.FileSystem.Application.State;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.State;

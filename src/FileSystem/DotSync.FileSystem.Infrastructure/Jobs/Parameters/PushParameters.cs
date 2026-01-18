@@ -1,5 +1,5 @@
-using com.brettnamba.DotSync.FileSystem.Application.Jobs;
-using com.brettnamba.DotSync.FileSystem.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.Common.Application.Jobs;
+using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters;

@@ -1,0 +1,21 @@
+namespace com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
+
+public interface IJob
+{
+    Guid Id { get; }
+    JobType Type { get; }
+    JobState State { get; }
+    DateTimeOffset StartTime { get; }
+    DateTimeOffset EndTime { get; }
+    TimeSpan Duration { get; }
+    IJobParameters Parameters { get; }
+
+    void SetInProgress(DateTimeOffset startTime);
+    void SetDone(DateTimeOffset endTime);
+    void SetError(DateTimeOffset endTime);
+}
+
+public interface IJob<out T> : IJob where T : IJobParameters
+{
+    new T Parameters { get; }
+}
