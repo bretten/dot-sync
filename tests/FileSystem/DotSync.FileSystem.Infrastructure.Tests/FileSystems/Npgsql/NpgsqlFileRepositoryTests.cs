@@ -4,7 +4,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Npgsql;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Npgsql;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 using Npgsql;
