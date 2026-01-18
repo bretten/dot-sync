@@ -3,7 +3,7 @@ using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 
 namespace com.brettnamba.DotSync.Common.Infrastructure.Tests.Jobs.TestClasses;
 
-public sealed record Test1Parameters(string Param1, int Delay) : IJobParameters
+public sealed record Test1Parameters(string Param1, int Delay, bool ThrowException = false) : IJobParameters
 {
     public JobType Type => JobType.Verify;
 

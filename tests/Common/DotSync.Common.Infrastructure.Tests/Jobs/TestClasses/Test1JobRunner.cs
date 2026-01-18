@@ -16,7 +16,19 @@ public sealed class Test1JobRunner : BaseJobRunner<Test1Parameters>
 
     protected override async Task<IJobOutput> RunJob(IJob<Test1Parameters> job)
     {
+        if (job.Parameters.ThrowException) throw new Test1JobRunnerFakeException();
         await Task.Delay(job.Parameters.Delay);
-        return new JobOutput(job, new FileResults(new Dictionary<string, IEnumerable<string[]>>()));
+        return new JobOutput(job, new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+            {
+                {
+                    "Result", new List<string[]>()
+                    {
+                        new  [] { job.Parameters.Param1, job.Parameters.Delay.ToString() },
+                    }
+                }
+            }
+        ));
     }
+
+    public sealed class Test1JobRunnerFakeException : Exception;
 }
