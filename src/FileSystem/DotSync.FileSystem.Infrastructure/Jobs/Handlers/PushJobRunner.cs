@@ -29,10 +29,10 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
         return new JobOutput(job, ToResults(result));
     }
 
-    private static FileResults ToResults(IEnumerable<DotFile> files)
+    private static JobResults ToResults(IEnumerable<DotFile> files)
     {
         var uploadedFiles = files.Select(x => new[] { x.Path.Value });
-        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
         {
             { "Uploaded Files", uploadedFiles }
         });

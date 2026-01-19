@@ -30,8 +30,8 @@ public class BaseJobRunnerTests
         // Assert
         Assert.Equal(now, job.StartTime);
         Assert.Equal(now2, job.EndTime);
-        Assert.Equal(jobParams.Param1, actual.FileResults.FileResultLists["Result"].First()[0]);
-        Assert.Equal(jobParams.Delay.ToString(), actual.FileResults.FileResultLists["Result"].First()[1]);
+        Assert.Equal(jobParams.Param1, actual.JobResults.ResultLists["Result"].First()[0]);
+        Assert.Equal(jobParams.Delay.ToString(), actual.JobResults.ResultLists["Result"].First()[1]);
     }
 
     [Fact]

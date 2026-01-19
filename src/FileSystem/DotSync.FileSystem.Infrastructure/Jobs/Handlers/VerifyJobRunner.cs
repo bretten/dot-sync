@@ -44,14 +44,14 @@ public sealed class VerifyJobRunner : BaseJobRunner<VerifyParameters>
         return new JobOutput(job, ToResults(result));
     }
 
-    private static FileResults ToResults(FileSetIntegrityVerificationResult result)
+    private static JobResults ToResults(FileSetIntegrityVerificationResult result)
     {
         var verified = new List<string[]>() { new string[] { "Verified Count", result.TotalVerified.ToString() } };
         var unverified = result.Unverified.Select(x => (string[])[x.Path.Value, x.Checksum.Value, x.Size.ToString()]);
         var moved = result.Moved.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         var missing = result.Missing.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         var newFiles = result.New.Select(x => (string[])[x.Path.Value]).ToImmutableList();
-        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
         {
             { "Verified", verified },
             { "Unverified", unverified },

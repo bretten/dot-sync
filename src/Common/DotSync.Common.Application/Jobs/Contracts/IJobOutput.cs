@@ -4,6 +4,18 @@ namespace com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 
 public interface IJobOutput
 {
+    /// <summary>
+    /// The job that was executed
+    /// </summary>
     public IJob Job { get; }
-    public FileResults FileResults { get; }
+
+    /// <summary>
+    /// Result data from the job execution
+    /// </summary>
+    public JobResults JobResults { get; }
+
+    /// <summary>
+    /// If the job threw an exception, will be non-null
+    /// </summary>
+    public Exception? Exception { get; }
 }

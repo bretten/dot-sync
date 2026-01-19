@@ -27,7 +27,14 @@
                 <MudPaper Class="pa-3">
                     @if (JobOutput != null)
                     {
-                        <FileList FileResults="@JobOutput.FileResults"/>
+                        if (JobOutput.Exception == null)
+                        {
+                            <FileList FileResults="@JobOutput.JobResults"/>
+                        }
+                        else
+                        {
+                            <MudAlert Severity="Severity.Error">@JobOutput.Exception!.Message</MudAlert>
+                        }
                     }
                 </MudPaper>
             </MudItem>

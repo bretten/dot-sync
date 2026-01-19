@@ -38,10 +38,10 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
         return new JobOutput(job, ToResult(result));
     }
 
-    private static FileResults ToResult(FileSystemScannerResult result)
+    private static JobResults ToResult(FileSystemScannerResult result)
     {
         var newFiles = result.NewFiles.Select(x => new[] { x.Path.Value });
-        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
         {
             { "New Files", newFiles }
         });
