@@ -1,7 +1,7 @@
 @using com.brettnamba.DotSync.Common.Application.Jobs.Execution
 @rendermode InteractiveServer
 
-@if (FileResults.FileResultLists.Count == 0)
+@if (JobResults.ResultLists.Count == 0)
 {
   <b>No result</b>
 }
@@ -9,7 +9,7 @@ else
 {
   var i = 0;
   <div class="accordion" id="file-list-accordion">
-    @foreach (var fileResult in FileResults.FileResultLists)
+    @foreach (var fileResult in JobResults.ResultLists)
     {
       var id = "file-list-accordion-" + i;
       var colCount = fileResult.Value.FirstOrDefault()?.Length ?? 0;
@@ -62,8 +62,8 @@ else
 }
 
 @code {
-  [Parameter] public required FileResults FileResults { get; set; }
+  [Parameter] public required JobResults JobResults { get; set; }
   [Parameter] public bool ShowClear { get; set; } = true;
 
-  private void Clear() => FileResults = new FileResults(new Dictionary<string, IEnumerable<string[]>>());
+  private void Clear() => JobResults = new JobResults(new Dictionary<string, IEnumerable<string[]>>());
 }

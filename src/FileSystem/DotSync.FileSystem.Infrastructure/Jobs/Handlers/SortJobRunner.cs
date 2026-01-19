@@ -39,9 +39,9 @@ public sealed class SortJobRunner : BaseJobRunner<SortParameters>
         return new JobOutput(job, ToResults(result));
     }
 
-    private static FileResults ToResults(IEnumerable<string> files)
+    private static JobResults ToResults(IEnumerable<string> files)
     {
-        return new FileResults(new Dictionary<string, IEnumerable<string[]>>()
+        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
         {
             { "Sorted Files", files.Select(x => new[] { x }) }
         });

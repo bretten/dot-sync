@@ -81,6 +81,7 @@ public sealed class HangfireJobManager : IJobManager, IDisposable
         }
         catch (Exception e)
         {
+            _jobOutput.TryAdd(job.Id, JobOutput.Failed(job, e));
             JobFailed?.Invoke(this, new JobFailedArgs() { Job = job, Exception = e });
             throw;
         }
