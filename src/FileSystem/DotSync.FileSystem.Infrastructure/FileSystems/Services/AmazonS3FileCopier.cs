@@ -10,6 +10,9 @@ using Microsoft.Extensions.Logging;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 
+/// <summary>
+/// Copies files to S3
+/// </summary>
 public sealed class AmazonS3FileCopier : IFileCopier
 {
     private readonly IFileChecksumGenerator _fileChecksumGenerator;
@@ -31,6 +34,16 @@ public sealed class AmazonS3FileCopier : IFileCopier
         _logger = logger;
     }
 
+    /// <inheritdoc/>
+    public async Task<bool> Exists(DotFile file, StorageLocation destination)
+    {
+        // The storage location is a S3 bucket, so get the bucket name
+        var bucket = destination.Path.WithoutLeadingAndTrailingSlash;
+        var key = file.Path.Value;
+        return await Exists(bucket, key);
+    }
+
+    /// <inheritdoc/>
     public async Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination)
     {
         // The storage location is a S3 bucket, so get the bucket name
