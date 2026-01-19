@@ -31,47 +31,21 @@ public sealed class FilePusher : IFilePusher
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DotFile>> PushFilesByPath(StorageLocation source, string pathPrefix,
-        StorageLocation destination)
-    {
-        var files = (await _fileRepository.GetFilesByPathPrefix(pathPrefix)).ToList();
-        var totalBytes = files.Sum(f => f.Size);
-
-        var pushedFiles = new List<DotFile>();
-        var bytesPushed = 0L;
-        foreach (var file in files)
-        {
-            var pushed = await _fileCopier.CopyFile(source, file, destination);
-            bytesPushed += file.Size;
-            _jobProgressReporter.ReportPercent(this, _jobContext.Id, bytesPushed, totalBytes);
-
-            if (!pushed) continue;
-            using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
-                   {
-                       new(nameof(JobExecutionContext), _jobContext.Id)
-                   }))
-            {
-                _logger.LogInformation($"Uploaded {file.Path.Value}");
-            }
-
-            pushedFiles.Add(file);
-            await _fileRepository.AddSyncedFile(file.Id, destination.Id);
-        }
-
-        return pushedFiles;
-    }
-
-    /// <inheritdoc/>
     public async Task<IEnumerable<DotFile>> PushFilesInStorage(StorageLocation source, string pathPrefix,
         long uploadLimitMb, StorageLocation destination)
     {
+        // Get unsynced files
         var files = (await _fileRepository.GetUnsyncedFiles(destination.Id, pathPrefix)).ToList();
-
-        var pushedFiles = new List<DotFile>();
+        // Determine what can be uploaded with the upload limit
         var uploadedBytes = 0L;
         var uploadLimitBytes = uploadLimitMb * 1000000; // Use MB, not MiB since that is the user-facing value
+        var filesToPush = new List<DotFile>();
         foreach (var file in files)
         {
+            // If it exists, no further action needed. Also, don't count it in the total limit
+            var exists = await _fileCopier.Exists(file, destination);
+            if (exists) continue;
+
             // Loose limit for now, just iterate until the rough limit is reached
             var projectedTotalUploadAmount = uploadedBytes + file.Size;
             if (uploadLimitMb != 0 && projectedTotalUploadAmount > uploadLimitBytes)
@@ -81,8 +55,31 @@ public sealed class FilePusher : IFilePusher
                 continue;
             }
 
-            var pushed = await _fileCopier.CopyFile(source, file, destination);
-            if (!pushed) continue;
+            // Track that the file will be uploaded
+            filesToPush.Add(file);
+            // Update the total amount to be uploaded
+            uploadedBytes += file.Size;
+        }
+
+        // The total bytes of all the files that will be uploaded
+        var totalBytesToUpload = uploadedBytes;
+        // Reset the counter used to measure the total to track the current progress during actual upload
+        uploadedBytes = 0;
+
+        // Upload files
+        var pushedFiles = new List<DotFile>();
+        foreach (var file in filesToPush)
+        {
+            // Upload the file
+            await _fileCopier.CopyFile(source, file, destination);
+
+            // Add the synced file to the domain
+            pushedFiles.Add(file);
+            await _fileRepository.AddSyncedFile(file.Id, destination.Id);
+
+            // Update progress
+            uploadedBytes += file.Size;
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, uploadedBytes, totalBytesToUpload);
             using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
                    {
                        new(nameof(JobExecutionContext), _jobContext.Id)
@@ -90,10 +87,6 @@ public sealed class FilePusher : IFilePusher
             {
                 _logger.LogInformation($"Uploaded {file.Path.Value}");
             }
-
-            pushedFiles.Add(file);
-            await _fileRepository.AddSyncedFile(file.Id, destination.Id);
-            uploadedBytes += file.Size;
         }
 
         return pushedFiles;

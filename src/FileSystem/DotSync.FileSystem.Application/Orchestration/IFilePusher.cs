@@ -8,15 +8,6 @@ namespace com.brettnamba.DotSync.FileSystem.Application.Orchestration;
 public interface IFilePusher
 {
     /// <summary>
-    /// Pushes files from the source to destination that have paths that match the path prefix
-    /// </summary>
-    /// <param name="source">Source storage</param>
-    /// <param name="pathPrefix">The prefix to filter path by</param>
-    /// <param name="destination">Destination storage</param>
-    /// <returns>Pushed files</returns>
-    Task<IEnumerable<DotFile>> PushFilesByPath(StorageLocation source, string pathPrefix, StorageLocation destination);
-
-    /// <summary>
     /// Pushes files with the specified prefix from the source to the destination and limits by an upload amount
     /// </summary>
     /// <param name="source">Source storage</param>
