@@ -1,4 +1,3 @@
-@inject IJobManager JobManager
 @inject IMainStorageProvider MainStorageProvider
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.FileSystem.Application.Storage
@@ -36,10 +35,16 @@
     }
 
     /// <inheritdoc/>
-    protected override Task OnSubmit()
+    protected override Task<IJobParameters> GetJobParameters()
     {
-        _ = Task.Run(() => JobManager.RunJob(new ScanParameters(ScanModel.Source, ScanModel.Path)));
-        return Task.CompletedTask;
+        return Task.FromResult<IJobParameters>(new ScanParameters(ScanModel.Source, ScanModel.Path));
+    }
+
+    /// <inheritdoc/>
+    protected override async Task OnSubmit()
+    {
+        var jobParameters = await GetJobParameters();
+        _ = Task.Run(() => JobManager.RunJob((ScanParameters)jobParameters));
     }
 
     public class ScanFormModel

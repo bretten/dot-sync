@@ -24,4 +24,9 @@ public static class Faker
             state: jobState ?? JobState.Queued,
             parameters: parameters);
     }
+
+    public static JobValidationResult FakeJobValidationResult(bool isValid = true, string? errorMessage = null)
+    {
+        return new JobValidationResult(isValid, errorMessage);
+    }
 }
