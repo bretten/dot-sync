@@ -123,7 +123,11 @@ builder.Services.AddSingleton(dataSource);
 builder.Services.AddDbContext<FileSystemsDbContext>(optionsBuilder =>
 {
     optionsBuilder.UseNpgsql(cs,
-        b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema));
+        b =>
+        {
+            b.EnableRetryOnFailure(5, TimeSpan.FromSeconds(20), null);
+            b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema);
+        });
 }, optionsLifetime: ServiceLifetime.Singleton); // Options lifetime needs to be singleton because DbContextFactory is
 builder.Services.AddDbContextFactory<FileSystemsDbContext>(optionsBuilder => optionsBuilder.UseNpgsql(cs,
     b => b.MigrationsHistoryTable(migrationsTable, fileSystemsSchema))
