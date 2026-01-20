@@ -1,3 +1,4 @@
+using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -6,6 +7,8 @@ namespace com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs.Forms;
 public abstract class BaseForm : ComponentBase
 {
     [CascadingParameter] protected IMudDialogInstance? MudDialog { get; set; }
+    [Inject] protected IJobManager JobManager { get; set; } = null!;
+    [Inject] protected IJobValidator JobValidator { get; set; } = null!;
 
     private bool _firstRenderDone = false;
     protected MudForm Form = null!;
@@ -26,8 +29,16 @@ public abstract class BaseForm : ComponentBase
 
     protected async Task Submit()
     {
+        // Validate form inputs
         await Form.Validate();
         if (!Form.IsValid)
+        {
+            return;
+        }
+
+        // Server-side validation, validate against job manager
+        var jobValidation = await ValidateJob();
+        if (!jobValidation)
         {
             return;
         }
@@ -37,9 +48,32 @@ public abstract class BaseForm : ComponentBase
     }
 
     /// <summary>
+    /// Returns the form inputs as <see cref="IJobParameters"/>
+    /// </summary>
+    protected abstract Task<IJobParameters> GetJobParameters();
+
+    /// <summary>
     /// Will be executed on a valid form submit
     /// </summary>
-    protected abstract Task OnSubmit();
+    protected virtual async Task OnSubmit()
+    {
+        var jobParameters = await GetJobParameters();
+        _ = Task.Run(() => JobManager.RunJob(jobParameters));
+    }
+
+    private async Task<bool> ValidateJob()
+    {
+        var jobParameters = await GetJobParameters();
+        var result = await JobValidator.IsValid(jobParameters);
+        if (!result.IsValid)
+        {
+            Errors = [result.Message!];
+            return false;
+        }
+
+        Errors = [];
+        return true;
+    }
 
     protected bool IsSubmitButtonDisabled()
     {

@@ -1,4 +1,3 @@
-@inject IJobManager JobManager
 @inject IMainStorageProvider MainStorageProvider
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.FileSystem.Application.Storage
@@ -9,7 +8,8 @@
 <MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
     <MudGrid>
         <MudItem xs="12">
-            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())" OnClick="@(Submit)"/>
+            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())"
+                              OnClick="@(Submit)"/>
         </MudItem>
     </MudGrid>
 </MudForm>
@@ -18,11 +18,19 @@
 @code {
 
     /// <inheritdoc/>
-    protected override async Task OnSubmit()
+    protected override async Task<IJobParameters> GetJobParameters()
     {
         const string sourcePath = "";
         var destinationPath = (await MainStorageProvider.GetMainStoragePath()).Value;
-        _ = Task.Run(() => JobManager.RunJob(new SortParameters(sourcePath, destinationPath)));
+        var parameters = new SortParameters(sourcePath, destinationPath);
+        return parameters;
+    }
+
+    /// <inheritdoc/>
+    protected override async Task OnSubmit()
+    {
+        var jobParameters = await GetJobParameters();
+        _ = Task.Run(() => JobManager.RunJob((SortParameters)jobParameters));
     }
 
 }

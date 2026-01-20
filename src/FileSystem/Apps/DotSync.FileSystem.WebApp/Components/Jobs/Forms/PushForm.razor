@@ -1,4 +1,3 @@
-@inject IJobManager JobManager
 @inject IMainStorageProvider MainStorageProvider
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.FileSystem.Application.Storage
@@ -39,11 +38,18 @@
     }
 
     /// <inheritdoc/>
-    protected override async Task OnSubmit()
+    protected override async Task<IJobParameters> GetJobParameters()
     {
         var mainStorage = await MainStorageProvider.GetMainStorageLocation();
         var parameters = new PushParameters(mainStorage, PushModel.SourcePushPath, PushModel.UploadLimitMb, PushModel.Destination!);
-        _ = Task.Run(() => JobManager.RunJob(parameters));
+        return parameters;
+    }
+
+    /// <inheritdoc/>
+    protected override async Task OnSubmit()
+    {
+        var jobParameters = await GetJobParameters();
+        _ = Task.Run(() => JobManager.RunJob((PushParameters)jobParameters));
     }
 
     public class PushFormModel
