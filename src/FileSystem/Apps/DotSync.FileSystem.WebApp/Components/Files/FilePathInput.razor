@@ -5,6 +5,7 @@
 
 <MudAutocomplete T="string" @bind-Value="Text" SearchFunc="@Search"
                  Label="Path"
+                 Text="@(Text ?? string.Empty)"
                  TextChanged="@TextChanged"
                  MaxItems="30"
                  ResetValueOnEmptyText="true"

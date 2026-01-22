@@ -1,4 +1,5 @@
 @using com.brettnamba.DotSync.Common.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs.Forms
 @rendermode InteractiveServer
 
@@ -16,7 +17,7 @@
                 }
                 else if (JobType == JobType.Push)
                 {
-                    <PushForm/>
+                    <PushForm InitialStorage="@InitialStorage" InitialPathPrefix="@InitialPathPrefix"/>
                 }
                 else if (JobType == JobType.Sort)
                 {
@@ -29,4 +30,6 @@
 
 @code {
     [Parameter] public JobType JobType { get; set; }
+    [Parameter] public StorageLocation? InitialStorage { get; set; }
+    [Parameter] public string? InitialPathPrefix { get; set; }
 }

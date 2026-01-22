@@ -9,6 +9,7 @@ public abstract class BaseForm : ComponentBase
     [CascadingParameter] protected IMudDialogInstance? MudDialog { get; set; }
     [Inject] protected IJobManager JobManager { get; set; } = null!;
     [Inject] protected IJobValidator JobValidator { get; set; } = null!;
+    [Inject] protected ISnackbar Snackbar { get; set; } = null!;
 
     private bool _firstRenderDone = false;
     protected MudForm Form = null!;
@@ -45,6 +46,17 @@ public abstract class BaseForm : ComponentBase
 
         await OnSubmit();
         MudDialog?.Close();
+        var jobParameters = await GetJobParameters();
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.TopCenter;
+        Snackbar.Add($"Job added: {jobParameters.Type}", Severity.Success, options =>
+        {
+            options.CloseButtonClickFunc = snackbar =>
+            {
+                // Close it immediately, otherwise clicking the close button causes it to slowly fade
+                snackbar.ForceClose();
+                return Task.CompletedTask;
+            };
+        });
     }
 
     /// <summary>
