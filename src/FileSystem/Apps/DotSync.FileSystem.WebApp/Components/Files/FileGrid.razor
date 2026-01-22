@@ -86,7 +86,7 @@
         <PropertyColumn Property="@(x => x.Size)" Title="Size" Sortable="true">
             <CellTemplate>
                 <div>@(Math.Round((double)context.Item.Size / 1000000, 2)) MB</div>
-                (<span>@(context.Item.Size) b</span>)
+                (<small>@(context.Item.Size) b</small>)
             </CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="@(x => x.Path.Value)" Title="Path" Sortable="true">
@@ -113,12 +113,12 @@
         </PropertyColumn>
         <PropertyColumn Property="@(x => x.FileCreation)" Title="Created" Sortable="true">
             <CellTemplate>
-                @context.Item.FileCreation.ToString("g")
+                <small>@context.Item.FileCreation.ToString("g")</small>
             </CellTemplate>
         </PropertyColumn>
         <PropertyColumn Property="@(x => x.FirstSync)" Title="First Sync" Sortable="true">
             <CellTemplate>
-                @context.Item.FirstSync.ToLocalTime().ToString("g")
+                <small>@context.Item.FirstSync.ToLocalTime().ToString("g")</small>
             </CellTemplate>
         </PropertyColumn>
     </Columns>
