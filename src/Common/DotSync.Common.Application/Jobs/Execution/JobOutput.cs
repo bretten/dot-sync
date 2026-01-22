@@ -22,7 +22,7 @@ public sealed class JobOutput : IJobOutput
     private JobOutput(IJob job, Exception exception)
     {
         Job = job;
-        JobResults = new JobResults(new Dictionary<string, IEnumerable<string[]>>());
+        JobResults = new JobResults(new Dictionary<string, ResultCollection>());
         Exception = exception;
     }
 

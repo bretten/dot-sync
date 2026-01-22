@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.DateAndTme;
@@ -41,9 +42,10 @@ public sealed class SortJobRunner : BaseJobRunner<SortParameters>
 
     private static JobResults ToResults(IEnumerable<string> files)
     {
-        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
+        var sortedFiles = files.Select(x => new[] { x }).ToImmutableList();
+        return new JobResults(new Dictionary<string, ResultCollection>()
         {
-            { "Sorted Files", files.Select(x => new[] { x }) }
+            { "Sorted Files", ResultCollection.Collection(sortedFiles) }
         });
     }
 }

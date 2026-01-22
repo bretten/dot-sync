@@ -19,14 +19,13 @@ public sealed class Test1JobRunner : BaseJobRunner<Test1Parameters>
     {
         if (job.Parameters.ThrowException) throw new Test1JobRunnerFakeException();
         await Task.Delay(job.Parameters.Delay);
-        return new JobOutput(job, new JobResults(new Dictionary<string, IEnumerable<string[]>>()
+        var results = new List<string[]>()
+        {
+            new[] { job.Parameters.Param1, job.Parameters.Delay.ToString() }
+        };
+        return new JobOutput(job, new JobResults(new Dictionary<string, ResultCollection>()
             {
-                {
-                    "Result", new List<string[]>()
-                    {
-                        new[] { job.Parameters.Param1, job.Parameters.Delay.ToString() },
-                    }
-                }
+                { "Result", ResultCollection.Collection(results) }
             }
         ));
     }
