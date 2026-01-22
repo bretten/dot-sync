@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.DateAndTme;
@@ -31,10 +32,10 @@ public sealed class PushJobRunner : BaseJobRunner<PushParameters>
 
     private static JobResults ToResults(IEnumerable<DotFile> files)
     {
-        var uploadedFiles = files.Select(x => new[] { x.Path.Value });
-        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
+        var uploadedFiles = files.Select(x => new[] { x.Path.Value }).ToImmutableList();
+        return new JobResults(new Dictionary<string, ResultCollection>()
         {
-            { "Uploaded Files", uploadedFiles }
+            { "Uploaded Files", ResultCollection.Collection(uploadedFiles) },
         });
     }
 }

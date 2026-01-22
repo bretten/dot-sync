@@ -46,18 +46,18 @@ public sealed class VerifyJobRunner : BaseJobRunner<VerifyParameters>
 
     private static JobResults ToResults(FileSetIntegrityVerificationResult result)
     {
-        var verified = new List<string[]>() { new string[] { "Verified Count", result.TotalVerified.ToString() } };
-        var unverified = result.Unverified.Select(x => (string[])[x.Path.Value, x.Checksum.Value, x.Size.ToString()]);
+        var unverified = result.Unverified.Select(x => (string[])[x.Path.Value, x.Checksum.Value, x.Size.ToString()])
+            .ToImmutableList();
         var moved = result.Moved.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         var missing = result.Missing.Select(x => (string[])[x.Path.Value]).ToImmutableList();
         var newFiles = result.New.Select(x => (string[])[x.Path.Value]).ToImmutableList();
-        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
+        return new JobResults(new Dictionary<string, ResultCollection>()
         {
-            { "Verified", verified },
-            { "Unverified", unverified },
-            { "Moved", moved },
-            { "Missing", missing },
-            { "New Files", newFiles },
+            { "Verified", ResultCollection.Quantity(result.TotalVerified) },
+            { "Unverified", ResultCollection.Collection(unverified) },
+            { "Moved", ResultCollection.Collection(moved) },
+            { "Missing", ResultCollection.Collection(missing) },
+            { "New Files", ResultCollection.Collection(newFiles) },
         });
     }
 }

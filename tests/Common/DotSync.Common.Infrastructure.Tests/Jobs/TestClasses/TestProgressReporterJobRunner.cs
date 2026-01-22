@@ -20,7 +20,7 @@ public class TestProgressReporterJobRunner : BaseJobRunner<TestProgressReportPar
         job.Parameters.ProgressReporter.ReportLog(this, job.Id, "LogReported");
         job.Parameters.ProgressReporter.ReportPercent(this, job.Id, 100, 100);
         return Task.FromResult<IJobOutput>(
-            new JobOutput(job, new JobResults(new Dictionary<string, IEnumerable<string[]>>()))
+            new JobOutput(job, new JobResults(new Dictionary<string, ResultCollection>()))
         );
     }
 }

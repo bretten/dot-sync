@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.DateAndTme;
@@ -40,10 +41,10 @@ public sealed class ScanJobRunner : BaseJobRunner<ScanParameters>
 
     private static JobResults ToResult(FileSystemScannerResult result)
     {
-        var newFiles = result.NewFiles.Select(x => new[] { x.Path.Value });
-        return new JobResults(new Dictionary<string, IEnumerable<string[]>>()
+        var newFiles = result.NewFiles.Select(x => new[] { x.Path.Value }).ToImmutableList();
+        return new JobResults(new Dictionary<string, ResultCollection>()
         {
-            { "New Files", newFiles }
+            { "New Files", ResultCollection.Collection(newFiles) }
         });
     }
 }
