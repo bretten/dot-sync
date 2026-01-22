@@ -7,11 +7,15 @@
 
     <main>
         <article class="content px-4">
-            <MudThemeProvider/>
-            <MudPopoverProvider/>
-            <MudDialogProvider/>
-            <MudSnackbarProvider/>
-            @Body
+            <MudPaper Elevation="0" Width="100%" Class="d-flex justify-center align-center">
+                <MudPaper Width="70%">
+                    <MudThemeProvider/>
+                    <MudPopoverProvider/>
+                    <MudDialogProvider/>
+                    <MudSnackbarProvider/>
+                    @Body
+                </MudPaper>
+            </MudPaper>
         </article>
     </main>
 </div>
