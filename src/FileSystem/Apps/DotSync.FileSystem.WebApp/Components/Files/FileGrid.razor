@@ -1,11 +1,46 @@
 @using System.Collections.Immutable
 @using System.Web
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<FileSystemsDbContext> DbContextFactory
 @inject IDialogService DialogService
+@inject IJSRuntime Js
 @rendermode InteractiveServer
+
+<MudStack Class="mb-10">
+    <MudTooltip>
+        <ChildContent>
+            <MudText Typo="Typo.h6">
+                Un-pushed Files
+                <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Color="Color.Info"/>
+            </MudText>
+        </ChildContent>
+        <TooltipContent>
+            <MudText Typo="Typo.subtitle1">
+                Files that have <strong>not yet</strong> been pushed to the specified storage location.
+            </MudText>
+            <MudText Typo="Typo.subtitle2">
+                Select a storage location to see which files need to be pushed.<br/>
+                Resetting shows all files regardless of push status.
+            </MudText>
+        </TooltipContent>
+    </MudTooltip>
+
+    <MudForm>
+        <MudRadioGroup T="StorageLocation" Value="_selectedStorage" ValueChanged="ChangeStorageLocation">
+            @foreach (var storage in _storageLocations)
+            {
+                <MudRadio Value="@(storage)" Color="Color.Primary"
+                          Class="mr-8">@($"{storage.Type} - {storage.Path.Value}")</MudRadio>
+            }
+        </MudRadioGroup>
+    </MudForm>
+    <div class="d-flex align-center ml-4">
+        <MudButton Variant="Variant.Outlined" OnClick="OnResetStorage">Reset</MudButton>
+    </div>
+</MudStack>
 
 <MudDataGrid @ref="_dataGrid" T="DotFile" ServerData="FilterFiles" SortMode="SortMode.Single">
     <ToolBarContent>
@@ -47,7 +82,28 @@
                 (<span>@(context.Item.Size) b</span>)
             </CellTemplate>
         </PropertyColumn>
-        <PropertyColumn Property="@(x => x.Path.Value)" Title="Path" Sortable="true"/>
+        <PropertyColumn Property="@(x => x.Path.Value)" Title="Path" Sortable="true">
+            <CellTemplate>
+                <MudText Class="mb-3">
+                    @(context.Item.Path.Value)
+                    <MudTooltip Text="Copy Path">
+                        <MudButton>
+                            <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small"
+                                     @onclick="@(_ => CopyToClipboard(context.Item.Path.Value))"/>
+                        </MudButton>
+                    </MudTooltip>
+                </MudText>
+                <MudText Typo="Typo.caption">
+                    @(context.Item.Sha256Checksum.Value)
+                    <MudTooltip Text="Copy SHA256 Checksum">
+                        <MudButton>
+                            <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small"
+                                     @onclick="@(_ => CopyToClipboard(context.Item.Sha256Checksum.Value))"/>
+                        </MudButton>
+                    </MudTooltip>
+                </MudText>
+            </CellTemplate>
+        </PropertyColumn>
         <PropertyColumn Property="@(x => x.FileCreation)" Title="Created" Sortable="true">
             <CellTemplate>
                 @context.Item.FileCreation.ToString("g")
@@ -68,16 +124,26 @@
 
     private MudDataGrid<DotFile> _dataGrid = null!;
     private string _searchQuery = string.Empty;
+    private IReadOnlyList<StorageLocation> _storageLocations = new List<StorageLocation>();
+    private StorageLocation? _selectedStorage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var setupContext = await DbContextFactory.CreateDbContextAsync();
+        _storageLocations = await setupContext.StorageLocations.Where(x => x.Type != StorageLocationType.Local).ToListAsync();
+
+        await base.OnInitializedAsync();
+    }
 
     public async Task<GridData<DotFile>> FilterFiles(GridState<DotFile> state)
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
         var query = context.FilesThatStartWith(_searchQuery);
-        // if (IsPageFilteredByStorageLocation())
-        // {
-        //     query = context.UnsyncedFiles(query, _selectedStorageLocationId);
-        // }
+        if (_selectedStorage != null)
+        {
+            query = context.UnsyncedFiles(query, _selectedStorage.Id);
+        }
 
         // Single sorting only
         if (state.SortDefinitions.Count > 0)
@@ -136,6 +202,18 @@
         return _dataGrid.ReloadServerData();
     }
 
+    private void ChangeStorageLocation(StorageLocation storage)
+    {
+        _selectedStorage = storage;
+        _dataGrid.ReloadServerData();
+    }
+
+    private void OnResetStorage()
+    {
+        _selectedStorage = null;
+        _dataGrid.ReloadServerData();
+    }
+
     private static IQueryable<DotFile> ApplySort(SortDefinition<DotFile> sortDef, IQueryable<DotFile> query)
     {
         switch (sortDef.SortBy)
@@ -156,5 +234,10 @@
     {
         ".jpg", ".jpeg", ".png", ".heic", ".dng"
     }.ToImmutableList();
+
+    private async Task CopyToClipboard(string? text)
+    {
+        await Js.InvokeVoidAsync("mudWindow.copyToClipboard", text);
+    }
 
 }
