@@ -1,8 +1,10 @@
 @using System.Collections.Immutable
 @using System.Web
+@using com.brettnamba.DotSync.Common.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<FileSystemsDbContext> DbContextFactory
 @inject IDialogService DialogService
@@ -33,12 +35,17 @@
             @foreach (var storage in _storageLocations)
             {
                 <MudRadio Value="@(storage)" Color="Color.Primary"
-                          Class="mr-8">@($"{storage.Type} - {storage.Path.Value}")</MudRadio>
+                          Class="mr-8">@($"{storage.Type} - {storage.Path.WithoutLeadingAndTrailingSlash}")</MudRadio>
             }
         </MudRadioGroup>
     </MudForm>
-    <div class="d-flex align-center ml-4">
+    <div class="d-flex align-center ml-4 gap-2">
         <MudButton Variant="Variant.Outlined" OnClick="OnResetStorage">Reset</MudButton>
+        <MudTooltip Text="Pushes files to the selected storage location based on the current filter">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnClickPush"
+                       Disabled="@(_selectedStorage == null)">Push
+            </MudButton>
+        </MudTooltip>
     </div>
 </MudStack>
 
@@ -135,7 +142,7 @@
         await base.OnInitializedAsync();
     }
 
-    public async Task<GridData<DotFile>> FilterFiles(GridState<DotFile> state)
+    private async Task<GridData<DotFile>> FilterFiles(GridState<DotFile> state)
     {
         await using var context = await DbContextFactory.CreateDbContextAsync();
 
@@ -185,15 +192,21 @@
         });
     }
 
-    private string GetThumbnailUrl(string imagePath)
+    private Task OnClickPush()
     {
-        return $"thumbnail?path={imagePath}";
-    }
-
-    private bool IsImage(string file)
-    {
-        var extension = Path.GetExtension(file).ToLowerInvariant();
-        return Extensions.Contains(extension);
+        var parameters = new DialogParameters<NewJobDialog>
+        {
+            { x => x.JobType, JobType.Push },
+            { x => x.InitialStorage, _selectedStorage },
+            { x => x.InitialPathPrefix, _searchQuery }
+        };
+        return DialogService.ShowAsync<NewJobDialog>($"New Job: {JobType.Push}", parameters, new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true
+        });
     }
 
     private Task OnUpdateSearch(string text)
@@ -214,6 +227,11 @@
         _dataGrid.ReloadServerData();
     }
 
+    private async Task CopyToClipboard(string? text)
+    {
+        await Js.InvokeVoidAsync("mudWindow.copyToClipboard", text);
+    }
+
     private static IQueryable<DotFile> ApplySort(SortDefinition<DotFile> sortDef, IQueryable<DotFile> query)
     {
         switch (sortDef.SortBy)
@@ -230,14 +248,20 @@
         }
     }
 
+    private string GetThumbnailUrl(string imagePath)
+    {
+        return $"thumbnail?path={imagePath}";
+    }
+
+    private bool IsImage(string file)
+    {
+        var extension = Path.GetExtension(file).ToLowerInvariant();
+        return Extensions.Contains(extension);
+    }
+
     private static readonly IReadOnlyList<string> Extensions = new List<string>()
     {
         ".jpg", ".jpeg", ".png", ".heic", ".dng"
     }.ToImmutableList();
-
-    private async Task CopyToClipboard(string? text)
-    {
-        await Js.InvokeVoidAsync("mudWindow.copyToClipboard", text);
-    }
 
 }

@@ -31,9 +31,16 @@
     [SupplyParameterFromForm(FormName = "Push")]
     private PushFormModel PushModel { get; set; } = null!;
 
+    [Parameter] public StorageLocation? InitialStorage { get; set; }
+    [Parameter] public string? InitialPathPrefix { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
-        PushModel = new PushFormModel();
+        PushModel = new PushFormModel()
+        {
+            Destination = InitialStorage,
+            SourcePushPath = InitialPathPrefix
+        };
         await base.OnInitializedAsync();
     }
 
