@@ -1,0 +1,17 @@
+@using System.Web
+<MudDialog>
+    <TitleContent>@(HttpUtility.UrlDecode(FilePath))</TitleContent>
+    <DialogContent>
+        <MudGrid Justify="Justify.Center">
+            <MudItem xs="12" Class="d-flex justify-center align-center">
+                <MudImage Fluid="true" Src="@ThumbnailPath" Alt="@FilePath" Class="rounded-lg"/>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public string FilePath { get; set; } = null!;
+    [Parameter] public string ThumbnailPath { get; set; } = null!;
+}

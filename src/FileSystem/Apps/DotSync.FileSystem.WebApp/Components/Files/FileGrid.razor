@@ -1,0 +1,160 @@
+@using System.Collections.Immutable
+@using System.Web
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<FileSystemsDbContext> DbContextFactory
+@inject IDialogService DialogService
+@rendermode InteractiveServer
+
+<MudDataGrid @ref="_dataGrid" T="DotFile" ServerData="FilterFiles" SortMode="SortMode.Single">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Files</MudText>
+        <MudSpacer/>
+        <FilePathInput TextChanged="@(s => OnUpdateSearch(s))"/>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width: 20%;"/>
+        <col style="width: 10%;"/>
+        <col style="width: 50%;"/>
+        <col style="width: 10%;"/>
+        <col style="width: 10%;"/>
+    </ColGroup>
+    <Columns>
+        <TemplateColumn Title="" Sortable="false" CellStyle="text-align:center">
+            <CellTemplate>
+                @{
+                    var encodedPath = HttpUtility.UrlEncode(context.Item.Path.Value);
+                }
+                @if (IsImage(context.Item.Path.Value))
+                {
+                    <MudImage Src="@(GetThumbnailUrl(encodedPath))" Width="200" Height="150"
+                              Alt="@(context.Item.Path.Value)" Class="rounded-lg ma-4" ObjectFit="ObjectFit.Cover"
+                              @onclick="@(e => OnThumbnailClicked(e, encodedPath))"/>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large"/>
+                }
+                <div>
+                    <small><a href="file?path=@(encodedPath)" target="_blank" class="small">Download</a></small>
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="@(x => x.Size)" Title="Size" Sortable="true">
+            <CellTemplate>
+                <div>@(Math.Round((double)context.Item.Size / 1000000, 2)) MB</div>
+                (<span>@(context.Item.Size) b</span>)
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(x => x.Path.Value)" Title="Path" Sortable="true"/>
+        <PropertyColumn Property="@(x => x.FileCreation)" Title="Created" Sortable="true">
+            <CellTemplate>
+                @context.Item.FileCreation.ToString("g")
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(x => x.FirstSync)" Title="First Sync" Sortable="true">
+            <CellTemplate>
+                @context.Item.FirstSync.ToLocalTime().ToString("g")
+            </CellTemplate>
+        </PropertyColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="DotFile" PageSizeOptions="@(new[] { 20, 50, 100 })"></MudDataGridPager>
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+
+    private MudDataGrid<DotFile> _dataGrid = null!;
+    private string _searchQuery = string.Empty;
+
+    public async Task<GridData<DotFile>> FilterFiles(GridState<DotFile> state)
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var query = context.FilesThatStartWith(_searchQuery);
+        // if (IsPageFilteredByStorageLocation())
+        // {
+        //     query = context.UnsyncedFiles(query, _selectedStorageLocationId);
+        // }
+
+        // Single sorting only
+        if (state.SortDefinitions.Count > 0)
+        {
+            var sortDef = state.SortDefinitions.ToList()[0];
+            query = ApplySort(sortDef, query);
+        }
+
+        // Total for pagination
+        var totalCount = await query.CountAsync();
+
+        // Filter this page's results
+        query = query.Skip(state.Page * state.PageSize).Take(state.PageSize);
+
+        var items = await query.ToArrayAsync();
+        var result = new GridData<DotFile>
+        {
+            Items = items,
+            TotalItems = totalCount
+        };
+
+        return result;
+    }
+
+    private Task OnThumbnailClicked(MouseEventArgs e, string filePath)
+    {
+        var thumbnailUrl = GetThumbnailUrl(filePath);
+        var parameters = new DialogParameters<FilePreviewDialog>()
+        {
+            { x => x.FilePath, filePath },
+            { x => x.ThumbnailPath, thumbnailUrl }
+        };
+        return DialogService.ShowAsync<FilePreviewDialog>(filePath, parameters, new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true
+        });
+    }
+
+    private string GetThumbnailUrl(string imagePath)
+    {
+        return $"thumbnail?path={imagePath}";
+    }
+
+    private bool IsImage(string file)
+    {
+        var extension = Path.GetExtension(file).ToLowerInvariant();
+        return Extensions.Contains(extension);
+    }
+
+    private Task OnUpdateSearch(string text)
+    {
+        _searchQuery = text;
+        return _dataGrid.ReloadServerData();
+    }
+
+    private static IQueryable<DotFile> ApplySort(SortDefinition<DotFile> sortDef, IQueryable<DotFile> query)
+    {
+        switch (sortDef.SortBy)
+        {
+            case nameof(DotFile.Path):
+            case $"{nameof(DotFile.Path)}.{nameof(DotFile.Path.Value)}":
+                return sortDef.Descending ? query.OrderByDescending(x => x.Path) : query.OrderBy(x => x.Path);
+            case nameof(DotFile.Size):
+                return sortDef.Descending ? query.OrderByDescending(x => x.Size) : query.OrderBy(x => x.Size);
+            case nameof(DotFile.FirstSync):
+                return sortDef.Descending ? query.OrderByDescending(x => x.FirstSync) : query.OrderBy(x => x.FirstSync);
+            default:
+                return sortDef.Descending ? query.OrderByDescending(x => x.FileCreation) : query.OrderBy(x => x.FileCreation);
+        }
+    }
+
+    private static readonly IReadOnlyList<string> Extensions = new List<string>()
+    {
+        ".jpg", ".jpeg", ".png", ".heic", ".dng"
+    }.ToImmutableList();
+
+}
