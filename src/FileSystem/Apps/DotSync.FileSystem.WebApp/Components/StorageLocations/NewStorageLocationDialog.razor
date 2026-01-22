@@ -1,0 +1,94 @@
+@inject IDbContextFactory<FileSystemsDbContext> FileSystemsDbContextFactory
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
+@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
+@using Microsoft.EntityFrameworkCore
+@inherits com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets.Forms.BaseForm
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                <MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
+                    <MudGrid>
+                        <MudItem xs="12">
+                            <MudSelect T="StorageLocationType" Label="Storage Type" @bind-Value="_storageLocationType"
+                                       Required="true" RequiredError="Pick a storage type">
+                                @foreach (var t in Enum.GetValues<StorageLocationType>())
+                                {
+                                    <MudSelectItem Value="@t">@t</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField T="string" Label="Path" @bind-Value="_path" Required="true"
+                                          RequiredError="Enter a path"/>
+                        </MudItem>
+                        <MudItem xs="12">
+                            <FormSubmitButton IsTypeButton="@(MudDialog != null)"
+                                              IsDisabled="@(IsSubmitButtonDisabled())"
+                                              OnClick="@(Submit)"/>
+                        </MudItem>
+                    </MudGrid>
+                </MudForm>
+                <ErrorMessages Errors="Errors"/>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+</MudDialog>
+
+@code {
+
+    private StorageLocationType _storageLocationType = StorageLocationType.AmazonS3;
+    private string? _path;
+
+    protected override async Task<bool> ServerSideValidate()
+    {
+        var path = GetRootedPath(_path!); // _path already validated client-side
+
+        await using var dbContext = await FileSystemsDbContextFactory.CreateDbContextAsync();
+        var existingStorageLocations = await dbContext.StorageLocations.ToListAsync();
+        var duplicates = existingStorageLocations.Where(x => x.Path == StoragePath.Create(path));
+
+        if (duplicates.Any())
+        {
+            Errors = ["Storage location already exists"];
+            return false;
+        }
+
+        Errors = [];
+        return true;
+    }
+
+    protected override async Task OnSubmit()
+    {
+        await using var dbContext = await FileSystemsDbContextFactory.CreateDbContextAsync();
+        await dbContext.StorageLocations.AddAsync(new StorageLocation(_storageLocationType, StoragePath.Create(GetRootedPath(_path!))));
+        await dbContext.SaveChangesAsync();
+    }
+
+    protected override Task<string> GetSuccessMessage()
+    {
+        return Task.FromResult($"Storage location added: {_storageLocationType} - {_path}");
+    }
+
+    private string GetRootedPath(string path)
+    {
+        // First char is /
+        if (path[0] != Path.AltDirectorySeparatorChar)
+        {
+            path = $"{Path.AltDirectorySeparatorChar}{path}";
+        }
+
+        // Last char is /
+        if (path[^1] != Path.AltDirectorySeparatorChar)
+        {
+            path = $"{path}{Path.AltDirectorySeparatorChar}";
+        }
+
+        return path;
+    }
+
+}
