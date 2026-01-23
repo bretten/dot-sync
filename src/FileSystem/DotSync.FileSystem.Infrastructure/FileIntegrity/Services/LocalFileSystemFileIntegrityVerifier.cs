@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -8,6 +9,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 
@@ -31,14 +33,20 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
     /// </summary>
     private readonly IJobProgressReporter _jobProgressReporter;
 
+    /// <summary>
+    /// Configured directories to skip
+    /// </summary>
+    private readonly DirectoryConfiguration _directoryConfiguration;
+
     public LocalFileSystemFileIntegrityVerifier(IFileRepository fileRepository,
         IFileChecksumGenerator checksumGenerator, ILogger<IFileIntegrityVerifier> logger,
-        IFileMetadataReader metadataReader, JobExecutionContext jobContext,
-        IJobProgressReporter jobProgressReporter) : base(fileRepository, checksumGenerator, logger)
+        IFileMetadataReader metadataReader, JobExecutionContext jobContext, IJobProgressReporter jobProgressReporter,
+        IOptions<DirectoryConfiguration> directoryConfiguration) : base(fileRepository, checksumGenerator, logger)
     {
         _metadataReader = metadataReader;
         _jobContext = jobContext;
         _jobProgressReporter = jobProgressReporter;
+        _directoryConfiguration = directoryConfiguration.Value;
     }
 
     /// <inheritdoc/>
@@ -49,6 +57,9 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
         var dbFiles = await FileRepository.GetFilesByPathPrefix(pathPrefix);
         var trackedFiles = new TrackedFiles(dbFiles);
         var skips = pathsToSkip.ToList();
+
+        // Skip the sort dir
+        skips.Add(_directoryConfiguration.SortDir);
 
         // Path to verify
         var rootPath = storageLocation.Path.Value;
@@ -95,6 +106,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
         var relativePath = Path.GetRelativePath(rootPath, directoryInfo.FullName);
         if (pathsToSkip.Contains(relativePath))
         {
+            Logger.LogInformation($"Skipping path {relativePath}");
             return Array.Empty<Func<Task<FileIntegrityVerificationResult>>>();
         }
 

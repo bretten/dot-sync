@@ -13,6 +13,7 @@ using com.brettnamba.DotSync.Common.Infrastructure.Configuration;
 using com.brettnamba.DotSync.Common.Infrastructure.Jobs.Execution;
 using com.brettnamba.DotSync.Common.Infrastructure.Jobs.Logger;
 using com.brettnamba.DotSync.Common.Infrastructure.Jobs.Progress;
+using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
@@ -136,6 +137,9 @@ builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
+
+// Directories
+builder.Services.Configure<DirectoryConfiguration>(builder.Configuration.GetSection(DirectoryConfiguration.Section));
 
 // File organization
 builder.Services.AddTransient<IFileSorter, LocalFileSystemByDateFileSorter>();
