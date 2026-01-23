@@ -19,6 +19,13 @@
         <FilePathInput TextChanged="@(s => OnUpdateSearch(s))"/>
         <MudSpacer/>
 
+        <MudChipSet T="string" AllClosable OnClose="OnResetStorage">
+            @if (_selectedStorage != null)
+            {
+                <MudChip
+                    Text="@($"{_selectedStorage.Type} - {_selectedStorage.Path.WithoutLeadingAndTrailingSlash}")"></MudChip>
+            }
+        </MudChipSet>
         <MudMenu>
             <ActivatorContent>
                 <MudChip T="string" Icon="@Icons.Material.Filled.CloudUpload" IconColor="Color.Surface"
