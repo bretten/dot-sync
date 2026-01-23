@@ -1,6 +1,7 @@
 ﻿using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.DateAndTme;
+using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
@@ -10,6 +11,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileSystems.Services;
@@ -44,9 +46,14 @@ public class LocalFileSystemScannerTests
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("nestedFile.txt")))
             .Returns(nestedFile.Sha256Checksum.Value);
 
+        var mockDirectoryConfig = new DirectoryConfiguration("sortDir");
+        var stubDirConfigOptions = new Mock<IOptions<DirectoryConfiguration>>();
+        stubDirConfigOptions.Setup(x => x.Value).Returns(mockDirectoryConfig);
+
         var scanner = new LocalFileSystemScanner(stubFileRepository.Object, stubFileMetadataReader.Object,
             stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>(),
-            new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>());
+            new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>(),
+            stubDirConfigOptions.Object);
 
         // Act
         var actual = await scanner.Scan(storage, string.Empty);
@@ -83,9 +90,14 @@ public class LocalFileSystemScannerTests
             .Setup(x => x.GenerateChecksum(IsFileInfoWith("nestedFile.txt")))
             .Returns(nestedFile.Sha256Checksum.Value);
 
+        var mockDirectoryConfig = new DirectoryConfiguration("sortDir");
+        var stubDirConfigOptions = new Mock<IOptions<DirectoryConfiguration>>();
+        stubDirConfigOptions.Setup(x => x.Value).Returns(mockDirectoryConfig);
+
         var scanner = new LocalFileSystemScanner(stubFileRepository.Object, stubFileMetadataReader.Object,
             stubChecksumGenerator.Object, Mock.Of<ILogger<IFileSystemScanner>>(),
-            new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>());
+            new JobExecutionContext(Mock.Of<IClock>()), Mock.Of<IJobProgressReporter>(),
+            stubDirConfigOptions.Object);
 
         // Act
         var actual = await scanner.Scan(storage, "someDir");

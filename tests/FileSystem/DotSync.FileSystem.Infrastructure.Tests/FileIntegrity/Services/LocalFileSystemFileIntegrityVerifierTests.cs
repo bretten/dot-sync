@@ -1,4 +1,5 @@
 ﻿using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -9,6 +10,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity.Services;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileIntegrity.Services;
@@ -60,10 +62,15 @@ public class LocalFileSystemFileIntegrityVerifierTests
         var stubMetadataReader = new Mock<IFileMetadataReader>();
         stubMetadataReader.Setup(x => x.ReadFileCreationDate(It.IsAny<string>()))
             .Returns(new DateTime(2024, 4, 25));
+        // Directory configuration
+        var mockDirectoryConfig = new DirectoryConfiguration("sortDir");
+        var stubDirConfigOptions = new Mock<IOptions<DirectoryConfiguration>>();
+        stubDirConfigOptions.Setup(x => x.Value).Returns(mockDirectoryConfig);
 
         var verifier = new LocalFileSystemFileIntegrityVerifier(stubFileRepository.Object, stubChecksumGenerator.Object,
             Mock.Of<ILogger<IFileIntegrityVerifier>>(), stubMetadataReader.Object,
-            Common.Application.Tests.Jobs.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>());
+            Common.Application.Tests.Jobs.TestClasses.Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>(),
+            stubDirConfigOptions.Object);
 
         /*
          * Act

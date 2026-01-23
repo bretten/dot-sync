@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
@@ -10,6 +11,7 @@ using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 
@@ -49,6 +51,11 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     private readonly IJobProgressReporter _jobProgressReporter;
 
     /// <summary>
+    /// Configured directories to skip
+    /// </summary>
+    private readonly DirectoryConfiguration _directoryConfiguration;
+
+    /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="fileRepository">Stores the expected state of the files</param>
@@ -57,9 +64,11 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// <param name="logger">Logger</param>
     /// <param name="jobContext">Job execution context</param>
     /// <param name="jobProgressReporter">Reports the progress of the job</param>
+    /// <param name="directoryConfiguration">Configured directories to skip</param>
     public LocalFileSystemScanner(IFileRepository fileRepository, IFileMetadataReader fileMetadataReader,
         IFileChecksumGenerator fileChecksumGenerator, ILogger<IFileSystemScanner> logger,
-        JobExecutionContext jobContext, IJobProgressReporter jobProgressReporter)
+        JobExecutionContext jobContext, IJobProgressReporter jobProgressReporter,
+        IOptions<DirectoryConfiguration> directoryConfiguration)
     {
         _fileRepository = fileRepository;
         _fileMetadataReader = fileMetadataReader;
@@ -67,6 +76,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         _logger = logger;
         _jobContext = jobContext;
         _jobProgressReporter = jobProgressReporter;
+        _directoryConfiguration = directoryConfiguration.Value;
     }
 
     /// <inheritdoc />
@@ -112,6 +122,15 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
         var tasks = new List<Func<Task<DotFile?>>>();
+
+        // Determine this directory's relative path compared to the root directory to see if it should be skipped
+        var relativePath = Path.GetRelativePath(rootDirectoryPath.Value, directoryInfo.FullName);
+        if (relativePath.Equals(_directoryConfiguration.SortDir, StringComparison.InvariantCultureIgnoreCase))
+        {
+            _logger.LogInformation($"Skipping path {relativePath}");
+            return tasks;
+        }
+
         foreach (var entry in entries)
         {
             if (entry.Attributes.HasFlag(FileAttributes.Hidden))
