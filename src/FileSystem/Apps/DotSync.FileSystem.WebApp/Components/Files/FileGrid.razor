@@ -122,7 +122,8 @@
                 </MudText>
             </CellTemplate>
         </PropertyColumn>
-        <PropertyColumn Property="@(x => x.FileCreation)" Title="Created" Sortable="true">
+        <PropertyColumn Property="@(x => x.FileCreation)" Title="Created" Sortable="true"
+                        InitialDirection="SortDirection.Descending">
             <CellTemplate>
                 <small>@context.Item.FileCreation.ToString("g")</small>
             </CellTemplate>
@@ -168,6 +169,10 @@
         {
             var sortDef = state.SortDefinitions.ToList()[0];
             query = ApplySort(sortDef, query);
+        }
+        else
+        {
+            query = query.OrderByDescending(x => x.FileCreation);
         }
 
         // Total for pagination
