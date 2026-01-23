@@ -3,7 +3,8 @@
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
 @inject IStorageLocationRepository StorageLocationRepo
 
-<MudSelect T="StorageLocation" Label="Storage" ValueChanged="OnChange" Required="true" RequiredError="Pick a storage" Value="StorageLocation">
+<MudSelect T="StorageLocation" Label="Storage" ValueChanged="OnChange" Required="true" RequiredError="Pick a storage"
+           Value="StorageLocation">
     @foreach (var storageLocation in _storageLocations)
     {
         <MudSelectItem

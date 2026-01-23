@@ -63,9 +63,9 @@ public static class AuthenticationExtensions
         endpoints.MapGet("/login",
             ([FromQuery] string? returnUrl) => TypedResults.Challenge(BuildAuthProperties(returnUrl))).AllowAnonymous();
 
-        endpoints.MapPost("/logout",
-            ([FromForm] string? returnUrl) => TypedResults.SignOut(BuildAuthProperties(returnUrl),
-                [CookieAuthenticationDefaults.AuthenticationScheme, AuthenticationScheme]));
+        endpoints.MapGet("/logout",
+            ([FromQuery] string? returnUrl) => TypedResults.SignOut(BuildAuthProperties(returnUrl),
+                [CookieAuthenticationDefaults.AuthenticationScheme, AuthenticationScheme])).RequireAuthorization();
     }
 
     private static AuthenticationProperties BuildAuthProperties(string? returnUrl)

@@ -1,0 +1,58 @@
+@using com.brettnamba.DotSync.Common.Application.Jobs
+@inject IDialogService DialogService
+
+<MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
+         OnClick="ClickScan">
+    Scan
+</MudChip>
+<MudChip T="string" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Surface" Color="Color.Primary"
+         OnClick="ClickVerify">
+    Verify
+</MudChip>
+<MudChip T="string" Icon="@Icons.Material.Filled.FileUpload" IconColor="Color.Surface" Color="Color.Primary"
+         OnClick="ClickPush">
+    Push
+</MudChip>
+<MudChip T="string" Icon="@Icons.Material.Filled.Sort" IconColor="Color.Surface" Color="Color.Primary"
+         OnClick="ClickSort">
+    Sort
+</MudChip>
+
+@code {
+
+    private async Task ClickScan()
+    {
+        await OpenDialog(JobType.Scan);
+    }
+
+    private async Task ClickVerify()
+    {
+        await OpenDialog(JobType.Verify);
+    }
+
+    private async Task ClickPush()
+    {
+        await OpenDialog(JobType.Push);
+    }
+
+    private async Task ClickSort()
+    {
+        await OpenDialog(JobType.Sort);
+    }
+
+    private async Task OpenDialog(JobType jobType)
+    {
+        var parameters = new DialogParameters<NewJobDialog>
+        {
+            { x => x.JobType, jobType }
+        };
+        var dialog = await DialogService.ShowAsync<NewJobDialog>($"New Job: {jobType}", parameters, new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true
+        });
+    }
+
+}

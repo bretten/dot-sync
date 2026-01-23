@@ -1,75 +1,13 @@
 @page "/Jobs"
-@using com.brettnamba.DotSync.Common.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Jobs
 @using com.brettnamba.DotSync.FileSystem.WebApp.Startup
 @using Microsoft.AspNetCore.Authorization
-@inject IDialogService DialogService
 @rendermode InteractiveServer
 @attribute [Authorize(AuthenticationExtensions.VerifierPolicy)]
 
-<h3>Jobs</h3>
-
-<MudGrid Justify="Justify.Center">
-    <MudItem xs="3">
-    </MudItem>
-    <MudItem xs="6" Class="d-flex justify-center align-center">
-        <MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Info" Color="Color.Dark"
-                 OnClick="ClickScan">
-            Scan
-        </MudChip>
-        <MudChip T="string" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Info" Color="Color.Dark"
-                 OnClick="ClickVerify">
-            Verify
-        </MudChip>
-        <MudChip T="string" Icon="@Icons.Material.Filled.FileUpload" IconColor="Color.Info" Color="Color.Dark"
-                 OnClick="ClickPush">
-            Push
-        </MudChip>
-        <MudChip T="string" Icon="@Icons.Material.Filled.Sort" IconColor="Color.Info" Color="Color.Dark"
-                 OnClick="ClickSort">
-            Sort
-        </MudChip>
-    </MudItem>
-    <MudItem xs="3">
-    </MudItem>
-</MudGrid>
 <JobList/>
 
 @code {
 
-    private async Task ClickScan()
-    {
-        await OpenDialog(JobType.Scan);
-    }
-
-    private async Task ClickVerify()
-    {
-        await OpenDialog(JobType.Verify);
-    }
-
-    private async Task ClickPush()
-    {
-        await OpenDialog(JobType.Push);
-    }
-
-    private async Task ClickSort()
-    {
-        await OpenDialog(JobType.Sort);
-    }
-
-    private async Task OpenDialog(JobType jobType)
-    {
-        var parameters = new DialogParameters<NewJobDialog>
-        {
-            { x => x.JobType, jobType }
-        };
-        var dialog = await DialogService.ShowAsync<NewJobDialog>($"New Job: {jobType}", parameters, new DialogOptions()
-        {
-            Position = DialogPosition.TopCenter,
-            FullWidth = true,
-            MaxWidth = MaxWidth.Medium,
-            CloseButton = true
-        });
-    }
 
 }
