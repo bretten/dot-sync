@@ -8,7 +8,7 @@
 @using com.brettnamba.DotSync.Common.DateAndTme
 @implements IDisposable
 
-<MudDataGrid Items="@_jobs" ExpandSingleRow="true">
+<MudDataGrid Items="@_jobs" SortMode="SortMode.Single">
     <Columns>
         <PropertyColumn Property="x => x.Id" Sortable="false"/>
         <PropertyColumn Property="x => x.Type"/>

@@ -11,13 +11,11 @@
 @inject IJSRuntime Js
 @rendermode InteractiveServer
 
-<MudStack Class="mb-10">
+<MudText Typo="Typo.h6">
+    Un-pushed Files
     <MudTooltip>
         <ChildContent>
-            <MudText Typo="Typo.h6">
-                Un-pushed Files
-                <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Color="Color.Info"/>
-            </MudText>
+            <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" Color="Color.Info"/>
         </ChildContent>
         <TooltipContent>
             <MudText Typo="Typo.subtitle1">
@@ -29,7 +27,9 @@
             </MudText>
         </TooltipContent>
     </MudTooltip>
+</MudText>
 
+<MudStack Class="mb-10">
     <MudForm>
         <MudRadioGroup T="StorageLocation" Value="_selectedStorage" ValueChanged="ChangeStorageLocation">
             @foreach (var storage in _storageLocations)

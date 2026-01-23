@@ -4,7 +4,12 @@
 @rendermode InteractiveServer
 
 <AuthorizeView Context="authContext">
-    <FileGrid/>
+    <Authorized>
+        <FileGrid/>
+    </Authorized>
+    <NotAuthorized>
+        <MudAlert Severity="Severity.Info" Class="mt-6">Please <MudLink Href="login">login</MudLink>.</MudAlert>
+    </NotAuthorized>
 </AuthorizeView>
 
 @code {
