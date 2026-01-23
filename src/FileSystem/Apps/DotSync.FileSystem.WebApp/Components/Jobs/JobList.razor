@@ -9,6 +9,11 @@
 @implements IDisposable
 
 <MudDataGrid Items="@_jobs" SortMode="SortMode.Single">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Jobs</MudText>
+        <MudSpacer/>
+        <NewJobControls/>
+    </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Id" Sortable="false"/>
         <PropertyColumn Property="x => x.Type"/>
@@ -45,7 +50,7 @@
         <TemplateColumn Title="Details">
             <CellTemplate Context="cell">
                 <MudButton @onclick="@(e => HandleDialogOpen(e, cell.Item))" Variant="Variant.Filled"
-                           Color="Color.Primary">
+                           Color="Color.Secondary">
                     Details
                 </MudButton>
             </CellTemplate>

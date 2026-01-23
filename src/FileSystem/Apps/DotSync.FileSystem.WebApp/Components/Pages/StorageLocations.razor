@@ -14,7 +14,10 @@
     <ToolBarContent>
         <MudText Typo="Typo.h6">Storage Locations</MudText>
         <MudSpacer/>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnClickNew">New</MudButton>
+        <MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
+                 OnClick="OnClickNew">
+            New
+        </MudChip>
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Id" Sortable="false"/>
