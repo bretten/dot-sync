@@ -20,6 +20,17 @@ public sealed class CrossPlatformFileMetadataReader : IFileMetadataReader
         "ddd MMM dd HH:mm:ss zzz yyyy"
     ];
 
+    /// <summary>
+    /// If a date cannot be found in the metadata, the functions used will return a minimum DateTime value which
+    /// varies based on the file type. For example, EXIF will be DateTime.MinValue, but QuickTimeMovieHeaderDirectory
+    /// will return 1/1/1904
+    ///
+    /// So this is a more generalized minimum date that should not be a real-world creation date and will
+    /// apply to all types of files.
+    /// This is greater than Epoch (1/1/1970), QuickTime Epoch (1/1/1904), DateTime.MinValue
+    /// </summary>
+    private readonly DateTime _minimumDate = new DateTime(1990, 1, 1);
+
     public DateTime ReadFileCreationDate(string path)
     {
         try
@@ -31,14 +42,16 @@ public sealed class CrossPlatformFileMetadataReader : IFileMetadataReader
             var fileDir = directories.OfType<FileMetadataDirectory>().FirstOrDefault();
 
             // Photo
-            if (exifBaseDir != null && exifBaseDir.TryGetDateTime(ExifDirectoryBase.TagDateTime, out var exifDate))
+            if (exifBaseDir != null && exifBaseDir.TryGetDateTime(ExifDirectoryBase.TagDateTime, out var exifDate)
+                                    && exifDate > _minimumDate)
             {
                 return exifDate;
             }
 
             // Video
             if (quicktimeMovieHeaderDir != null &&
-                quicktimeMovieHeaderDir.TryGetDateTime(QuickTimeMovieHeaderDirectory.TagCreated, out var qtDate))
+                quicktimeMovieHeaderDir.TryGetDateTime(QuickTimeMovieHeaderDirectory.TagCreated, out var qtDate)
+                && qtDate > _minimumDate)
             {
                 return qtDate.Kind == DateTimeKind.Local
                     ? qtDate
@@ -46,7 +59,8 @@ public sealed class CrossPlatformFileMetadataReader : IFileMetadataReader
             }
 
             // No media date found, so use file system modified date
-            if (fileDir != null && fileDir.TryGetDateTime(FileMetadataDirectory.TagFileModifiedDate, out var fileDate))
+            if (fileDir != null && fileDir.TryGetDateTime(FileMetadataDirectory.TagFileModifiedDate, out var fileDate)
+                                && fileDate > _minimumDate)
             {
                 return fileDate;
             }
