@@ -1,9 +1,13 @@
+using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
@@ -13,6 +17,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 /// <summary>
 /// Backfiller checkpoints progress using a file on the local filesystem
 /// </summary>
+[ExcludeFromCodeCoverage]
 public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
 {
     private readonly IDbContextFactory<FileSystemsDbContext> _dbContextFactory;
@@ -25,18 +30,25 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
 
     private readonly IMainStorageProvider _mainStorageProvider;
 
+    private readonly IFileMetadataReader _fileMetadataReader;
+
+    private readonly ILogger<LocalCheckpointFileBackfiller> _logger;
+
     private const string JobThumbnails = "thumbnails";
     private const string JobSyncedFiles = "synced_files";
 
     public LocalCheckpointFileBackfiller(IDbContextFactory<FileSystemsDbContext> dbContextFactory,
         IOptions<LocalCheckpointFileBackfillerConfiguration> config, IThumbnailProvider thumbnailProvider,
-        NpgsqlDataSource npgsqlDataSource, IMainStorageProvider mainStorageProvider)
+        NpgsqlDataSource npgsqlDataSource, IMainStorageProvider mainStorageProvider,
+        IFileMetadataReader fileMetadataReader, ILogger<LocalCheckpointFileBackfiller> logger)
     {
         _dbContextFactory = dbContextFactory;
         _configuration = config.Value;
         _thumbnailProvider = thumbnailProvider;
         _npgsqlDataSource = npgsqlDataSource;
         _mainStorageProvider = mainStorageProvider;
+        _fileMetadataReader = fileMetadataReader;
+        _logger = logger;
     }
 
     public async Task BackfillThumbnails()
@@ -92,6 +104,29 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
             lastBatch++;
             await WriteProgress(JobSyncedFiles, lastBatch);
         } while (currentBatch.Count == _configuration.BatchCount);
+    }
+
+    public async Task BackfillIncorrectDates()
+    {
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        // Get files with incorrect dates
+        var files = await dbContext.Files.AsNoTracking().Where(x => x.FileCreation <= new DateTime(1990, 1, 1))
+            .ToListAsync();
+        foreach (var file in files)
+        {
+            // File path on the main storage
+            var fullLocalPath = await _mainStorageProvider.GetFileFullLocalPath(file.Path);
+            _logger.LogInformation($"Fixing date for {fullLocalPath}");
+            // Get the correct date
+            var newDate = _fileMetadataReader.ReadFileCreationDate(fullLocalPath);
+
+            // Update the row
+            await using var connection = await _npgsqlDataSource.OpenConnectionAsync();
+            await using var command = new NpgsqlCommand(FilesCreationDateUpdateCommand, connection);
+            command.Parameters.Add(new NpgsqlParameter { Value = file.Id, DbType = DbType.Guid });
+            command.Parameters.Add(new NpgsqlParameter { Value = newDate, DbType = DbType.DateTime2 });
+            await command.ExecuteScalarAsync();
+        }
     }
 
     private async Task BulkInsertSyncedFiles(NpgsqlConnection connection, NpgsqlTransaction transaction,
@@ -243,4 +278,12 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
                 importer.Write(file.LastSync, NpgsqlDbType.TimestampTz);
             }
         };
+
+    /// <summary>
+    /// SQL for updating file creation date
+    /// </summary>
+    private const string FilesCreationDateUpdateCommand = $@"
+        UPDATE {Constants.Schema}.{Constants.Files.TableName}
+        SET {Constants.Files.FileCreation} = $2
+        WHERE {Constants.Files.Id} = $1;";
 }
