@@ -4,4 +4,5 @@ public interface IFileBackfiller
 {
     Task BackfillThumbnails();
     Task BackfillSyncedFiles();
+    Task BackfillIncorrectDates();
 }

@@ -244,7 +244,8 @@ if (runMaintenance)
 {
     var backfiller = scope.ServiceProvider.GetRequiredService<IFileBackfiller>();
     hangfire.Enqueue(() => backfiller.BackfillThumbnails());
-    hangfire.Enqueue(() => backfiller.BackfillSyncedFiles());
+    //hangfire.Enqueue(() => backfiller.BackfillSyncedFiles());
+    hangfire.Enqueue(() => backfiller.BackfillIncorrectDates());
 }
 
 // Configure the HTTP request pipeline.
