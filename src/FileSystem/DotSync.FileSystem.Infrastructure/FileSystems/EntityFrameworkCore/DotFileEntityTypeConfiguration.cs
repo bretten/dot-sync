@@ -56,12 +56,6 @@ public sealed class DotFileEntityTypeConfiguration : IEntityTypeConfiguration<Do
             .HasColumnName(Constants.Files.FileCreation)
             .HasColumnOrder(columnOrder++);
 
-        builder.Property(e => e.IsVerified)
-            .IsRequired()
-            .HasColumnType("boolean")
-            .HasColumnName(Constants.Files.IsVerified)
-            .HasColumnOrder(columnOrder++);
-
         builder.Property(e => e.LastSync)
             .IsRequired()
             .HasColumnType("timestamp with time zone")

@@ -136,8 +136,6 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
         if (existingFileByChecksum != null && s3Path == existingFileByChecksum.Path)
         {
             // The checksum and path matched, so the file has been verified
-            existingFileByChecksum.SetAsVerified();
-            await FileRepository.Update(existingFileByChecksum);
             return FileIntegrityVerificationResult.Verified(s3Path, s3Checksum, s3Object.Size ?? 0);
         }
 

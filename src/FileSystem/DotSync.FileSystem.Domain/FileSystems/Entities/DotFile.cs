@@ -6,11 +6,6 @@ namespace com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 /// <summary>
 /// Represents a file
 /// </summary>
-/// <param name="id">ID of the file</param>
-/// <param name="path">Relative path to the file</param>
-/// <param name="sha256Checksum">Checksum of the file</param>
-/// <param name="size">Size of the file</param>
-/// <param name="fileCreation">When the file was created (or a best estimation)</param>
 public sealed class DotFile : Entity
 {
     /// <summary>
@@ -32,11 +27,6 @@ public sealed class DotFile : Entity
     /// When the file itself was created
     /// </summary>
     public DateTime FileCreation { get; }
-
-    /// <summary>
-    /// True if the file has been verified to have the correct path and checksum
-    /// </summary>
-    public bool IsVerified { get; private set; }
 
     /// <summary>
     /// The last time this file was synced with the system
@@ -64,14 +54,6 @@ public sealed class DotFile : Entity
     public void UpdatePath(FileSystemPath newPath)
     {
         Path = newPath;
-    }
-
-    /// <summary>
-    /// Sets the file as verified
-    /// </summary>
-    public void SetAsVerified()
-    {
-        IsVerified = true;
     }
 
     public DotFile(Guid id, FileSystemPath path, FileSha256Checksum sha256Checksum, long size,

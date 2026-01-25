@@ -46,7 +46,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
     public async Task Add_DotFile_AddsToDb()
     {
         // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
+        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
 
         var repo = await GetRepo();
 
@@ -63,11 +63,9 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
     public async Task Update_DotFile_UpdatesDb()
     {
         // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: false);
-        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: false);
+        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
+        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20);
 
-        fakeFile.SetAsVerified();
         fakeFile.UpdatePath(FileSystemPath.Create("updated/path/file.txt"));
         fakeFile.LastSync = ClockTime;
 
@@ -83,10 +81,9 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
         // Assert
         Assert.NotNull(actual);
         Assert.NotNull(actual2);
-        var expectedFile = Faker.FakeFile(path: "updated/path/file.txt", checksum: "file", size: 10, isVerified: true,
-            lastSync: ClockTime);
-        var expectedFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: false);
+        var expectedFile =
+            Faker.FakeFile(path: "updated/path/file.txt", checksum: "file", size: 10, lastSync: ClockTime);
+        var expectedFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20);
         Assert.True(Equal(expectedFile, actual));
         Assert.True(Equal(expectedFile2, actual2));
     }
@@ -95,7 +92,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
     public async Task GetFileByChecksum_Checksum_ReturnsCorrespondingFile()
     {
         // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
+        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
 
         var repo = await GetRepo();
         await repo.Add(fakeFile);
@@ -105,7 +102,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
 
         // Assert
         Assert.NotNull(actual);
-        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
+        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
         Assert.True(Equal(expectedFile, actual));
     }
 
@@ -113,7 +110,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
     public async Task GetFileByPath_Path_ReturnsCorrespondingFile()
     {
         // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
+        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
 
         var repo = await GetRepo();
         await repo.Add(fakeFile);
@@ -123,102 +120,17 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
 
         // Assert
         Assert.NotNull(actual);
-        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
+        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
         Assert.True(Equal(expectedFile, actual));
-    }
-
-    [Fact]
-    public async Task SetAllAsUnverified_NoPath_AllRowsSetAsUnverified()
-    {
-        // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
-        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: true);
-
-        var repo = await GetRepo();
-        await repo.Add(fakeFile);
-        await repo.Add(fakeFile2);
-
-        // Act
-        await repo.SetAllAsUnverified(string.Empty);
-        var actual = await repo.GetFileByChecksum(fakeFile.Sha256Checksum);
-        var actual2 = await repo.GetFileByChecksum(fakeFile2.Sha256Checksum);
-
-        // Assert
-        Assert.NotNull(actual);
-        Assert.NotNull(actual2);
-        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: false);
-        var expectedFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: false);
-        Assert.True(Equal(actual, expectedFile));
-        Assert.True(Equal(actual2, expectedFile2));
-    }
-
-    [Fact]
-    public async Task SetAllAsUnverified_Path_OnlyRowsWithMatchingPathSetAsUnverified()
-    {
-        // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
-        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: true);
-        var fakeFile3 = Faker.FakeFile(id: Faker.Guid3, path: "other/path/to/file3.txt", checksum: "file3", size: 30,
-            isVerified: true);
-
-        var repo = await GetRepo();
-        await repo.Add(fakeFile);
-        await repo.Add(fakeFile2);
-        await repo.Add(fakeFile3);
-
-        // Act
-        await repo.SetAllAsUnverified("path/to");
-        var actual = await repo.GetFileByChecksum(fakeFile.Sha256Checksum);
-        var actual2 = await repo.GetFileByChecksum(fakeFile2.Sha256Checksum);
-        var actual3 = await repo.GetFileByChecksum(fakeFile3.Sha256Checksum);
-
-        // Assert
-        Assert.NotNull(actual);
-        Assert.NotNull(actual2);
-        Assert.NotNull(actual3);
-        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: false);
-        var expectedFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: false);
-        var expectedFile3 = Faker.FakeFile(id: Faker.Guid3, path: "other/path/to/file3.txt", checksum: "file3",
-            size: 30,
-            isVerified: true);
-        Assert.True(Equal(actual, expectedFile));
-        Assert.True(Equal(actual2, expectedFile2));
-        Assert.True(Equal(actual3, expectedFile3));
-    }
-
-    [Fact]
-    public async Task GetUnverifiedFiles_NoParams_ReturnsAllUnverified()
-    {
-        // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
-        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: false);
-
-        var repo = await GetRepo();
-        await repo.Add(fakeFile);
-        await repo.Add(fakeFile2);
-
-        // Act
-        var actual = (await repo.GetUnverifiedFiles()).ToList();
-
-        // Assert
-        Assert.False(Contains(actual, fakeFile));
-        Assert.True(Contains(actual, fakeFile2));
     }
 
     [Fact]
     public async Task GetFilesByPathPrefix_Path_ReturnsRowsWithMatchingPath()
     {
         // Arrange
-        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
-        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: true);
-        var fakeFile3 = Faker.FakeFile(id: Faker.Guid3, path: "other/path/to/file3.txt", checksum: "file3", size: 30,
-            isVerified: true);
+        var fakeFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
+        var fakeFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20);
+        var fakeFile3 = Faker.FakeFile(id: Faker.Guid3, path: "other/path/to/file3.txt", checksum: "file3", size: 30);
 
         var repo = await GetRepo();
         await repo.Add(fakeFile);
@@ -230,9 +142,8 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(2, actual.Count);
-        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10, isVerified: true);
-        var expectedFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20,
-            isVerified: true);
+        var expectedFile = Faker.FakeFile(path: "path/to/file.txt", checksum: "file", size: 10);
+        var expectedFile2 = Faker.FakeFile(id: Faker.Guid2, path: "path/to/file2.txt", checksum: "file2", size: 20);
         Assert.True(Contains(actual, expectedFile));
         Assert.True(Contains(actual, expectedFile2));
     }
@@ -244,7 +155,6 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
                && d1.Sha256Checksum == d2.Sha256Checksum
                && d1.Size == d2.Size
                && d1.FileCreation == d2.FileCreation
-               && d1.IsVerified == d2.IsVerified
                && d1.LastSync == d2.LastSync
                && d1.FirstSync == d2.FirstSync;
     }
@@ -256,7 +166,6 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
                                 && x.Sha256Checksum == file.Sha256Checksum
                                 && x.Size == file.Size
                                 && x.FileCreation == file.FileCreation
-                                && x.IsVerified == file.IsVerified
                                 && x.LastSync == file.LastSync
                                 && x.FirstSync == file.FirstSync) == 1;
     }
