@@ -101,10 +101,9 @@ public class LocalFileSystemFileIntegrityVerifierTests
         return It.Is<FileInfo>(x => x.FullName.EndsWith(path.AsPath()));
     }
 
-    private static DotFile IsDotFileWith(string path, string checksum, bool isVerified)
+    private static DotFile IsDotFileWith(string path, string checksum)
     {
-        return It.Is<DotFile>(x =>
-            x.Path.Value == path.AsPath() && x.Sha256Checksum.Value == checksum && x.IsVerified == isVerified);
+        return It.Is<DotFile>(x => x.Path.Value == path.AsPath() && x.Sha256Checksum.Value == checksum);
     }
 
     private static Func<FileIntegrityVerificationResult, bool> ResultFor(DotFile file)

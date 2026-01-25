@@ -45,11 +45,6 @@ public static class Constants
         public const string FileCreation = "file_creation";
 
         /// <summary>
-        /// True if the file has been verified to have the correct path and checksum
-        /// </summary>
-        public const string IsVerified = "is_verified";
-
-        /// <summary>
         /// Last sync
         /// </summary>
         public const string LastSync = "last_sync";

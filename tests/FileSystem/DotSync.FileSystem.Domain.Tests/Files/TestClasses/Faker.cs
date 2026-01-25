@@ -13,8 +13,7 @@ public static class Faker
     public static readonly Guid Guid4 = Guid.Parse("10000000-0000-0000-0000-000000000004");
 
     public static DotFile FakeFile(Guid? id = null, string? path = null, string? checksum = null, long size = 0,
-        DateTime? fileCreation = null, bool? isVerified = false, DateTimeOffset? lastSync = null,
-        DateTimeOffset? firstSync = null)
+        DateTime? fileCreation = null, DateTimeOffset? lastSync = null, DateTimeOffset? firstSync = null)
     {
         var f = new DotFile(id: id ?? Guid1,
             FileSystemPath.Create(path?.AsPath() ?? string.Empty),
@@ -25,7 +24,6 @@ public static class Faker
             LastSync = lastSync ?? new DateTimeOffset(2024, 7, 26, 1, 2, 3, TimeSpan.FromHours(0)),
             FirstSync = firstSync ?? new DateTimeOffset(2024, 7, 26, 4, 5, 6, TimeSpan.FromHours(0))
         };
-        if (isVerified.HasValue && isVerified.Value) f.SetAsVerified();
         return f;
     }
 

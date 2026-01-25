@@ -54,25 +54,6 @@ public sealed class EntityFrameworkCoreFileRepository(
         return await dbContext.Files.FirstOrDefaultAsync(x => x.Path == path);
     }
 
-    public async Task SetAllAsUnverified(string pathPrefix)
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        if (pathPrefix != "")
-        {
-            await dbContext.FilesThatStartWith(pathPrefix)
-                .ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
-            return;
-        }
-
-        await dbContext.Files.ExecuteUpdateAsync(x => x.SetProperty(e => e.IsVerified, e => false));
-    }
-
-    public async Task<IEnumerable<DotFile>> GetUnverifiedFiles()
-    {
-        await using var dbContext = await dbContextFactory.CreateDbContextAsync();
-        return await dbContext.Files.Where(x => !x.IsVerified).ToListAsync();
-    }
-
     public async Task<IEnumerable<DotFile>> GetFilesByPathPrefix(string pathPrefix)
     {
         await using var dbContext = await dbContextFactory.CreateDbContextAsync();
