@@ -8,6 +8,7 @@ public interface IStorageLocationRepository
 {
     Task Add(StorageLocation storageLocation);
     Task Update(StorageLocation storageLocation);
+    Task<bool> Exists(StorageLocation storageLocation);
     Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, StoragePath path);
     Task<IEnumerable<StorageLocation>> GetAll();
     Task<IEnumerable<StorageLocation>> GetAllButMainStorage();

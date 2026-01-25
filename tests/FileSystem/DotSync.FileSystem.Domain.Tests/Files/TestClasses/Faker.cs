@@ -28,7 +28,7 @@ public static class Faker
     }
 
     public static StorageLocation FakeStorageLocation(StorageLocationType type = StorageLocationType.Local,
-        string? path = null, long fileCount = 0, long size = 0)
+        string? path = null)
     {
         return new StorageLocation(type, StoragePath.Create(path?.AsPath() ?? "/some/path/"));
     }

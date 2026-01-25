@@ -1,6 +1,7 @@
 ﻿using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,16 @@ public sealed class EntityFrameworkCoreStorageLocationRepository
     public async Task Add(StorageLocation storageLocation)
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+        // If a local storage was specified, make sure there is not already a local storage
+        if (storageLocation.Type == StorageLocationType.Local)
+        {
+            var mainLocalStorage = await GetMainLocalStorage(dbContext);
+            if (mainLocalStorage != null)
+                throw new MainStorageAlreadyExistsException(
+                    $"Main local storage location already exists: {mainLocalStorage.Path.Value}");
+        }
+
         await dbContext.AddAsync(storageLocation);
         await dbContext.SaveChangesAsync();
     }
@@ -32,6 +43,13 @@ public sealed class EntityFrameworkCoreStorageLocationRepository
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
         dbContext.Update(storageLocation);
         await dbContext.SaveChangesAsync();
+    }
+
+    public async Task<bool> Exists(StorageLocation storageLocation)
+    {
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        return null != (await dbContext.StorageLocations.FirstOrDefaultAsync(x =>
+            x.Type == storageLocation.Type && x.Path == storageLocation.Path));
     }
 
     public async Task<StorageLocation?> GetByTypeAndPath(StorageLocationType type, StoragePath path)
@@ -54,5 +72,11 @@ public sealed class EntityFrameworkCoreStorageLocationRepository
 
         var mainStorage = await _mainStorageProvider.GetMainStorageLocation();
         return allStorages.Where(x => x.Id != mainStorage.Id);
+    }
+
+    private async Task<StorageLocation?> GetMainLocalStorage(FileSystemsDbContext dbContext)
+    {
+        return await dbContext.StorageLocations.AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Type == StorageLocationType.Local);
     }
 }
