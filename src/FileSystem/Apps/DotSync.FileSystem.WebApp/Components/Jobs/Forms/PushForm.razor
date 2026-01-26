@@ -1,7 +1,7 @@
-@inject IMainStorageProvider MainStorageProvider
+@inject IStorageLocationRepository StorageLocationRepo
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
-@using com.brettnamba.DotSync.FileSystem.Application.Storage
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.StorageLocations
@@ -48,7 +48,7 @@
     /// <inheritdoc/>
     protected override async Task<IJobParameters> GetJobParameters()
     {
-        var mainStorage = await MainStorageProvider.GetMainStorageLocation();
+        var mainStorage = await StorageLocationRepo.GetMainStorageLocation();
         var parameters = new PushParameters(mainStorage, PushModel.SourcePushPath, PushModel.UploadLimitMb, PushModel.Destination!);
         return parameters;
     }

@@ -2,8 +2,8 @@ using System.Data;
 using System.Diagnostics.CodeAnalysis;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
-using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -28,7 +28,7 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
 
     private readonly NpgsqlDataSource _npgsqlDataSource;
 
-    private readonly IMainStorageProvider _mainStorageProvider;
+    private readonly IStorageLocationRepository _storageLocationRepo;
 
     private readonly IFileMetadataReader _fileMetadataReader;
 
@@ -39,14 +39,14 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
 
     public LocalCheckpointFileBackfiller(IDbContextFactory<FileSystemsDbContext> dbContextFactory,
         IOptions<LocalCheckpointFileBackfillerConfiguration> config, IThumbnailProvider thumbnailProvider,
-        NpgsqlDataSource npgsqlDataSource, IMainStorageProvider mainStorageProvider,
+        NpgsqlDataSource npgsqlDataSource, IStorageLocationRepository storageLocationRepo,
         IFileMetadataReader fileMetadataReader, ILogger<LocalCheckpointFileBackfiller> logger)
     {
         _dbContextFactory = dbContextFactory;
         _configuration = config.Value;
         _thumbnailProvider = thumbnailProvider;
         _npgsqlDataSource = npgsqlDataSource;
-        _mainStorageProvider = mainStorageProvider;
+        _storageLocationRepo = storageLocationRepo;
         _fileMetadataReader = fileMetadataReader;
         _logger = logger;
     }
@@ -76,9 +76,9 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
 
     public async Task BackfillSyncedFiles()
     {
-        var mainStorage = await _mainStorageProvider.GetMainStoragePath();
+        var mainStorage = await _storageLocationRepo.GetMainStorageLocation();
         var storageLocations = await GetStorageLocations();
-        storageLocations = storageLocations.Where(x => x.Path != mainStorage).ToList();
+        storageLocations = storageLocations.Where(x => x.Path != mainStorage.Path).ToList();
 
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
 
@@ -115,7 +115,7 @@ public sealed class LocalCheckpointFileBackfiller : IFileBackfiller
         foreach (var file in files)
         {
             // File path on the main storage
-            var fullLocalPath = await _mainStorageProvider.GetFileFullLocalPath(file.Path);
+            var fullLocalPath = await _storageLocationRepo.GetPathInMainStorage(file.Path);
             _logger.LogInformation($"Fixing date for {fullLocalPath}");
             // Get the correct date
             var newDate = _fileMetadataReader.ReadFileCreationDate(fullLocalPath);

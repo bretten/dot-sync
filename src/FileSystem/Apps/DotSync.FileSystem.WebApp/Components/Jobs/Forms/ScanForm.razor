@@ -1,7 +1,7 @@
-@inject IMainStorageProvider MainStorageProvider
+@inject IStorageLocationRepository StorageLocationRepo
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
-@using com.brettnamba.DotSync.FileSystem.Application.Storage
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
 @using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Files
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
@@ -29,7 +29,7 @@
     {
         ScanModel = new ScanFormModel()
         {
-            Source = await MainStorageProvider.GetMainStorageLocation()
+            Source = await StorageLocationRepo.GetMainStorageLocation()
         };
         await base.OnInitializedAsync();
     }
