@@ -1,10 +1,10 @@
-@inject IDbContextFactory<FileSystemsDbContext> FileSystemsDbContextFactory
+@inject IStorageLocationRepository StorageLocationRepo
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Exceptions
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects
-@using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
 @using com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets
-@using Microsoft.EntityFrameworkCore
 @inherits com.brettnamba.DotSync.FileSystem.WebApp.Components.Widgets.Forms.BaseForm
 
 <MudDialog>
@@ -16,7 +16,7 @@
                         <MudItem xs="12">
                             <MudSelect T="StorageLocationType" Label="Storage Type" @bind-Value="_storageLocationType"
                                        Required="true" RequiredError="Pick a storage type">
-                                @foreach (var t in Enum.GetValues<StorageLocationType>())
+                                @foreach (var t in (AllowLocal ? Enum.GetValues<StorageLocationType>() : Enum.GetValues<StorageLocationType>().Where(x => x != StorageLocationType.Local)))
                                 {
                                     <MudSelectItem Value="@t">@t</MudSelectItem>
                                 }
@@ -41,6 +41,8 @@
 
 @code {
 
+    [Parameter] public bool AllowLocal { get; set; }
+
     private StorageLocationType _storageLocationType = StorageLocationType.AmazonS3;
     private string? _path;
 
@@ -48,11 +50,23 @@
     {
         var path = GetRootedPath(_path!); // _path already validated client-side
 
-        await using var dbContext = await FileSystemsDbContextFactory.CreateDbContextAsync();
-        var existingStorageLocations = await dbContext.StorageLocations.ToListAsync();
-        var duplicates = existingStorageLocations.Where(x => x.Path == StoragePath.Create(path));
+        if (_storageLocationType == StorageLocationType.Local)
+        {
+            try
+            {
+                await StorageLocationRepo.GetMainStorageLocation();
+                Errors = ["Main storage location already exists"];
+                return false;
+            }
+            catch (MainStorageDoesNotExistException)
+            {
+                // No main storage exists, so allow creation
+            }
+        }
 
-        if (duplicates.Any())
+        var exists = await StorageLocationRepo.Exists(_storageLocationType, StoragePath.Create(path));
+
+        if (exists)
         {
             Errors = ["Storage location already exists"];
             return false;
@@ -64,9 +78,7 @@
 
     protected override async Task OnSubmit()
     {
-        await using var dbContext = await FileSystemsDbContextFactory.CreateDbContextAsync();
-        await dbContext.StorageLocations.AddAsync(new StorageLocation(_storageLocationType, StoragePath.Create(GetRootedPath(_path!))));
-        await dbContext.SaveChangesAsync();
+        await StorageLocationRepo.Add(new StorageLocation(_storageLocationType, StoragePath.Create(GetRootedPath(_path!))));
     }
 
     protected override Task<string> GetSuccessMessage()

@@ -1,8 +1,6 @@
 ﻿using System.Data.Common;
-using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Exceptions;
-using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.Tests.Files.TestClasses;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -51,7 +49,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
 
         var factory = await GetDbContextFactory();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(factory, Mock.Of<IMainStorageProvider>());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory);
 
         // Act
         await repo.Add(fakeStorageLocation);
@@ -78,7 +76,7 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
 
         var factory = await GetDbContextFactory();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(factory, Mock.Of<IMainStorageProvider>());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory);
 
         var action = async () => await repo.Add(fakeStorageLocation);
 
@@ -97,11 +95,10 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         // Arrange
         var fakeStorageLocation = Faker.FakeStorageLocation(path: "/path/to/storage/");
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory(),
-            Mock.Of<IMainStorageProvider>());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(await GetDbContextFactory());
 
         // Act
-        var actual = await repo.Exists(fakeStorageLocation);
+        var actual = await repo.Exists(fakeStorageLocation.Type, fakeStorageLocation.Path);
 
         // Assert
         Assert.False(actual);
@@ -121,10 +118,10 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
 
         var factory = await GetDbContextFactory();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(factory, Mock.Of<IMainStorageProvider>());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory);
 
         // Act
-        var actual = await repo.Exists(fakeStorageLocation);
+        var actual = await repo.Exists(fakeStorageLocation.Type, fakeStorageLocation.Path);
 
         // Assert
         Assert.True(actual);
@@ -132,10 +129,29 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
 
     [Fact]
     [Trait("Category", "Integration")]
-    public async Task GetByTypeAndPath_TypeAndPath_ReturnsStorageLocation()
+    public async Task GetMainStorageLocation_DoesNotExist_ThrowsException()
     {
         // Arrange
-        var fakeStorageLocation = Faker.FakeStorageLocation(path: "/path/to/storage/");
+        var factory = await GetDbContextFactory();
+
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory);
+
+        var action = async () => await repo.GetMainStorageLocation();
+
+        // Act
+        var actual = await Record.ExceptionAsync(action);
+
+        // Assert
+        Assert.NotNull(actual);
+        Assert.IsType<MainStorageDoesNotExistException>(actual);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task GetMainStorageLocation_Exists_MainStorageReturned()
+    {
+        // Arrange
+        var fakeStorageLocation = Faker.FakeStorageLocation(path: "/path/to/storage/", type: StorageLocationType.Local);
 
         var arrangeFactory = await GetDbContextFactory();
         var arrangeDbContext = await arrangeFactory.CreateDbContextAsync();
@@ -144,15 +160,39 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
 
         var factory = await GetDbContextFactory();
 
-        var repo = new EntityFrameworkCoreStorageLocationRepository(factory, Mock.Of<IMainStorageProvider>());
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory);
 
         // Act
-        var actual = await repo.GetByTypeAndPath(StorageLocationType.Local, StoragePath.Create("/path/to/storage/"));
+        var actual = await repo.GetMainStorageLocation();
 
         // Assert
         Assert.NotNull(actual);
+        Assert.Equal(StorageLocationType.Local, actual.Type);
         Assert.Equal(fakeStorageLocation.Id, actual.Id);
-        Assert.Equal(fakeStorageLocation.Path, actual.Path);
+    }
+
+    [Fact]
+    [Trait("Category", "Integration")]
+    public async Task GetPathInMainStorage_FilePath_PathReturnsInMainStorage()
+    {
+        // Arrange
+        var fakeStorageLocation = Faker.FakeStorageLocation(path: "/path/to/storage/", type: StorageLocationType.Local);
+        var filePath = Faker.FakeFileSystemPath("path/to/file.jpg");
+
+        var arrangeFactory = await GetDbContextFactory();
+        var arrangeDbContext = await arrangeFactory.CreateDbContextAsync();
+        await arrangeDbContext.StorageLocations.AddAsync(fakeStorageLocation);
+        await arrangeDbContext.SaveChangesAsync();
+
+        var factory = await GetDbContextFactory();
+
+        var repo = new EntityFrameworkCoreStorageLocationRepository(factory);
+
+        // Act
+        var actual = await repo.GetPathInMainStorage(filePath);
+
+        // Assert
+        Assert.Equal("/path/to/storage/path/to/file.jpg", actual);
     }
 
     public async Task InitializeAsync() => await _container.StartAsync();
@@ -166,24 +206,24 @@ public class EntityFrameworkCoreStorageLocationRepositoryIntegrationTests : IAsy
         return connection;
     }
 
-    private FileSystemsDbContext GetDbContext(DbConnection connection)
+    private async Task<FileSystemsDbContext> GetDbContext()
     {
+        var connection = await GetDbConnection();
         var contextOptions = new DbContextOptionsBuilder<FileSystemsDbContext>()
             .UseNpgsql(connection)
             .LogTo(Console.WriteLine)
             .Options;
-        return new FileSystemsDbContext(contextOptions);
+        var dbContext = new FileSystemsDbContext(contextOptions);
+        await dbContext.Database.MigrateAsync();
+        return dbContext;
     }
 
-    private async Task<IDbContextFactory<FileSystemsDbContext>> GetDbContextFactory()
+    private Task<IDbContextFactory<FileSystemsDbContext>> GetDbContextFactory()
     {
-        var connection = await GetDbConnection();
-        var dbContext = GetDbContext(connection);
-        await dbContext.Database.MigrateAsync();
         var factory = new Mock<IDbContextFactory<FileSystemsDbContext>>();
         factory.Setup(x => x.CreateDbContextAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(dbContext);
-        return factory.Object;
+            .Returns(async () => await GetDbContext());
+        return Task.FromResult(factory.Object);
     }
 
     private sealed class DockerNotRunningException(string? message) : Exception(message);

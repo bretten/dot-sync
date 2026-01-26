@@ -18,7 +18,6 @@ using com.brettnamba.DotSync.FileSystem.Application.Files.Indexing;
 using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
 using com.brettnamba.DotSync.FileSystem.Application.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Application.Orchestration;
-using com.brettnamba.DotSync.FileSystem.Application.Storage;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
@@ -32,7 +31,6 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
-using com.brettnamba.DotSync.FileSystem.Infrastructure.Storage;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
 using com.brettnamba.DotSync.FileSystem.WebApp.Hangfire;
 using com.brettnamba.DotSync.FileSystem.WebApp.Startup;
@@ -136,7 +134,7 @@ builder.Services.AddTransient<IFileRepository, EntityFrameworkCoreFileRepository
 // EF-aware IAsyncQueryExecutor
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 
-builder.Services.AddTransient<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
+builder.Services.AddScoped<IStorageLocationRepository, EntityFrameworkCoreStorageLocationRepository>();
 
 // Directories
 builder.Services.Configure<DirectoryConfiguration>(builder.Configuration.GetSection(DirectoryConfiguration.Section));
@@ -195,9 +193,6 @@ builder.Services.AddScoped<IFileCopier, AmazonS3FileCopier>(sp =>
         sp.GetRequiredService<IAmazonS3>(), storageClass, sp.GetRequiredService<ILogger<AmazonS3FileCopier>>());
 });
 builder.Services.AddScoped<IFilePusher, FilePusher>();
-
-// Storage provider
-builder.Services.AddScoped<IMainStorageProvider, MainStorageProvider>();
 
 // Thumbnails
 builder.Services.Configure<ThumbnailConfiguration>(
@@ -287,9 +282,9 @@ app.MapGet("/thumbnail", async ([FromQuery] string path, IThumbnailProvider prov
     return Results.File(thumbnail.Path, contentType: thumbnail.ContentType);
 });
 // File serving
-app.MapGet("/file", async ([FromQuery] string path, IMainStorageProvider storageProvider) =>
+app.MapGet("/file", async ([FromQuery] string path, IStorageLocationRepository storageLocationRepo) =>
 {
-    var filePath = await storageProvider.GetFileFullLocalPath(FileSystemPath.Create(path));
+    var filePath = await storageLocationRepo.GetPathInMainStorage(FileSystemPath.Create(path));
     return Results.File(filePath, fileDownloadName: Path.GetFileName(filePath), enableRangeProcessing: true);
 });
 

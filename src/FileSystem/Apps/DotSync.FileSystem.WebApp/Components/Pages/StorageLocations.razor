@@ -37,7 +37,11 @@
 
     private async Task OnClickNew()
     {
-        var dialog = await DialogService.ShowAsync<NewStorageLocationDialog>("New Storage Location", new DialogOptions()
+        var parameters = new DialogParameters<NewStorageLocationDialog>()
+        {
+            { x => x.AllowLocal, false }
+        };
+        var dialog = await DialogService.ShowAsync<NewStorageLocationDialog>("New Storage Location", parameters, new DialogOptions()
         {
             Position = DialogPosition.TopCenter,
             FullWidth = true,

@@ -32,4 +32,9 @@ public static class Faker
     {
         return new StorageLocation(type, StoragePath.Create(path?.AsPath() ?? "/some/path/"));
     }
+
+    public static FileSystemPath FakeFileSystemPath(string? path = null)
+    {
+        return FileSystemPath.Create(path ?? "path/to/file.jpg");
+    }
 }

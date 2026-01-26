@@ -1,5 +1,5 @@
 using com.brettnamba.DotSync.FileSystem.Application.Files.Thumbnails;
-using com.brettnamba.DotSync.FileSystem.Application.Storage;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using ImageMagick;
 using ImageMagick.Formats;
@@ -9,7 +9,7 @@ namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Files.Thumbnails;
 
 public sealed class MagickThumbnailGenerator : IThumbnailGenerator
 {
-    private readonly IMainStorageProvider _mainStorageProvider;
+    private readonly IStorageLocationRepository _storageLocationRepo;
     private readonly ThumbnailConfiguration _config;
 
     private DirectoryInfo? _thumbnailsDir;
@@ -27,9 +27,10 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
         }
     }
 
-    public MagickThumbnailGenerator(IMainStorageProvider mainStorageProvider, IOptions<ThumbnailConfiguration> config)
+    public MagickThumbnailGenerator(IStorageLocationRepository storageLocationRepo,
+        IOptions<ThumbnailConfiguration> config)
     {
-        _mainStorageProvider = mainStorageProvider;
+        _storageLocationRepo = storageLocationRepo;
         _config = config.Value;
     }
 
@@ -50,7 +51,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
             return await CreateThumbnailFromRaw(filePath);
         }
 
-        var fullLocalPath = await _mainStorageProvider.GetFileFullLocalPath(filePath);
+        var fullLocalPath = await _storageLocationRepo.GetPathInMainStorage(filePath);
 
         await using var fileStream = File.Open(fullLocalPath, FileMode.Open, FileAccess.Read);
         using var thumbnail = new MagickImage(fileStream);
@@ -75,7 +76,7 @@ public sealed class MagickThumbnailGenerator : IThumbnailGenerator
             ReadThumbnail = true
         };
 
-        var fullLocalPath = await _mainStorageProvider.GetFileFullLocalPath(filePath);
+        var fullLocalPath = await _storageLocationRepo.GetPathInMainStorage(filePath);
 
         using var raw = new MagickImage();
         raw.Settings.SetDefines(defines);
