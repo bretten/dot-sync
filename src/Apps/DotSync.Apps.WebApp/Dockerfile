@@ -7,8 +7,8 @@ FROM alpine:3 AS aws-config
 RUN apk add --no-cache curl
 
 # Copy AWS credentials template
-COPY ["src/FileSystem/Apps/DotSync.FileSystem.WebApp/docker/aws_credentials_template.txt", "credentials_template"]
-COPY ["src/FileSystem/Apps/DotSync.FileSystem.WebApp/docker/aws_replace_placeholders.sh", "aws_replace_placeholders.sh"]
+COPY ["src/Apps/DotSync.Apps.WebApp/docker/aws_credentials_template.txt", "credentials_template"]
+COPY ["src/Apps/DotSync.Apps.WebApp/docker/aws_replace_placeholders.sh", "aws_replace_placeholders.sh"]
 
 # Get the AWS credential helper tool
 RUN curl https://rolesanywhere.amazonaws.com/releases/1.7.1/X86_64/Linux/Amzn2023/aws_signing_helper --output aws_signing_helper
@@ -48,20 +48,20 @@ WORKDIR /src
 COPY Directory.Build.props .
 
 # Restore dependencies for build
-COPY ["src/FileSystem/Apps/DotSync.FileSystem.WebApp/DotSync.FileSystem.WebApp.csproj", "."]
-RUN dotnet restore "DotSync.FileSystem.WebApp.csproj"
+COPY ["src/Apps/DotSync.Apps.WebApp/DotSync.Apps.WebApp.csproj", "."]
+RUN dotnet restore "DotSync.Apps.WebApp.csproj"
 
 # Source code for building
 COPY src .
 
 # Build
-WORKDIR "/src/FileSystem/Apps/DotSync.FileSystem.WebApp"
-RUN dotnet build "DotSync.FileSystem.WebApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/Apps/DotSync.Apps.WebApp"
+RUN dotnet build "DotSync.Apps.WebApp.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 #.NET Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "DotSync.FileSystem.WebApp.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "DotSync.Apps.WebApp.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 ###
 ### Final stage ###

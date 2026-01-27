@@ -5,8 +5,9 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-        <RootNamespace>com.brettnamba.DotSync.FileSystem.WebApp</RootNamespace>
+        <RootNamespace>com.brettnamba.DotSync.Apps.WebApp</RootNamespace>
         <UserSecretsId>4d3275ff-78e2-4a9a-9d61-74adf0e993ae</UserSecretsId>
+        <AssemblyName>DotSync.Apps.WebApp</AssemblyName>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,8 +23,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\Apps\DotSync.Apps.Common\DotSync.Apps.Common.csproj" />
-      <ProjectReference Include="..\..\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj" />
+      <ProjectReference Include="..\..\FileSystem\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj" />
+      <ProjectReference Include="..\DotSync.Apps.Common\DotSync.Apps.Common.csproj" />
     </ItemGroup>
 
 </Project>

@@ -9,4 +9,4 @@ perl -0777 -pe "
     s|__REGION__|$REGION|g;
     " /home/app/.aws/credentials_template > /home/app/.aws/credentials
 
-dotnet DotSync.FileSystem.WebApp.dll
+dotnet DotSync.Apps.WebApp.dll
