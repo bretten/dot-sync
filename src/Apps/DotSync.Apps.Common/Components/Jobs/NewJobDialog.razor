@@ -1,0 +1,35 @@
+@using com.brettnamba.DotSync.Apps.Common.Components.Jobs.Forms
+@using com.brettnamba.DotSync.Common.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@rendermode InteractiveServer
+
+<MudDialog>
+    <DialogContent>
+        <MudGrid>
+            <MudItem xs="12">
+                @if (JobType == JobType.Scan)
+                {
+                    <ScanForm/>
+                }
+                else if (JobType == JobType.Verify)
+                {
+                    <VerifyForm/>
+                }
+                else if (JobType == JobType.Push)
+                {
+                    <PushForm InitialStorage="@InitialStorage" InitialPathPrefix="@InitialPathPrefix"/>
+                }
+                else if (JobType == JobType.Sort)
+                {
+                    <SortForm/>
+                }
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter] public JobType JobType { get; set; }
+    [Parameter] public StorageLocation? InitialStorage { get; set; }
+    [Parameter] public string? InitialPathPrefix { get; set; }
+}

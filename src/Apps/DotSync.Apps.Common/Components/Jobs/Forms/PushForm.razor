@@ -1,0 +1,72 @@
+@inject IStorageLocationRepository StorageLocationRepo
+@using com.brettnamba.DotSync.Apps.Common.Components.Files
+@using com.brettnamba.DotSync.Apps.Common.Components.StorageLocations
+@using com.brettnamba.DotSync.Apps.Common.Components.Widgets
+@using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Parameters
+@inherits BaseJobForm
+
+<MudForm @ref="Form" @bind-IsValid="IsValid" @bind-Errors="Errors">
+    <MudGrid>
+        <MudItem xs="12">
+            <StorageLocationSelect @bind-StorageLocation="PushModel.Destination"/>
+        </MudItem>
+        <MudItem xs="12">
+            <FilePathInput @bind-Text="PushModel.SourcePushPath"/>
+        </MudItem>
+        <MudItem xs="12">
+            <MudTextField @bind-Value="PushModel.UploadLimitMb" Label="Upload Limit (MB)"/>
+        </MudItem>
+        <MudItem xs="12">
+            <FormSubmitButton IsTypeButton="@(MudDialog != null)" IsDisabled="@(IsSubmitButtonDisabled())"
+                              OnClick="@(Submit)"/>
+        </MudItem>
+    </MudGrid>
+</MudForm>
+<ErrorMessages Errors="Errors"/>
+
+@code {
+
+    [SupplyParameterFromForm(FormName = "Push")]
+    private PushFormModel PushModel { get; set; } = null!;
+
+    [Parameter] public StorageLocation? InitialStorage { get; set; }
+    [Parameter] public string? InitialPathPrefix { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        PushModel = new PushFormModel()
+        {
+            Destination = InitialStorage,
+            SourcePushPath = InitialPathPrefix
+        };
+        await base.OnInitializedAsync();
+    }
+
+    /// <inheritdoc/>
+    protected override async Task<IJobParameters> GetJobParameters()
+    {
+        var mainStorage = await StorageLocationRepo.GetMainStorageLocation();
+        var parameters = new PushParameters(mainStorage, PushModel.SourcePushPath, PushModel.UploadLimitMb, PushModel.Destination!);
+        return parameters;
+    }
+
+    /// <inheritdoc/>
+    protected override async Task OnSubmit()
+    {
+        var jobParameters = await GetJobParameters();
+        _ = Task.Run(() => JobManager.RunJob((PushParameters)jobParameters));
+    }
+
+    public class PushFormModel
+    {
+        public string? SourcePushPath { get; set; }
+
+        public long? UploadLimitMb { get; set; }
+
+        public StorageLocation? Destination { get; set; }
+    }
+
+}

@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <RootNamespace>com.brettnamba.DotSync.Apps.WebApp</RootNamespace>
+        <UserSecretsId>4d3275ff-78e2-4a9a-9d61-74adf0e993ae</UserSecretsId>
+        <AssemblyName>DotSync.Apps.WebApp</AssemblyName>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Content Include="..\..\..\..\.dockerignore">
+        <Link>.dockerignore</Link>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Hangfire.AspNetCore" Version="1.8.22" />
+      <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
+      <PackageReference Include="MudBlazor" Version="8.15.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\FileSystem\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj" />
+      <ProjectReference Include="..\DotSync.Apps.Common\DotSync.Apps.Common.csproj" />
+    </ItemGroup>
+
+</Project>
