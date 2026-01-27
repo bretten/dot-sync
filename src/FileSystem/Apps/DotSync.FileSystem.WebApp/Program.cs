@@ -1,4 +1,7 @@
 using System.Reflection;
+using com.brettnamba.DotSync.Apps.Common.Auth;
+using com.brettnamba.DotSync.Apps.Common.Components.Pages;
+using com.brettnamba.DotSync.Apps.Common.Startup;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Infrastructure.Aws;
 using com.brettnamba.DotSync.Common.Infrastructure.Jobs;
@@ -10,7 +13,6 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
 using com.brettnamba.DotSync.FileSystem.WebApp.Components;
-using com.brettnamba.DotSync.FileSystem.WebApp.Startup;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using MudBlazor.Services;
@@ -116,6 +118,7 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()
+    .AddAdditionalAssemblies(typeof(Home).Assembly)
     .AddInteractiveServerRenderMode();
 
 // Authentication

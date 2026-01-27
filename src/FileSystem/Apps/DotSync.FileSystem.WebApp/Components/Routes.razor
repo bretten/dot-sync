@@ -1,5 +1,6 @@
-﻿@using com.brettnamba.DotSync.FileSystem.WebApp.Components.Layout
-<Router AppAssembly="typeof(Program).Assembly">
+﻿@using com.brettnamba.DotSync.Apps.Common.Components.Layout
+@using com.brettnamba.DotSync.Apps.Common.Components.Pages
+<Router AppAssembly="@(typeof(Program).Assembly)" AdditionalAssemblies="@(new [] { typeof(Home).Assembly })">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
             <NotAuthorized>

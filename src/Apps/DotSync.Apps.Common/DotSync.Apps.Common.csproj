@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>com.brettnamba.DotSync.Apps.Common</RootNamespace>
+    </PropertyGroup>
+
+
+    <ItemGroup>
+        <SupportedPlatform Include="browser"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.20" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="8.0.12" />
+        <PackageReference Include="MudBlazor" Version="8.15.0" />
+        <PackageReference Include="TrieNet" Version="1.0.3.26316" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\FileSystem\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj" />
+    </ItemGroup>
+
+</Project>

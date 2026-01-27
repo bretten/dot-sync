@@ -18,13 +18,11 @@
     <ItemGroup>
       <PackageReference Include="Hangfire.AspNetCore" Version="1.8.22" />
       <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
-      <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.20" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="8.0.21" />
       <PackageReference Include="MudBlazor" Version="8.15.0" />
-      <PackageReference Include="TrieNet" Version="1.0.3.26316" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\..\Apps\DotSync.Apps.Common\DotSync.Apps.Common.csproj" />
       <ProjectReference Include="..\..\DotSync.FileSystem.Infrastructure\DotSync.FileSystem.Infrastructure.csproj" />
     </ItemGroup>
 

@@ -1,0 +1,283 @@
+@using System.Collections.Immutable
+@using System.Web
+@using com.brettnamba.DotSync.Apps.Common.Components.Jobs
+@using com.brettnamba.DotSync.Common.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
+@using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums
+@using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<FileSystemsDbContext> DbContextFactory
+@inject IDialogService DialogService
+@inject IJSRuntime Js
+@rendermode InteractiveServer
+
+<MudDataGrid @ref="_dataGrid" T="DotFile" ServerData="FilterFiles" SortMode="SortMode.Single">
+    <ToolBarContent>
+        <MudText Typo="Typo.h6">Files</MudText>
+        <MudSpacer/>
+
+        <FilePathInput TextChanged="@(s => OnUpdateSearch(s))"/>
+        <MudSpacer/>
+
+        <MudChipSet T="string" AllClosable OnClose="OnResetStorage">
+            @if (_selectedStorage != null)
+            {
+                <MudChip
+                    Text="@($"{_selectedStorage.Type} - {_selectedStorage.Path.WithoutLeadingAndTrailingSlash}")"></MudChip>
+            }
+        </MudChipSet>
+        <MudMenu>
+            <ActivatorContent>
+                <MudChip T="string" Icon="@Icons.Material.Filled.CloudUpload" IconColor="Color.Surface"
+                         Color="Color.Primary">
+                    Push
+                </MudChip>
+            </ActivatorContent>
+            <ChildContent>
+                <MudMenuItem>
+                    <MudText Typo="Typo.subtitle1">
+                        Files that have <strong>not yet</strong> been pushed to the specified storage location.
+                    </MudText>
+                    <MudText Typo="Typo.subtitle2">
+                        Select a storage location to see which files need to be pushed.
+                    </MudText>
+                </MudMenuItem>
+                <MudDivider/>
+                <MudForm>
+                    <MudRadioGroup T="StorageLocation" Value="_selectedStorage" ValueChanged="ChangeStorageLocation">
+                        @foreach (var storage in _storageLocations)
+                        {
+                            <MudMenuItem>
+                                <MudRadio Value="@(storage)"
+                                          Color="Color.Secondary">@($"{storage.Type} - {storage.Path.WithoutLeadingAndTrailingSlash}")</MudRadio>
+                            </MudMenuItem>
+                        }
+                    </MudRadioGroup>
+                </MudForm>
+                <MudDivider/>
+                <MudMenuItem>
+                    <MudButton Variant="Variant.Outlined" OnClick="OnResetStorage">Reset</MudButton>
+                    <MudTooltip Text="Pushes files to the selected storage location based on the current filter">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OnClickPush"
+                                   Disabled="@(_selectedStorage == null)">Push
+                        </MudButton>
+                    </MudTooltip>
+                </MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+    </ToolBarContent>
+    <ColGroup>
+        <col style="width: 20%;"/>
+        <col style="width: 10%;"/>
+        <col style="width: 50%;"/>
+        <col style="width: 10%;"/>
+        <col style="width: 10%;"/>
+    </ColGroup>
+    <Columns>
+        <TemplateColumn Title="" Sortable="false" CellStyle="text-align:center">
+            <CellTemplate>
+                @{
+                    var encodedPath = HttpUtility.UrlEncode(context.Item.Path.Value);
+                }
+                @if (IsImage(context.Item.Path.Value))
+                {
+                    <MudImage Src="@(GetThumbnailUrl(encodedPath))" Width="200" Height="150"
+                              Alt="@(context.Item.Path.Value)" Class="rounded-lg ma-4" ObjectFit="ObjectFit.Cover"
+                              @onclick="@(e => OnThumbnailClicked(e, encodedPath))"/>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.InsertDriveFile" Size="Size.Large"/>
+                }
+                <div>
+                    <small><a href="file?path=@(encodedPath)" target="_blank" class="small">Download</a></small>
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="@(x => x.Size)" Title="Size" Sortable="true">
+            <CellTemplate>
+                <div>@(Math.Round((double)context.Item.Size / 1000000, 2)) MB</div>
+                (<small>@(context.Item.Size) b</small>)
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(x => x.Path.Value)" Title="Path" Sortable="true">
+            <CellTemplate>
+                <MudText Class="mb-3">
+                    @(context.Item.Path.Value)
+                    <MudTooltip Text="Copy Path">
+                        <MudButton>
+                            <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small"
+                                     @onclick="@(_ => CopyToClipboard(context.Item.Path.Value))"/>
+                        </MudButton>
+                    </MudTooltip>
+                </MudText>
+                <MudText Typo="Typo.caption">
+                    @(context.Item.Sha256Checksum.Value)
+                    <MudTooltip Text="Copy SHA256 Checksum">
+                        <MudButton>
+                            <MudIcon Icon="@Icons.Material.Filled.ContentCopy" Size="Size.Small"
+                                     @onclick="@(_ => CopyToClipboard(context.Item.Sha256Checksum.Value))"/>
+                        </MudButton>
+                    </MudTooltip>
+                </MudText>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(x => x.FileCreation)" Title="Created" Sortable="true"
+                        InitialDirection="SortDirection.Descending">
+            <CellTemplate>
+                <small>@context.Item.FileCreation.ToString("g")</small>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(x => x.FirstSync)" Title="First Sync" Sortable="true">
+            <CellTemplate>
+                <small>@context.Item.FirstSync.ToLocalTime().ToString("g")</small>
+            </CellTemplate>
+        </PropertyColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="DotFile" PageSizeOptions="@(new[] { 20, 50, 100 })"></MudDataGridPager>
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+
+    private MudDataGrid<DotFile> _dataGrid = null!;
+    private string _searchQuery = string.Empty;
+    private IReadOnlyList<StorageLocation> _storageLocations = new List<StorageLocation>();
+    private StorageLocation? _selectedStorage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var setupContext = await DbContextFactory.CreateDbContextAsync();
+        _storageLocations = await setupContext.StorageLocations.Where(x => x.Type != StorageLocationType.Local).ToListAsync();
+
+        await base.OnInitializedAsync();
+    }
+
+    private async Task<GridData<DotFile>> FilterFiles(GridState<DotFile> state)
+    {
+        await using var context = await DbContextFactory.CreateDbContextAsync();
+
+        var query = context.FilesThatStartWith(_searchQuery);
+        if (_selectedStorage != null)
+        {
+            query = context.UnsyncedFiles(query, _selectedStorage.Id);
+        }
+
+        // Single sorting only
+        if (state.SortDefinitions.Count > 0)
+        {
+            var sortDef = state.SortDefinitions.ToList()[0];
+            query = ApplySort(sortDef, query);
+        }
+        else
+        {
+            query = query.OrderByDescending(x => x.FileCreation);
+        }
+
+        // Total for pagination
+        var totalCount = await query.CountAsync();
+
+        // Filter this page's results
+        query = query.Skip(state.Page * state.PageSize).Take(state.PageSize);
+
+        var items = await query.ToArrayAsync();
+        var result = new GridData<DotFile>
+        {
+            Items = items,
+            TotalItems = totalCount
+        };
+
+        return result;
+    }
+
+    private Task OnThumbnailClicked(MouseEventArgs e, string filePath)
+    {
+        var thumbnailUrl = GetThumbnailUrl(filePath);
+        var parameters = new DialogParameters<FilePreviewDialog>()
+        {
+            { x => x.FilePath, filePath },
+            { x => x.ThumbnailPath, thumbnailUrl }
+        };
+        return DialogService.ShowAsync<FilePreviewDialog>(filePath, parameters, new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true
+        });
+    }
+
+    private Task OnClickPush()
+    {
+        var parameters = new DialogParameters<NewJobDialog>
+        {
+            { x => x.JobType, JobType.Push },
+            { x => x.InitialStorage, _selectedStorage },
+            { x => x.InitialPathPrefix, _searchQuery }
+        };
+        return DialogService.ShowAsync<NewJobDialog>($"New Job: {JobType.Push}", parameters, new DialogOptions()
+        {
+            Position = DialogPosition.TopCenter,
+            FullWidth = true,
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true
+        });
+    }
+
+    private Task OnUpdateSearch(string text)
+    {
+        _searchQuery = text;
+        return _dataGrid.ReloadServerData();
+    }
+
+    private void ChangeStorageLocation(StorageLocation storage)
+    {
+        _selectedStorage = storage;
+        _dataGrid.ReloadServerData();
+    }
+
+    private void OnResetStorage()
+    {
+        _selectedStorage = null;
+        _dataGrid.ReloadServerData();
+    }
+
+    private async Task CopyToClipboard(string? text)
+    {
+        await Js.InvokeVoidAsync("mudWindow.copyToClipboard", text);
+    }
+
+    private static IQueryable<DotFile> ApplySort(SortDefinition<DotFile> sortDef, IQueryable<DotFile> query)
+    {
+        switch (sortDef.SortBy)
+        {
+            case nameof(DotFile.Path):
+            case $"{nameof(DotFile.Path)}.{nameof(DotFile.Path.Value)}":
+                return sortDef.Descending ? query.OrderByDescending(x => x.Path) : query.OrderBy(x => x.Path);
+            case nameof(DotFile.Size):
+                return sortDef.Descending ? query.OrderByDescending(x => x.Size) : query.OrderBy(x => x.Size);
+            case nameof(DotFile.FirstSync):
+                return sortDef.Descending ? query.OrderByDescending(x => x.FirstSync) : query.OrderBy(x => x.FirstSync);
+            default:
+                return sortDef.Descending ? query.OrderByDescending(x => x.FileCreation) : query.OrderBy(x => x.FileCreation);
+        }
+    }
+
+    private string GetThumbnailUrl(string imagePath)
+    {
+        return $"thumbnail?path={imagePath}";
+    }
+
+    private bool IsImage(string file)
+    {
+        var extension = Path.GetExtension(file).ToLowerInvariant();
+        return Extensions.Contains(extension);
+    }
+
+    private static readonly IReadOnlyList<string> Extensions = new List<string>()
+    {
+        ".jpg", ".jpeg", ".png", ".heic", ".dng"
+    }.ToImmutableList();
+
+}
