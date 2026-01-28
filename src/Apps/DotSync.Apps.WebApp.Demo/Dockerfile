@@ -3,6 +3,12 @@
 ###
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 
+# Copy the test files for the app
+RUN mkdir -p /home/app/dot_sync
+COPY ["src/Apps/DotSync.Apps.WebApp.Demo/docker/files_seed/", "/home/app/dot_sync"]
+RUN chown $APP_UID:$APP_UID /home/app/dot_sync \
+    && chown $APP_UID:$APP_UID /home/app/dot_sync/ -R
+
 # App
 USER $APP_UID
 WORKDIR /app
