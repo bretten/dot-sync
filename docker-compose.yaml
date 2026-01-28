@@ -1,0 +1,15 @@
+﻿services:
+  dotsync-apps-webapp:
+    image: dotsync.apps.webapp
+    build:
+      context: .
+      dockerfile: src/Apps/DotSync.Apps.WebApp/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    networks:
+      - public
+      - backend
+
+networks:
+  public:
+  backend:

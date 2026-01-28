@@ -6,11 +6,15 @@ using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Infrastructure.Aws;
 using com.brettnamba.DotSync.Common.Infrastructure.Jobs;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
+using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileIntegrity;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileOrganization;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Files;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
@@ -18,6 +22,7 @@ using DotSync.Apps.WebApp.Demo.Components;
 using DotSync.Apps.WebApp.Demo.Mocks;
 using Hangfire;
 using Hangfire.MemoryStorage;
+using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -108,11 +113,36 @@ var app = builder.Build();
 
 // Migrate the DB to the current version
 app.MigrateDatabase();
-// Update the fake, internal S3 storage to match the DB
+// Seed the instance with the test state
 using (var scope = app.Services.CreateScope())
 {
-    var mockS3Storage =  scope.ServiceProvider.GetRequiredService<MockS3Storage>();
+    // Update the fake, internal S3 storage to match the DB
+    var mockS3Storage = scope.ServiceProvider.GetRequiredService<MockS3Storage>();
     await mockS3Storage.UpdateState();
+
+    // Seed the database
+    var dbContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<FileSystemsDbContext>>();
+    var dbContext = dbContextFactory.CreateDbContext();
+
+    // Make sure there is a default local storage
+    var defaultTestStoragePath = StoragePath.Create("/home/app/dot_sync/");
+    var mainStorage =
+        dbContext.StorageLocations.FirstOrDefault(x =>
+            x.Type == StorageLocationType.Local && x.Path == defaultTestStoragePath);
+    if (mainStorage == null)
+    {
+        dbContext.StorageLocations.Add(new StorageLocation(StorageLocationType.Local, defaultTestStoragePath));
+        dbContext.SaveChanges();
+    }
+
+    // Make sure there is a test S3 bucket
+    var s3StorageCount = dbContext.StorageLocations.Count(x => x.Type == StorageLocationType.AmazonS3);
+    if (s3StorageCount < 1)
+    {
+        dbContext.StorageLocations.Add(new StorageLocation(StorageLocationType.AmazonS3,
+            StoragePath.Create("/testBucket/")));
+        dbContext.SaveChanges();
+    }
 }
 
 // Load state
