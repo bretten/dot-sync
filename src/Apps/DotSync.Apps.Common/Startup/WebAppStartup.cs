@@ -68,7 +68,8 @@ public static class WebAppStartup
     {
         using var scope = app.Services.CreateScope();
         // DB migration
-        scope.ServiceProvider.GetRequiredService<FileSystemsDbContext>().Database.Migrate();
+        using var dbContext = scope.ServiceProvider.GetRequiredService<FileSystemsDbContext>();
+        dbContext.Database.Migrate();
     }
 
     /// <summary>
