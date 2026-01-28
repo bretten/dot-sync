@@ -1,0 +1,44 @@
+﻿services:
+  dotsync-apps-webapp:
+    restart: always
+    build:
+      context: .
+      dockerfile: src/Apps/DotSync.Apps.WebApp.Demo/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - Urls=http://*:7040
+      - OAuth2__Authority=https://cognito-idp.us-west-2.amazonaws.com/us-west-2_KmkWyQs8s
+      - OAuth2__ClientId=60oopa9npk8ctd9mah1gtccvk5
+      - ConnectionStrings__FileSystems=Server=postgres-db;Username=postgres;Password=postgres;Port=5432;Database=dot-sync-demo;
+    networks:
+      - public
+      - backend
+    ports:
+      - "7040:7040"
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+
+  postgres-db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      - LANG=en_US.utf8
+      - POSTGRES_INITDB_ARGS=--locale-provider=icu --icu-locale=en-US
+      - POSTGRES_DB=dot-sync-demo
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "54320:5432"
+    networks:
+      - public # So the data can be debugged via a client
+      - backend
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d dot-sync-demo" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+networks:
+  public:
+  backend:
