@@ -1,7 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
 namespace DotSync.Apps.WebApp.Demo.Mocks;
 
+[ExcludeFromCodeCoverage]
 public sealed class MockS3Storage
 {
     /// <summary>
@@ -11,6 +15,13 @@ public sealed class MockS3Storage
     /// </summary>
     private readonly Dictionary<Guid, HashSet<DotFile>> _storageLocationsToUploadedFiles =
         new Dictionary<Guid, HashSet<DotFile>>();
+
+    private readonly IDbContextFactory<FileSystemsDbContext> _dbContextFactory;
+
+    public MockS3Storage(IDbContextFactory<FileSystemsDbContext> dbContextFactory)
+    {
+        _dbContextFactory = dbContextFactory;
+    }
 
     public List<DotFile> FilesFor(StorageLocation storageLocation)
     {
@@ -40,5 +51,21 @@ public sealed class MockS3Storage
         }
 
         _storageLocationsToUploadedFiles[destination.Id].Add(file);
+    }
+
+    /// <summary>
+    /// Updates the state of the fake internal S3 storage to match that of the last DB state
+    /// </summary>
+    public async Task UpdateState()
+    {
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+        // Get all files that have been pushed/synced
+        var syncedFiles =
+            await dbContext.SyncedFiles.Include(x => x.File).Include(x => x.StorageLocation).ToListAsync();
+        foreach (var syncedFile in syncedFiles)
+        {
+            // Because it has been synced, add it to the internal, fake S3 storage
+            AddFile(syncedFile.StorageLocation, syncedFile.File);
+        }
     }
 }

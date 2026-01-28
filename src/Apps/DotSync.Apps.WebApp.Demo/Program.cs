@@ -108,6 +108,12 @@ var app = builder.Build();
 
 // Migrate the DB to the current version
 app.MigrateDatabase();
+// Update the fake, internal S3 storage to match the DB
+using (var scope = app.Services.CreateScope())
+{
+    var mockS3Storage =  scope.ServiceProvider.GetRequiredService<MockS3Storage>();
+    await mockS3Storage.UpdateState();
+}
 
 // Load state
 app.SetupStateManagement();
