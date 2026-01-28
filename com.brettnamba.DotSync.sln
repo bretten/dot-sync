@@ -46,6 +46,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.Apps.Common", "src\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.Apps.WebApp", "src\Apps\DotSync.Apps.WebApp\DotSync.Apps.WebApp.csproj", "{EDBAE3D0-E426-4BC7-9170-CACED2324848}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotSync.Apps.WebApp.Demo", "src\Apps\DotSync.Apps.WebApp.Demo\DotSync.Apps.WebApp.Demo.csproj", "{7282A79B-E32E-46DF-AF3F-EC2648FC09ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,7 @@ Global
 		{95526F33-6233-4ECB-B5F9-F440132053F3} = {2277D53C-4826-4E33-BF6E-1E267B6692D9}
 		{CB8E7F34-15A5-4872-9A04-8077FFED19EF} = {95526F33-6233-4ECB-B5F9-F440132053F3}
 		{EDBAE3D0-E426-4BC7-9170-CACED2324848} = {95526F33-6233-4ECB-B5F9-F440132053F3}
+		{7282A79B-E32E-46DF-AF3F-EC2648FC09ED} = {95526F33-6233-4ECB-B5F9-F440132053F3}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{77D93EEC-A08C-416F-9236-8A20D19FC448}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -139,5 +142,9 @@ Global
 		{EDBAE3D0-E426-4BC7-9170-CACED2324848}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDBAE3D0-E426-4BC7-9170-CACED2324848}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDBAE3D0-E426-4BC7-9170-CACED2324848}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7282A79B-E32E-46DF-AF3F-EC2648FC09ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7282A79B-E32E-46DF-AF3F-EC2648FC09ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7282A79B-E32E-46DF-AF3F-EC2648FC09ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7282A79B-E32E-46DF-AF3F-EC2648FC09ED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
