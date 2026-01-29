@@ -2,10 +2,11 @@
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.FileOrganization;
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace com.brettnamba.DotSync.FileSystem.Domain.Tests.FileOrganization.Services;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.Tests.FileOrganization.Services;
 
 public class LocalFileSystemByDateFileSorterTests
 {

@@ -1,12 +1,13 @@
 ﻿using System.Collections.Concurrent;
 using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
+using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.Extensions.Logging;
 
-namespace com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileOrganization;
 
 /// <summary>
 /// Sorts files by their date on a local filesystem

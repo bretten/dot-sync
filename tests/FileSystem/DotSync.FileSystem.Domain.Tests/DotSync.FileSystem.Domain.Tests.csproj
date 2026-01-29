@@ -30,13 +30,4 @@
       <ProjectReference Include="..\..\Common\DotSync.Common.Domain.Tests\DotSync.Common.Domain.Tests.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <None Update="FileOrganization\Services\TestFiles\dir1\nestedDir1\date_modified_2024-04-25.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="FileOrganization\Services\TestFiles\dir2\nestedDir2\date_taken_2023-02-04.jpg">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
-
 </Project>
