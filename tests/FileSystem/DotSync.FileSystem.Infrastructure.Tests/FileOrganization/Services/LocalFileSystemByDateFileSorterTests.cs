@@ -1,4 +1,6 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
+﻿using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.Common.Application.Tests.Jobs.TestClasses;
+using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
@@ -42,7 +44,8 @@ public class LocalFileSystemByDateFileSorterTests
 
         var mockLogger = Mock.Of<ILogger<IFileSorter>>();
         var sorter = new LocalFileSystemByDateFileSorter(stubMetadataReader.Object,
-            Mock.Of<IStorageLocationRepository>(), mockLogger);
+            Mock.Of<IStorageLocationRepository>(), Faker.FakeJobExecutionContext(), Mock.Of<IJobProgressReporter>(),
+            mockLogger);
 
         /*
          * Act
