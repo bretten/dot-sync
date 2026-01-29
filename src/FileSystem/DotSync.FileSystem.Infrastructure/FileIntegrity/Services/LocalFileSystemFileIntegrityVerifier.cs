@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
@@ -144,13 +145,7 @@ public sealed class LocalFileSystemFileIntegrityVerifier : BaseFileIntegrityVeri
     private Task<FileIntegrityVerificationResult> VerifyFile(string rootPath, FileInfo fileInfo,
         TrackedFiles trackedFiles)
     {
-        using (Logger.BeginScope(new List<KeyValuePair<string, object>>()
-               {
-                   new(nameof(JobExecutionContext), _jobContext.Id)
-               }))
-        {
-            Logger.LogInformation($"Verifying {fileInfo.FullName}");
-        }
+        Logger.LogWithScope($"Verifying {fileInfo.FullName}", _jobContext);
 
         // Generate the checksum of the file on the filesystem
         var checksum = FileSha256Checksum.Create(ChecksumGenerator.GenerateChecksum(fileInfo));

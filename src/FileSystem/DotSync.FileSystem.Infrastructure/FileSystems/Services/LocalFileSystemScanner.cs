@@ -2,6 +2,7 @@
 using System.Collections.Immutable;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Configuration;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -172,13 +173,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             return null;
         }
 
-        using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
-               {
-                   new(nameof(JobExecutionContext), _jobContext.Id)
-               }))
-        {
-            _logger.LogInformation($"Scanning {fileInfo.FullName}");
-        }
+        _logger.LogWithScope($"Scanning {fileInfo.FullName}", _jobContext);
 
         // File creation time (or best estimation)
         var fileCreation = _fileMetadataReader.ReadFileCreationDate(fileInfo.FullName);
