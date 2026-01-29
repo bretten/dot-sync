@@ -1,4 +1,5 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
+﻿using System.Collections.Concurrent;
+using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
@@ -55,19 +56,29 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
 
         var sourceDirectoryInfo = new DirectoryInfo(sourcePath.Value);
 
-        // Get all directories that are within the source path
+        // Each of the top-level directories in the source path determines where the file will be moved to
         var sourceDirectories = sourceDirectoryInfo.EnumerateFileSystemInfos()
             .OfType<DirectoryInfo>();
 
-        var result = new List<string>();
-
-        // Each directory in the source path will be used to determine where each file will be sorted
-        foreach (var sourceDirectory in sourceDirectories)
+        // Determine all the files in the source path that will be moved (minimal IO work, parallelize)
+        var totalFilesToMove = 0;
+        var filesToMoveByDirectory = new ConcurrentDictionary<DirectoryInfo, List<FileInfo>>();
+        Parallel.ForEach(sourceDirectories, sourceDirectory =>
         {
-            // Get the files in the source dir
-            var files = GetFilesInDirectory(sourceDirectory);
+            // Get the files in the top-level source dir
+            var filesToMove = GetFilesInDirectory(sourceDirectory).ToList();
+            Interlocked.Add(ref totalFilesToMove, filesToMove.Count); // Update the total count
+
+            filesToMoveByDirectory[sourceDirectory] = filesToMove;
+        });
+
+        // Move each file within the top-level source dir to the corresponding destination
+        var result = new List<string>(); // Files that were successfully moved
+        var filesMoved = 0;
+        foreach (var (sourceDirectory, files) in filesToMoveByDirectory)
+        {
             // Move the files to the destination
-            result.AddRange(MoveFiles(sourceDirectory, files, destinationPath));
+            result.AddRange(MoveFiles(sourceDirectory, files, destinationPath, ref filesMoved));
         }
 
         return result.AsEnumerable();
@@ -107,9 +118,10 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <param name="sourceDirectory">The original top-level directory of the file</param>
     /// <param name="files">The files to be moved</param>
     /// <param name="destinationPath">The destination</param>
+    /// <param name="filesMoved">Counter for the total files moved so far</param>
     /// <returns>Files that were moved</returns>
     private List<string> MoveFiles(DirectoryInfo sourceDirectory, IEnumerable<FileInfo> files,
-        StoragePath destinationPath)
+        StoragePath destinationPath, ref int filesMoved)
     {
         var result = new List<string>();
         var containingDirectories = new List<DirectoryInfo>();
@@ -123,6 +135,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
 
             // Move the file
             result.Add(MoveFile(sourceDirectory, date, destinationPath, file));
+            filesMoved++;
         }
 
         // Remove the containing directories
