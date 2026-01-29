@@ -1,11 +1,16 @@
-﻿using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
+﻿using System.Collections.Concurrent;
+using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
+using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
+using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Exceptions;
+using com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.ValueObjects;
 using Microsoft.Extensions.Logging;
 
-namespace com.brettnamba.DotSync.FileSystem.Domain.FileOrganization.Services;
+namespace com.brettnamba.DotSync.FileSystem.Infrastructure.FileOrganization;
 
 /// <summary>
 /// Sorts files by their date on a local filesystem
@@ -23,6 +28,16 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     private readonly IStorageLocationRepository _storageLocationRepository;
 
     /// <summary>
+    /// Execution context for the current job
+    /// </summary>
+    private readonly JobExecutionContext _jobContext;
+
+    /// <summary>
+    /// Reports the progress of the job
+    /// </summary>
+    private readonly IJobProgressReporter _jobProgressReporter;
+
+    /// <summary>
     /// Logger
     /// </summary>
     private readonly ILogger<IFileSorter> _logger;
@@ -32,12 +47,17 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// </summary>
     /// <param name="fileMetadataReader">Metadata reader used to get the date of the file</param>
     /// <param name="storageLocationRepository">Used to get local storage locations to prevent sorting directly on them</param>
+    /// <param name="jobContext">Execution context for the current job</param>
+    /// <param name="jobProgressReporter">Reports the progress of the job</param>
     /// <param name="logger">Logger</param>
     public LocalFileSystemByDateFileSorter(IFileMetadataReader fileMetadataReader,
-        IStorageLocationRepository storageLocationRepository, ILogger<IFileSorter> logger)
+        IStorageLocationRepository storageLocationRepository, JobExecutionContext jobContext,
+        IJobProgressReporter jobProgressReporter, ILogger<IFileSorter> logger)
     {
         _fileMetadataReader = fileMetadataReader;
         _storageLocationRepository = storageLocationRepository;
+        _jobContext = jobContext;
+        _jobProgressReporter = jobProgressReporter;
         _logger = logger;
     }
 
@@ -55,19 +75,29 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
 
         var sourceDirectoryInfo = new DirectoryInfo(sourcePath.Value);
 
-        // Get all directories that are within the source path
+        // Each of the top-level directories in the source path determines where the file will be moved to
         var sourceDirectories = sourceDirectoryInfo.EnumerateFileSystemInfos()
             .OfType<DirectoryInfo>();
 
-        var result = new List<string>();
-
-        // Each directory in the source path will be used to determine where each file will be sorted
-        foreach (var sourceDirectory in sourceDirectories)
+        // Determine all the files in the source path that will be moved (minimal IO work, parallelize)
+        var totalFilesToMove = 0;
+        var filesToMoveByDirectory = new ConcurrentDictionary<DirectoryInfo, List<FileInfo>>();
+        Parallel.ForEach(sourceDirectories, sourceDirectory =>
         {
-            // Get the files in the source dir
-            var files = GetFilesInDirectory(sourceDirectory);
+            // Get the files in the top-level source dir
+            var filesToMove = GetFilesInDirectory(sourceDirectory).ToList();
+            Interlocked.Add(ref totalFilesToMove, filesToMove.Count); // Update the total count
+
+            filesToMoveByDirectory[sourceDirectory] = filesToMove;
+        });
+
+        // Move each file within the top-level source dir to the corresponding destination
+        var result = new List<string>(); // Files that were successfully moved
+        var filesMoved = 0;
+        foreach (var (sourceDirectory, files) in filesToMoveByDirectory)
+        {
             // Move the files to the destination
-            result.AddRange(MoveFiles(sourceDirectory, files, destinationPath));
+            result.AddRange(MoveFiles(sourceDirectory, files, destinationPath, ref filesMoved, totalFilesToMove));
         }
 
         return result.AsEnumerable();
@@ -107,9 +137,11 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
     /// <param name="sourceDirectory">The original top-level directory of the file</param>
     /// <param name="files">The files to be moved</param>
     /// <param name="destinationPath">The destination</param>
+    /// <param name="filesMoved">Counter for the total files moved so far (for reporting progress)</param>
+    /// <param name="totalFilesToMove">The total number of files that need to moved (for reporting progress)</param>
     /// <returns>Files that were moved</returns>
     private List<string> MoveFiles(DirectoryInfo sourceDirectory, IEnumerable<FileInfo> files,
-        StoragePath destinationPath)
+        StoragePath destinationPath, ref int filesMoved, int totalFilesToMove)
     {
         var result = new List<string>();
         var containingDirectories = new List<DirectoryInfo>();
@@ -123,6 +155,8 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
 
             // Move the file
             result.Add(MoveFile(sourceDirectory, date, destinationPath, file));
+            filesMoved++;
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, filesMoved, totalFilesToMove);
         }
 
         // Remove the containing directories
@@ -166,7 +200,7 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
         // Create the directories if they don't exist
         new FileInfo(newPath).Directory?.Create();
 
-        _logger.LogInformation($"Moving {file.FullName} to {newPath}");
+        _logger.LogWithScope($"Moving {file.FullName} to {newPath}", _jobContext);
         File.Move(file.FullName, newPath);
         return newPath;
     }
