@@ -1,5 +1,6 @@
 ﻿using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Repositories;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
@@ -80,13 +81,7 @@ public sealed class FilePusher : IFilePusher
             // Update progress
             uploadedBytes += file.Size;
             _jobProgressReporter.ReportPercent(this, _jobContext.Id, uploadedBytes, totalBytesToUpload);
-            using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
-                   {
-                       new(nameof(JobExecutionContext), _jobContext.Id)
-                   }))
-            {
-                _logger.LogInformation($"Uploaded {file.Path.Value}");
-            }
+            _logger.LogWithScope($"Uploaded {file.Path.Value}", _jobContext);
         }
 
         return pushedFiles;

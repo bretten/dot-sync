@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
@@ -58,13 +59,7 @@ public sealed class MockAmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifie
         var results = new List<FileIntegrityVerificationResult>();
         foreach (var file in toVerify)
         {
-            using (Logger.BeginScope(new List<KeyValuePair<string, object>>()
-                   {
-                       new(nameof(JobExecutionContext), _jobContext.Id)
-                   }))
-            {
-                Logger.LogInformation($"Verifying {file.Path.Value}");
-            }
+            Logger.LogWithScope($"Verifying {file.Path.Value}", _jobContext);
 
             // Simulate requests to S3
             await Task.Delay(TimeSpan.FromSeconds(_random.Next(1, 5)));

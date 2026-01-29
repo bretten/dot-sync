@@ -4,6 +4,7 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
 using com.brettnamba.DotSync.Common.Infrastructure.Aws;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.ValueObjects;
@@ -103,7 +104,7 @@ public sealed class AmazonS3FileIntegrityVerifier : BaseFileIntegrityVerifier
                 }
 
                 // Verify the object
-                Logger.LogInformation($"Verifying {s3Object.Key}");
+                Logger.LogWithScope($"Verifying {s3Object.Key}", _jobContext);
                 var result = await VerifyS3Object(bucket, s3Object);
 
                 // Update progress

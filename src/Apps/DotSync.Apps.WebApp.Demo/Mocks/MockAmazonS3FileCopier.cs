@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
+using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Services;
 
@@ -34,13 +35,7 @@ public sealed class MockAmazonS3FileCopier : IFileCopier
 
     public async Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination)
     {
-        using (_logger.BeginScope(new List<KeyValuePair<string, object>>()
-               {
-                   new(nameof(JobExecutionContext), _jobContext.Id)
-               }))
-        {
-            _logger.LogInformation($"Uploading {file.Path.Value}");
-        }
+        _logger.LogWithScope($"Uploading {file.Path.Value}", _jobContext);
 
         // Simulate upload
         await Task.Delay(TimeSpan.FromSeconds(_random.Next(1, 5)));
