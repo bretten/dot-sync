@@ -72,7 +72,12 @@ public sealed class FilePusher : IFilePusher
         foreach (var file in filesToPush)
         {
             // Upload the file
-            await _fileCopier.CopyFile(source, file, destination);
+            await _fileCopier.CopyFile(source, file, destination,
+                (transferredBytes, totalBytes) =>
+                {
+                    _jobProgressReporter.ReportPercent(this, _jobContext.Id, uploadedBytes + transferredBytes,
+                        totalBytesToUpload);
+                });
 
             // Add the synced file to the domain
             pushedFiles.Add(file);
@@ -82,6 +87,12 @@ public sealed class FilePusher : IFilePusher
             uploadedBytes += file.Size;
             _jobProgressReporter.ReportPercent(this, _jobContext.Id, uploadedBytes, totalBytesToUpload);
             _logger.LogWithScope($"Uploaded {file.Path.Value}", _jobContext);
+        }
+
+        // If there were no files to push, set progress to 100
+        if (filesToPush.Count == 0)
+        {
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, 100, 100);
         }
 
         return pushedFiles;

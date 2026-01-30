@@ -44,7 +44,8 @@ public sealed class AmazonS3FileCopier : IFileCopier
     }
 
     /// <inheritdoc/>
-    public async Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination)
+    public async Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination,
+        Action<long, long> updateUploadProgress)
     {
         // The storage location is a S3 bucket, so get the bucket name
         var bucket = destination.Path.WithoutLeadingAndTrailingSlash;
@@ -60,32 +61,49 @@ public sealed class AmazonS3FileCopier : IFileCopier
 
         if (fileInfo.Length >= SinglePartUploadMaxSize)
         {
-            await MultiPartUpload(bucket: bucket, key: key, fileInfo);
+            await MultiPartUpload(bucket: bucket, key: key, fileInfo, updateUploadProgress);
             return true;
         }
 
-        await SinglePartUpload(bucket: bucket, key: key, fileInfo);
+        await SinglePartUpload(bucket: bucket, key: key, fileInfo, updateUploadProgress);
         return true;
     }
 
-    private async Task SinglePartUpload(string bucket, string key, FileInfo fileInfo)
+    private async Task SinglePartUpload(string bucket, string key, FileInfo fileInfo,
+        Action<long, long> updateUploadProgress)
     {
-        var request = new PutObjectRequest
+        var checksum = _fileChecksumGenerator.GenerateChecksum(fileInfo);
+
+        // Change the config so that it forces single part upload by maximizing the point at which TransferUtility forces multipart upload
+        // In the calling method, we already check for multipart upload so no need to actually use it here in SinglePartUpload
+        var config = new TransferUtilityConfig
+        {
+            MinSizeBeforePartUpload = long.MaxValue
+        };
+        using var fileTransferUtility = new TransferUtility(_s3, config);
+        var fileTransferUtilityRequest = new TransferUtilityUploadRequest
         {
             BucketName = bucket,
             Key = key,
             FilePath = fileInfo.FullName,
             ChecksumAlgorithm = ChecksumAlgorithm.SHA256,
-            ChecksumSHA256 = _fileChecksumGenerator.GenerateChecksum(fileInfo),
+            ChecksumSHA256 = checksum,
             ServerSideEncryptionMethod = ServerSideEncryptionMethod.AES256,
             StorageClass = _storageClass
         };
-        request.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum, _fileChecksumGenerator.GenerateChecksum(fileInfo));
+        fileTransferUtilityRequest.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum, checksum);
 
-        await _s3.PutObjectAsync(request);
+        // Notify progress changes using the callback
+        fileTransferUtilityRequest.UploadProgressEvent += (s, e) =>
+        {
+            updateUploadProgress(e.TransferredBytes, e.TotalBytes);
+        };
+
+        await fileTransferUtility.UploadAsync(fileTransferUtilityRequest);
     }
 
-    private async Task MultiPartUpload(string bucket, string key, FileInfo fileInfo)
+    private async Task MultiPartUpload(string bucket, string key, FileInfo fileInfo,
+        Action<long, long> updateUploadProgress)
     {
         using var fileTransferUtility = new TransferUtility(_s3);
         var fileTransferUtilityRequest = new TransferUtilityUploadRequest
@@ -101,6 +119,12 @@ public sealed class AmazonS3FileCopier : IFileCopier
         };
         fileTransferUtilityRequest.Metadata.Add(Constants.Metadata.Keys.Sha256Checksum,
             _fileChecksumGenerator.GenerateChecksum(fileInfo));
+
+        // Notify progress changes using the callback
+        fileTransferUtilityRequest.UploadProgressEvent += (s, e) =>
+        {
+            updateUploadProgress(e.TransferredBytes, e.TotalBytes);
+        };
 
         await fileTransferUtility.UploadAsync(fileTransferUtilityRequest);
 
