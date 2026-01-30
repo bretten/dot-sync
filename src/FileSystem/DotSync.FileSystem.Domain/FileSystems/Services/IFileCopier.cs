@@ -21,6 +21,8 @@ public interface IFileCopier
     /// <param name="source">The source storage location</param>
     /// <param name="file">The file to copy</param>
     /// <param name="destination">The destination storage</param>
+    /// <param name="updateUploadProgress">Callback used to report upload progress of the file</param>
     /// <returns></returns>
-    Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination);
+    Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination,
+        Action<long, long> updateUploadProgress);
 }
