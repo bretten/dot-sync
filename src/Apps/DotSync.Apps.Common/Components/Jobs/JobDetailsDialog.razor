@@ -1,5 +1,10 @@
+@inject IJobManager JobManager
+@inject IJobProgressReporter ProgressReporter
 @using com.brettnamba.DotSync.Apps.Common.Components.Widgets
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
+@using com.brettnamba.DotSync.Common.Application.Jobs.Events
+@using com.brettnamba.DotSync.Common.Application.Jobs.Progress
+@implements IDisposable
 <MudDialog>
     <TitleContent>
         @{
@@ -49,6 +54,20 @@
 
     [Parameter] public IJobOutput? JobOutput { get; set; }
 
+    protected override void OnInitialized()
+    {
+        Progress = JobManager.CheckJobProgress(Job.Id)?.AsPercent() ?? 0;
+        LogMessages = JobManager.GetJobLogs(Job.Id);
+        JobOutput = JobManager.GetJobOutput(Job.Id);
+
+        JobManager.JobCompleted += HandleJobComplete;
+        JobManager.JobFailed += HandleJobFailed;
+
+        ProgressReporter.LogReported += HandleLogReported;
+        ProgressReporter.PercentReported += HandlePercentReported;
+        base.OnInitialized();
+    }
+
     public void UpdateProgress(double progress)
     {
         Progress = progress;
@@ -71,6 +90,35 @@
     {
         InvokeAsync(StateHasChanged); // This updates the Job related data
         InvokeAsync(MudDialog.StateHasChanged); // This updates the title
+    }
+
+    private void HandlePercentReported(object? sender, ProgressPercent e)
+    {
+        if (e.JobId == Job.Id) UpdateProgress(e.AsPercent());
+    }
+
+    private void HandleLogReported(object? sender, ProgressLog e)
+    {
+        if (e.JobId == Job.Id) UpdateLogs(JobManager.GetJobLogs(e.JobId).ToList());
+    }
+
+    private void HandleJobComplete(object? sender, JobCompletedArgs args)
+    {
+        if (args.Job.Id == Job.Id) FinishJob(args.Result);
+    }
+
+    private void HandleJobFailed(object? sender, JobFailedArgs args)
+    {
+        if (args.Job.Id == Job.Id) FinishJob();
+    }
+
+    public void Dispose()
+    {
+        JobManager.JobCompleted -= HandleJobComplete;
+        JobManager.JobFailed -= HandleJobFailed;
+
+        ProgressReporter.LogReported -= HandleLogReported;
+        ProgressReporter.PercentReported -= HandlePercentReported;
     }
 
 }

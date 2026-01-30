@@ -1,7 +1,7 @@
 @inject IJobManager JobManager
 @inject IJobProgressReporter ProgressReporter
-@inject IDialogService DialogService
 @inject IClock Clock
+@inject JobDetailsProvider JobDetailsProvider
 @using com.brettnamba.DotSync.Common.Application.Jobs.Contracts
 @using com.brettnamba.DotSync.Common.Application.Jobs.Events
 @using com.brettnamba.DotSync.Common.Application.Jobs.Progress
@@ -49,7 +49,7 @@
         </PropertyColumn>
         <TemplateColumn Title="Details">
             <CellTemplate Context="cell">
-                <MudButton @onclick="@(e => HandleDialogOpen(e, cell.Item))" Variant="Variant.Filled"
+                <MudButton OnClick="@(_ => JobDetailsProvider.HandleDialogOpen(cell.Item))" Variant="Variant.Filled"
                            Color="Color.Secondary">
                     Details
                 </MudButton>
@@ -60,7 +60,6 @@
 
 @code {
     private IReadOnlyList<IJob> _jobs = null!;
-    private JobDetailsDialog? _activeDialog;
 
     protected override Task OnInitializedAsync()
     {
@@ -77,15 +76,11 @@
 
     private void HandlePercentReported(object? sender, ProgressPercent e)
     {
-        if (e.JobId == _activeDialog?.Job.Id) _activeDialog?.UpdateProgress(e.AsPercent());
-
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleLogReported(object? sender, ProgressLog e)
     {
-        if (e.JobId == _activeDialog?.Job.Id) _activeDialog?.UpdateLogs(JobManager.GetJobLogs(e.JobId));
-
         InvokeAsync(StateHasChanged);
     }
 
@@ -96,36 +91,12 @@
 
     private void HandleJobComplete(object? sender, JobCompletedArgs args)
     {
-        if (args.Job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob(args.Result);
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleJobFailed(object? sender, JobFailedArgs args)
     {
-        if (args.Job.Id == _activeDialog?.Job.Id) _activeDialog?.FinishJob();
         InvokeAsync(StateHasChanged);
-    }
-
-    private async Task HandleDialogOpen(MouseEventArgs obj, IJob job)
-    {
-        var parameters = new DialogParameters<JobDetailsDialog>
-        {
-            { x => x.Job, job },
-            { x => x.Progress, JobManager.CheckJobProgress(job.Id)?.AsPercent() ?? 0 },
-            { x => x.LogMessages, JobManager.GetJobLogs(job.Id) },
-            { x => x.JobOutput, JobManager.GetJobOutput(job.Id) }
-        };
-        var dialog = await DialogService.ShowAsync<JobDetailsDialog>(job.Type.ToString(), parameters, new DialogOptions()
-        {
-            Position = DialogPosition.TopCenter,
-            FullWidth = true,
-            MaxWidth = MaxWidth.Medium,
-            CloseButton = true
-        });
-        _activeDialog = (JobDetailsDialog)dialog.Dialog!;
-
-        var result = await dialog.Result;
-        _activeDialog = null;
     }
 
     public void Dispose()
