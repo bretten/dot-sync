@@ -28,12 +28,15 @@ public sealed class MockAmazonS3FileCopier : IFileCopier
         _logger = logger;
     }
 
+    /// <inheritdoc/>
     public Task<bool> Exists(DotFile file, StorageLocation destination)
     {
         return Task.FromResult(_mockS3Storage.Exists(destination, file));
     }
 
-    public async Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination)
+    /// <inheritdoc/>
+    public async Task<bool> CopyFile(StorageLocation source, DotFile file, StorageLocation destination,
+        Action<long, long> updateUploadProgress)
     {
         _logger.LogWithScope($"Uploading {file.Path.Value}", _jobContext);
 
