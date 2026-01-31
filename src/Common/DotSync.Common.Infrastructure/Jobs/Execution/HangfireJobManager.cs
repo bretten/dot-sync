@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using com.brettnamba.DotSync.Common.Application.Jobs;
 using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Events;
@@ -18,7 +19,7 @@ public sealed class HangfireJobManager : IJobManager, IDisposable
     private readonly IJobProgressReporter _progressReporter;
     private readonly ILogger<HangfireJobManager> _logger;
     private readonly List<IJob> _jobs = new();
-    private readonly ConcurrentDictionary<Guid, List<string>> _jobLogs = new();
+    private readonly ConcurrentDictionary<Guid, ConcurrentBag<string>> _jobLogs = new();
     private readonly ConcurrentDictionary<Guid, ProgressPercent> _jobProgress = new();
     private readonly ConcurrentDictionary<Guid, IJobOutput> _jobOutput = new();
 
@@ -39,7 +40,7 @@ public sealed class HangfireJobManager : IJobManager, IDisposable
     public IReadOnlyList<string> GetJobLogs(Guid jobId)
     {
         _jobLogs.TryGetValue(jobId, out var result);
-        return result ?? [];
+        return result?.ToImmutableList() ?? [];
     }
 
     /// <inheritdoc />
@@ -91,7 +92,7 @@ public sealed class HangfireJobManager : IJobManager, IDisposable
     {
         var job = new Job<T>(context.Id, jobParameters.Type, JobState.Queued, jobParameters);
         _jobs.Add(job);
-        _jobLogs.TryAdd(job.Id, new List<string>());
+        _jobLogs.TryAdd(job.Id, new ConcurrentBag<string>());
         _jobProgress.TryAdd(job.Id, new ProgressPercent(job.Id, 0, 1));
         return job;
     }
