@@ -23,7 +23,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
     {
         try
         {
-            _container = new PostgreSqlBuilder()
+            _container = new PostgreSqlBuilder("postgres:17-alpine")
                 .WithName(GetType().Name + Guid.NewGuid())
                 .WithUsername("postgres")
                 .WithPassword("password99")
@@ -291,7 +291,7 @@ public class EntityFrameworkCoreFileRepositoryIntegrationTests : IAsyncLifetime
 
     public async Task InitializeAsync() => await _container.StartAsync();
 
-    public async Task DisposeAsync() => await _container.StopAsync();
+    public async Task DisposeAsync() => await _container.DisposeAsync();
 
     private async Task<DbConnection> GetDbConnection()
     {

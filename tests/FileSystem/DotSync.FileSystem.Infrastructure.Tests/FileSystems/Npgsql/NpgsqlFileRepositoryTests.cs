@@ -24,7 +24,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
     {
         try
         {
-            _container = new PostgreSqlBuilder()
+            _container = new PostgreSqlBuilder("postgres:17-alpine")
                 .WithName(GetType().Name + Guid.NewGuid())
                 .WithUsername("postgres")
                 .WithPassword("password99")
@@ -172,7 +172,7 @@ public class NpgsqlFileRepositoryTests : IAsyncLifetime
 
     public async Task InitializeAsync() => await _container.StartAsync();
 
-    public async Task DisposeAsync() => await _container.StopAsync();
+    public async Task DisposeAsync() => await _container.DisposeAsync();
 
     private static readonly DateTimeOffset ClockTime = new(2024, 7, 26, 1, 2, 3, TimeSpan.FromHours(0));
 
