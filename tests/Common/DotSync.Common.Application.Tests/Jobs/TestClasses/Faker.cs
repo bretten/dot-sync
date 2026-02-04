@@ -27,6 +27,6 @@ public static class Faker
 
     public static JobValidationResult FakeJobValidationResult(bool isValid = true, string? errorMessage = null)
     {
-        return new JobValidationResult(isValid, errorMessage);
+        return new JobValidationResult(isValid, errorMessage ?? string.Empty);
     }
 }
