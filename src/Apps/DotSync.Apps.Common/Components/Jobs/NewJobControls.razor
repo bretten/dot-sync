@@ -1,22 +1,25 @@
+@using com.brettnamba.DotSync.Apps.Common.Auth
 @using com.brettnamba.DotSync.Common.Application.Jobs
 @inject IDialogService DialogService
 
-<MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
-         OnClick="ClickScan">
-    Scan
-</MudChip>
-<MudChip T="string" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Surface" Color="Color.Primary"
-         OnClick="ClickVerify">
-    Verify
-</MudChip>
-<MudChip T="string" Icon="@Icons.Material.Filled.FileUpload" IconColor="Color.Surface" Color="Color.Primary"
-         OnClick="ClickPush">
-    Push
-</MudChip>
-<MudChip T="string" Icon="@Icons.Material.Filled.Sort" IconColor="Color.Surface" Color="Color.Primary"
-         OnClick="ClickSort">
-    Sort
-</MudChip>
+<AuthorizeView Policy="@(AuthenticationExtensions.AdminPolicy)">
+    <MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
+             OnClick="ClickScan">
+        Scan
+    </MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Surface" Color="Color.Primary"
+             OnClick="ClickVerify">
+        Verify
+    </MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.FileUpload" IconColor="Color.Surface" Color="Color.Primary"
+             OnClick="ClickPush">
+        Push
+    </MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.Sort" IconColor="Color.Surface" Color="Color.Primary"
+             OnClick="ClickSort">
+        Sort
+    </MudChip>
+</AuthorizeView>
 
 @code {
 
