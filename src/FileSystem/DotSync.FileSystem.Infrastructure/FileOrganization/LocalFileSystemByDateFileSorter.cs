@@ -100,6 +100,12 @@ public sealed class LocalFileSystemByDateFileSorter : IFileSorter
             result.AddRange(MoveFiles(sourceDirectory, files, destinationPath, ref filesMoved, totalFilesToMove));
         }
 
+        // There were no files to sort, so set progress as done
+        if (filesMoved == 0)
+        {
+            _jobProgressReporter.ReportPercent(this, _jobContext.Id, 100, 100);
+        }
+
         return result.AsEnumerable();
     }
 
