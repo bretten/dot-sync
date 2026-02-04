@@ -17,6 +17,8 @@ public sealed class JobProgressLogger(
     IJobProgressReporter progressReporter,
     IExternalScopeProvider scopeProvider) : ILogger
 {
+    private readonly string _name = name;
+
     public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
         Func<TState, Exception?, string> formatter)
     {

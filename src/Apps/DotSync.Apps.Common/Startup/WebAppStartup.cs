@@ -29,8 +29,10 @@ public static class WebAppStartup
     /// Configures web server and SSL certs
     /// </summary>
     /// <param name="builder"></param>
+#pragma warning disable CA1416
     public static void ConfigureWebServer(this WebApplicationBuilder builder)
     {
+        if (OperatingSystem.IsBrowser()) return;
         builder.WebHost.ConfigureKestrel(async void (x) =>
         {
             var secretsProvider = builder.Configuration.GetSecretsProvider();
@@ -41,6 +43,7 @@ public static class WebAppStartup
             });
         });
     }
+#pragma warning restore CA1416
 
     /// <summary>
     /// Maps endpoints for the app
