@@ -8,16 +8,18 @@
 @rendermode InteractiveServer
 @inject IDbContextFactory<FileSystemsDbContext> FileSystemsDbContextFactory
 @inject IDialogService DialogService
-@attribute [Authorize(AuthenticationExtensions.VerifierPolicy)]
+@attribute [Authorize(AuthenticationExtensions.AnyPolicy)]
 
 <MudDataGrid Items="@_storageLocations">
     <ToolBarContent>
         <MudText Typo="Typo.h6">Storage Locations</MudText>
         <MudSpacer/>
-        <MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
-                 OnClick="OnClickNew">
-            New
-        </MudChip>
+        <AuthorizeView Policy="@(AuthenticationExtensions.AdminPolicy)">
+            <MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
+                     OnClick="OnClickNew">
+                New
+            </MudChip>
+        </AuthorizeView>
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Id" Sortable="false"/>

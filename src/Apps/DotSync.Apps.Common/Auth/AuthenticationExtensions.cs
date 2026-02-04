@@ -14,8 +14,9 @@ namespace com.brettnamba.DotSync.Apps.Common.Auth;
 public static class AuthenticationExtensions
 {
     public const string AuthenticationScheme = "oidc";
-    public const string VerifierPolicy = "Verifier";
-    public const string PusherPolicy = "Pusher";
+    public const string AdminPolicy = "Admin";
+    public const string ViewerPolicy = "Viewer";
+    public const string AnyPolicy = "Any";
 
     public static void AddOidc(this IServiceCollection services, IConfiguration config)
     {
@@ -54,11 +55,15 @@ public static class AuthenticationExtensions
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
 
+        // Authorization (AWS cognito groups to represent policies)
         services.AddAuthorizationBuilder()
-            .AddPolicy(VerifierPolicy,
-                policy => policy.RequireClaim(config["OAuth2:UserGroupsClaim"]!, config["OAuth2:VerifyGroup"]!))
-            .AddPolicy(PusherPolicy,
-                policy => policy.RequireClaim(config["OAuth2:UserGroupsClaim"]!, config["OAuth2:PushGroup"]!));
+            .AddPolicy(AdminPolicy,
+                policy => policy.RequireClaim(config["OAuth2:UserGroupsClaim"]!, config["OAuth2:AdminGroup"]!))
+            .AddPolicy(ViewerPolicy,
+                policy => policy.RequireClaim(config["OAuth2:UserGroupsClaim"]!, config["OAuth2:ViewerGroup"]!))
+            .AddPolicy(AnyPolicy,
+                policy => policy.RequireClaim(config["OAuth2:UserGroupsClaim"]!, config["OAuth2:AdminGroup"]!,
+                    config["OAuth2:ViewerGroup"]!));
 
         services.AddCascadingAuthenticationState();
     }

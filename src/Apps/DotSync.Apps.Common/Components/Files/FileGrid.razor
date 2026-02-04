@@ -1,5 +1,6 @@
 @using System.Collections.Immutable
 @using System.Web
+@using com.brettnamba.DotSync.Apps.Common.Auth
 @using com.brettnamba.DotSync.Apps.Common.Components.Jobs
 @using com.brettnamba.DotSync.Common.Application.Jobs
 @using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities
@@ -28,10 +29,12 @@
         </MudChipSet>
         <MudMenu>
             <ActivatorContent>
-                <MudChip T="string" Icon="@Icons.Material.Filled.CloudUpload" IconColor="Color.Surface"
-                         Color="Color.Primary">
-                    Push
-                </MudChip>
+                <AuthorizeView Policy="@(AuthenticationExtensions.AdminPolicy)">
+                    <MudChip T="string" Icon="@Icons.Material.Filled.CloudUpload" IconColor="Color.Surface"
+                             Color="Color.Primary">
+                        Push
+                    </MudChip>
+                </AuthorizeView>
             </ActivatorContent>
             <ChildContent>
                 <MudMenuItem>
