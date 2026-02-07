@@ -66,7 +66,6 @@ builder.Services.AddJobs(builder.Configuration, new List<Assembly>()
     typeof(VerifyJobRunner).Assembly
 });
 builder.Logging.AddJobLogging();
-builder.Services.AddScoped<JobDetailsProvider>();
 
 // File systems
 await builder.Services.AddFileSystems(builder.Configuration);
@@ -91,6 +90,10 @@ if (!builder.Environment.IsDevelopment())
 {
     builder.ConfigureWebServer();
 }
+
+// UI components
+builder.Services.AddJobDialog();
+builder.Services.AddOverlay();
 
 /*
  * Application
