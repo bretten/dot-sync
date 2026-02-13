@@ -1,6 +1,5 @@
 using System.Reflection;
 using com.brettnamba.DotSync.Apps.Common.Auth;
-using com.brettnamba.DotSync.Apps.Common.Components.Jobs;
 using com.brettnamba.DotSync.Apps.Common.Components.Pages;
 using com.brettnamba.DotSync.Apps.Common.Startup;
 using com.brettnamba.DotSync.Apps.WebApp.Components;
@@ -14,6 +13,7 @@ using com.brettnamba.DotSync.FileSystem.Infrastructure.FileSystems;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Jobs.Handlers;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.Maintenance;
 using com.brettnamba.DotSync.FileSystem.Infrastructure.State;
+using com.brettnamba.DotSync.FileSystem.Infrastructure.Users;
 using Hangfire;
 using Hangfire.MemoryStorage;
 using MudBlazor.Services;
@@ -81,6 +81,9 @@ builder.Services.AddFileServices(builder.Configuration);
 
 // State management
 builder.Services.AddStateManagement();
+
+// User services
+builder.Services.AddUserServices();
 
 // Maintenance
 builder.Services.AddMaintenance(builder.Configuration);
