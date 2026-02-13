@@ -1,0 +1,29 @@
+@inject IOverlayService OverlayService
+
+<MudOverlay @bind-Visible="Visible" DarkBackground AutoClose="false" OnClosed="Close"/>
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+
+    protected override void OnInitialized()
+    {
+        OverlayService.RegisterOverlay(this);
+        base.OnInitialized();
+    }
+
+    public void Show()
+    {
+        Visible = true;
+        VisibleChanged.InvokeAsync(Visible);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Close()
+    {
+        Visible = false;
+        VisibleChanged.InvokeAsync(Visible);
+        InvokeAsync(StateHasChanged);
+    }
+
+}

@@ -1,0 +1,110 @@
+@using com.brettnamba.DotSync.Apps.Common.Components.Widgets.Overlay
+@inject IOverlayService OverlayService
+
+<MudPopover OverflowBehavior="OverflowBehavior.FlipNever" Open="@IsOpen" AnchorOrigin="@Anchor" Fixed="true"
+            TransformOrigin="@Transform" Class="pa-4">
+    <div class="d-flex flex-column">
+        <MudText>@Title</MudText>
+        <MudText Typo="Typo.body2">@Body</MudText>
+        <MudButton OnClick="@Close" Class="ml-auto mr-n3 mb-1" Color="Color.Error">Close</MudButton>
+        <div class="@GetLocation()" style="top:0; left:0; z-index:-1;">
+            <MudIcon Icon="@GetIcon()" Color="Color.Secondary" Class=""/>
+        </div>
+    </div>
+</MudPopover>
+
+@code {
+    [Parameter] public Origin Anchor { get; set; }
+    [Parameter] public Origin Transform { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string Title { get; set; } = null!;
+    [Parameter] public string Body { get; set; } = null!;
+
+    public async Task Open()
+    {
+        IsOpen = true;
+        await OverlayService.Show();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task Close()
+    {
+        IsOpen = false;
+        await OverlayService.Hide();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private string GetIcon()
+    {
+        var icon = "";
+
+        switch (Transform)
+        {
+            case Origin.TopLeft:
+                icon = Icons.Material.Filled.NorthWest;
+                break;
+            case Origin.TopCenter:
+                icon = Icons.Material.Filled.North;
+                break;
+            case Origin.TopRight:
+                icon = Icons.Material.Filled.NorthEast;
+                break;
+            case Origin.CenterLeft:
+                icon = Icons.Material.Filled.West;
+                break;
+            case Origin.CenterCenter:
+                icon = Icons.Material.Filled.ZoomOutMap;
+                break;
+            case Origin.CenterRight:
+                icon = Icons.Material.Filled.East;
+                break;
+            case Origin.BottomLeft:
+                icon = Icons.Material.Filled.SouthWest;
+                break;
+            case Origin.BottomCenter:
+                icon = Icons.Material.Filled.South;
+                break;
+            case Origin.BottomRight:
+                icon = Icons.Material.Filled.SouthEast;
+                break;
+        }
+
+        return icon;
+    }
+
+    private string GetLocation()
+    {
+        var align = "";
+        var justify = "";
+        var pos = Transform.ToDescriptionString().Split("-");
+
+        if (pos[0] == "center")
+        {
+            align = "align-center";
+        }
+        else if (pos[0] == "top")
+        {
+            align = "align-start";
+        }
+        else if (pos[0] == "bottom")
+        {
+            align = "align-end";
+        }
+
+        if (pos[1] == "left")
+        {
+            justify = "justify-start";
+        }
+        else if (pos[1] == "right")
+        {
+            justify = "justify-end";
+        }
+        else if (pos[1] == "center")
+        {
+            justify = "justify-center";
+        }
+
+        return $"absolute mud-height-full mud-width-full d-flex {align} {justify}";
+    }
+
+}
