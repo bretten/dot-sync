@@ -105,6 +105,7 @@ if (!builder.Environment.IsDevelopment())
 // UI components
 builder.Services.AddJobDialog();
 builder.Services.AddOverlay();
+builder.Services.AddUserActions();
 
 /*
  * Override with mock services

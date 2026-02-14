@@ -19,6 +19,18 @@
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public string Title { get; set; } = null!;
     [Parameter] public string Body { get; set; } = null!;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsOpen)
+        {
+            await OverlayService.Show();
+            StateHasChanged();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
 
     public async Task Open()
     {
@@ -31,6 +43,7 @@
     {
         IsOpen = false;
         await OverlayService.Hide();
+        await OnClose.InvokeAsync();
         await InvokeAsync(StateHasChanged);
     }
 
