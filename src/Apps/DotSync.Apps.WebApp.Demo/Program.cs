@@ -5,6 +5,7 @@ using com.brettnamba.DotSync.Apps.Common.Startup;
 using com.brettnamba.DotSync.Common.DateAndTme;
 using com.brettnamba.DotSync.Common.Infrastructure.Aws;
 using com.brettnamba.DotSync.Common.Infrastructure.Jobs;
+using com.brettnamba.DotSync.FileSystem.Application.Users;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
@@ -152,6 +153,11 @@ using (var scope = app.Services.CreateScope())
             StoragePath.Create("/testBucket/")));
         dbContext.SaveChanges();
     }
+
+    // Enable tutorials for the demo users
+    var userSettings = scope.ServiceProvider.GetRequiredService<IUserSettings>();
+    await userSettings.UpdateSetting(UserSetting.ShowTutorials, "user1", true);
+    await userSettings.UpdateSetting(UserSetting.ShowTutorials, "user2", true);
 }
 
 // Load state
