@@ -1,5 +1,6 @@
 using com.brettnamba.DotSync.Apps.Common.Components.Jobs;
 using com.brettnamba.DotSync.Apps.Common.Components.Widgets.Overlay;
+using com.brettnamba.DotSync.Apps.Common.Users;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace com.brettnamba.DotSync.Apps.Common.Startup;
@@ -22,5 +23,14 @@ public static class Dependencies
     public static void AddOverlay(this IServiceCollection services)
     {
         services.AddScoped<IOverlayService, SingleInstanceOverlayService>();
+    }
+
+    /// <summary>
+    /// Adds user action dependencies
+    /// </summary>
+    /// <param name="services">Service collection</param>
+    public static void AddUserActions(this IServiceCollection services)
+    {
+        services.AddScoped<IUserActions, AuthenticationStateProviderUserActions>();
     }
 }

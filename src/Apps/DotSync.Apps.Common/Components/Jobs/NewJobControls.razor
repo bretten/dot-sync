@@ -1,27 +1,76 @@
 @using com.brettnamba.DotSync.Apps.Common.Auth
+@using com.brettnamba.DotSync.Apps.Common.Components.Widgets
+@using com.brettnamba.DotSync.Apps.Common.Users
 @using com.brettnamba.DotSync.Common.Application.Jobs
+@using com.brettnamba.DotSync.FileSystem.Application.Users
 @inject IDialogService DialogService
+@inject IUserActions UserActions
 
 <AuthorizeView Policy="@(AuthenticationExtensions.AdminPolicy)">
     <MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
              OnClick="ClickScan">
         Scan
+        <Popover Title="Scan job" Body="Start adding files here. Scans for new files to add to the system"
+                 Anchor="Origin.BottomLeft" Transform="Origin.TopRight"
+                 IsOpen="_openScanTutorial" OnClose="OnCloseScanTutorial"/>
     </MudChip>
     <MudChip T="string" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Surface" Color="Color.Primary"
              OnClick="ClickVerify">
         Verify
+        <Popover Title="Verify job" Body="Verifies existing files by checksum and also adds new files"
+                 Anchor="Origin.BottomLeft" Transform="Origin.TopRight"
+                 IsOpen="_openVerifyTutorial" OnClose="OnCloseVerifyTutorial"/>
     </MudChip>
     <MudChip T="string" Icon="@Icons.Material.Filled.FileUpload" IconColor="Color.Surface" Color="Color.Primary"
              OnClick="ClickPush">
         Push
+        <Popover Title="Push job" Body="Uploads files to cloud storage" IsOpen="_openPushTutorial"
+                 Anchor="Origin.BottomLeft" Transform="Origin.TopRight"
+                 OnClose="OnClosePushTutorial"/>
     </MudChip>
     <MudChip T="string" Icon="@Icons.Material.Filled.Sort" IconColor="Color.Surface" Color="Color.Primary"
              OnClick="ClickSort">
+        Sort
+        <Popover Title="Sort job"
+                 Body="Sorts files in a designated directory by date and moves them to the main storage"
+                 Anchor="Origin.BottomLeft" Transform="Origin.TopRight" IsOpen="_openSortTutorial"
+                 OnClose="OnCloseSortTutorial"/>
+    </MudChip>
+</AuthorizeView>
+<AuthorizeView Policy="@(AuthenticationExtensions.ViewerPolicy)">
+    <MudChip T="string" Icon="@Icons.Material.Filled.Add" IconColor="Color.Surface" Color="Color.Primary"
+             Disabled="true">
+        Scan
+        <Popover Title="Insufficient permissions" Body="You need to be an admin to start jobs"
+                 Anchor="Origin.BottomLeft" Transform="Origin.TopRight"
+                 IsOpen="_openNonAdminTutorial" OnClose="OnCloseNonAdminTutorial"/>
+    </MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Surface" Color="Color.Primary"
+             Disabled="true">
+        Verify
+    </MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.FileUpload" IconColor="Color.Surface" Color="Color.Primary"
+             Disabled="true">
+        Push
+    </MudChip>
+    <MudChip T="string" Icon="@Icons.Material.Filled.Sort" IconColor="Color.Surface" Color="Color.Primary"
+             Disabled="true">
         Sort
     </MudChip>
 </AuthorizeView>
 
 @code {
+    private bool _openScanTutorial;
+    private bool _openVerifyTutorial;
+    private bool _openPushTutorial;
+    private bool _openSortTutorial;
+    private bool _openNonAdminTutorial;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _openScanTutorial = _openNonAdminTutorial = await UserActions.GetBoolUserSetting(UserSetting.ShowTutorials);
+        await base.OnInitializedAsync();
+    }
 
     private async Task ClickScan()
     {
@@ -56,6 +105,40 @@
             MaxWidth = MaxWidth.Medium,
             CloseButton = true
         });
+    }
+
+    private void OnCloseScanTutorial()
+    {
+        _openScanTutorial = false;
+        _openVerifyTutorial = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnCloseVerifyTutorial()
+    {
+        _openVerifyTutorial = false;
+        _openPushTutorial = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnClosePushTutorial()
+    {
+        _openPushTutorial = false;
+        _openSortTutorial = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnCloseSortTutorial()
+    {
+        _openSortTutorial = false;
+        await UserActions.UpdateUserSetting(UserSetting.ShowTutorials, false);
+        StateHasChanged();
+    }
+
+    private async Task OnCloseNonAdminTutorial()
+    {
+        _openNonAdminTutorial = false;
+        await UserActions.UpdateUserSetting(UserSetting.ShowTutorials, false);
     }
 
 }

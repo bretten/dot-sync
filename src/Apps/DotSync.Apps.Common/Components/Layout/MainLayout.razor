@@ -1,5 +1,9 @@
-﻿@using com.brettnamba.DotSync.Apps.Common.Components.Widgets.Overlay
+﻿@using com.brettnamba.DotSync.Apps.Common.Components.Widgets
+@using com.brettnamba.DotSync.Apps.Common.Components.Widgets.Overlay
+@using com.brettnamba.DotSync.Apps.Common.Users
+@using com.brettnamba.DotSync.FileSystem.Application.Users
 @inherits LayoutComponentBase
+@inject IUserActions UserActions
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="@_isDarkMode"/>
 <MudPopoverProvider/>
@@ -10,7 +14,12 @@
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start"
                        OnClick="@((e) => DrawerToggle())"/>
-        <MudText Typo="Typo.h5" Class="ml-3">DotBackup</MudText>
+        <MudText Typo="Typo.h5" Class="ml-3">
+            DotBackup
+            <Popover Title="Tutorial"
+                     Body="There are no files yet. Open the menu and go to the Jobs page to start adding files"
+                     IsOpen="_tutorialOpen" Anchor="Origin.BottomRight" Transform="Origin.TopLeft"/>
+        </MudText>
         <MudSpacer/>
         <MudMenu Variant="Variant.Text" Icon="@Icons.Material.TwoTone.MoreVert" Color="Color.Inherit"
                  Disabled="@(_overlayOpen)">
@@ -41,10 +50,12 @@
     private bool _isDarkMode = true;
     private MudTheme? _theme = null;
     private bool _overlayOpen;
+    private bool _tutorialOpen;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        await base.OnInitializedAsync();
+        _tutorialOpen = await UserActions.GetBoolUserSetting(UserSetting.ShowTutorials);
 
         _theme = new()
         {
