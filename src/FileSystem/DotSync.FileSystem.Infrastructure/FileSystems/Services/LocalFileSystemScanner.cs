@@ -4,6 +4,7 @@ using com.brettnamba.DotSync.Common.Application.Jobs.Contracts;
 using com.brettnamba.DotSync.Common.Application.Jobs.Execution;
 using com.brettnamba.DotSync.Common.Application.Jobs.Extensions;
 using com.brettnamba.DotSync.FileSystem.Application.Configuration;
+using com.brettnamba.DotSync.FileSystem.Application.Files;
 using com.brettnamba.DotSync.FileSystem.Domain.FileIntegrity.Services;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Entities;
 using com.brettnamba.DotSync.FileSystem.Domain.FileSystems.Enums;
@@ -88,10 +89,15 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             throw new IncompatibleStorageLocationException("Not a local storage location");
         }
 
+        // Existing files to compare file system against
+        var dbFiles = await _fileRepository.GetFilesByPathPrefix(pathPrefix);
+        var trackedFiles = new TrackedFiles(dbFiles);
+
+        // Scan the file system for new files
         var pathToScan = !string.IsNullOrWhiteSpace(pathPrefix)
             ? Path.Combine(storageLocation.Path.Value, pathPrefix)
             : storageLocation.Path.Value;
-        var tasks = ScanDirectory(new DirectoryInfo(pathToScan), storageLocation.Path).ToList();
+        var tasks = ScanDirectory(new DirectoryInfo(pathToScan), storageLocation.Path, trackedFiles).ToList();
         var newFiles = new ConcurrentBag<DotFile>();
         var completedTasks = 0;
         var taskExecutions = tasks.Select(async task =>
@@ -105,6 +111,7 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
         });
         await Task.WhenAll(taskExecutions);
 
+        // Add new files to the database
         foreach (var newFile in newFiles)
         {
             await _fileRepository.Add(newFile);
@@ -118,8 +125,10 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// </summary>
     /// <param name="directoryInfo">The directory to scan</param>
     /// <param name="rootDirectoryPath">The original root directory that is being scanned</param>
+    /// <param name="trackedFiles">Files that are already tracked by the system</param>
     /// <returns>New files found in the directory</returns>
-    private IEnumerable<Func<Task<DotFile?>>> ScanDirectory(DirectoryInfo directoryInfo, StoragePath rootDirectoryPath)
+    private IEnumerable<Func<Task<DotFile?>>> ScanDirectory(DirectoryInfo directoryInfo, StoragePath rootDirectoryPath,
+        TrackedFiles trackedFiles)
     {
         var entries = directoryInfo.EnumerateFileSystemInfos();
         var tasks = new List<Func<Task<DotFile?>>>();
@@ -143,10 +152,10 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
             switch (entry)
             {
                 case FileInfo info:
-                    tasks.Add(() => ScanFile(info, rootDirectoryPath));
+                    tasks.Add(() => ScanFile(info, rootDirectoryPath, trackedFiles));
                     break;
                 case DirectoryInfo info:
-                    tasks.AddRange(ScanDirectory(info, rootDirectoryPath));
+                    tasks.AddRange(ScanDirectory(info, rootDirectoryPath, trackedFiles));
                     break;
             }
         }
@@ -159,15 +168,16 @@ public sealed class LocalFileSystemScanner : IFileSystemScanner
     /// </summary>
     /// <param name="fileInfo">The file</param>
     /// <param name="rootDirectoryPath">The original root directory of the file</param>
+    /// <param name="trackedFiles">Files that are already tracked by the system</param>
     /// <returns><see cref="DotFile"/> if it is a new file, otherwise null</returns>
-    private async Task<DotFile?> ScanFile(FileInfo fileInfo, StoragePath rootDirectoryPath)
+    private async Task<DotFile?> ScanFile(FileInfo fileInfo, StoragePath rootDirectoryPath, TrackedFiles trackedFiles)
     {
         // Determine its relative path compared to the root directory
         var relativePath = FileSystemPath.Create(Path.GetRelativePath(rootDirectoryPath.Value, fileInfo.FullName));
 
         // See if the file's path exists
-        var existingFileByPath = await _fileRepository.GetFileByPath(relativePath);
-        if (existingFileByPath != null)
+        var filePathTracked = trackedFiles.PathExists(relativePath.Value);
+        if (filePathTracked)
         {
             // The file exists, no further work needed
             return null;
