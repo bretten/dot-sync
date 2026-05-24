@@ -89,6 +89,11 @@ public static class WebAppStartup
             hangfire.Enqueue(() => backfiller.BackfillThumbnails());
             //hangfire.Enqueue(() => backfiller.BackfillSyncedFiles());
             hangfire.Enqueue(() => backfiller.BackfillIncorrectDates());
+
+            // var statusChecker = scope.ServiceProvider.GetRequiredService<IFileStatusChecker>();
+            // hangfire.Enqueue(() =>
+            //     statusChecker.CheckFileStatus(
+            //         app.Configuration.GetValue<string>("Maintenance:FileStatusCheckerPath")!));
         }
     }
 

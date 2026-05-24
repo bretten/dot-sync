@@ -17,5 +17,6 @@ public static class Dependencies
         services.Configure<LocalCheckpointFileBackfillerConfiguration>(
             configuration.GetSection(LocalCheckpointFileBackfillerConfiguration.Section));
         services.AddScoped<IFileBackfiller, LocalCheckpointFileBackfiller>();
+        services.AddScoped<IFileStatusChecker, FileStatusChecker>();
     }
 }
