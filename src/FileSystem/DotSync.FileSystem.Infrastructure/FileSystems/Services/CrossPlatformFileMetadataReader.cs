@@ -95,6 +95,10 @@ public sealed class CrossPlatformFileMetadataReader : IFileMetadataReader
         catch (ImageProcessingException)
         {
         }
+        catch (XmpCore.XmpException)
+        {
+            // MetadataExtractor needs to address issue where metadata on certain images cannot be read: https://github.com/drewnoakes/metadata-extractor-dotnet/issues/109
+        }
         catch (FormatException)
         {
             throw;
