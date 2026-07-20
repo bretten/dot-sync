@@ -41,7 +41,7 @@ public abstract class BaseJobRunner<T> : IJobRunner<T> where T : IJobParameters
         }
         catch (Exception e)
         {
-            _logger.LogError(e.Message);
+            _logger.LogError(e, e.Message);
             job.SetError(_clock.GetUtcNow());
             throw;
         }
